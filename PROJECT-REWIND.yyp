@@ -35,6 +35,7 @@
   },
   "name":"PROJECT-REWIND",
   "resources":[
+    {"id":{"name":"tst","path":"objects/tst/tst.yy",},},
     {"id":{"name":"Room1","path":"rooms/Room1/Room1.yy",},},
   ],
   "resourceType":"GMProject",
