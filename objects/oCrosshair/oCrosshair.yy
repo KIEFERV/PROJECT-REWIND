@@ -1,9 +1,11 @@
 {
   "$GMObject":"",
-  "%Name":"tst",
-  "eventList":[],
+  "%Name":"oCrosshair",
+  "eventList":[
+    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":3,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
+  ],
   "managed":true,
-  "name":"tst",
+  "name":"oCrosshair",
   "overriddenProperties":[],
   "parent":{
     "name":"Objects",
@@ -27,7 +29,10 @@
   "resourceType":"GMObject",
   "resourceVersion":"2.0",
   "solid":false,
-  "spriteId":null,
+  "spriteId":{
+    "name":"sCrosshair",
+    "path":"sprites/sCrosshair/sCrosshair.yy",
+  },
   "spriteMaskId":null,
   "visible":true,
 }
