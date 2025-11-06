@@ -25,3 +25,9 @@ if place_meeting(x, y + ySpd, oWall){
 //move the player
 x += xSpd;
 y += ySpd;
+
+
+//raycasting test
+
+
+
