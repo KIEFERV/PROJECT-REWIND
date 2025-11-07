@@ -1,5 +1,5 @@
-var lx = mouse_x;       // the light position, based around the mouse location
-var ly = mouse_y;
+var lx = oPlayer.x;       // the light position, based around the mouse location
+var ly = oPlayer.y;
 var rad = 256            // the radius of the light
 var tile_size = 32;     // size of a tile
 var tilemap = layer_tilemap_get_id("WallTiles");
