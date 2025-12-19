@@ -2,3 +2,4 @@
 moveSpd = 2;
 xSpd = 0;
 ySpd = 0;
+sprintSpd = 6;
