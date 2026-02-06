@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Documentation</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+    <div class="admin-doc-container">
+        <h1>=== Admin Documentation ===</h1>
+        <p>Welcome to the Admin Panel. Here you can manage and view various aspects of the system.</p>
+        <form action="/admin_Dashboard" method="POST"></form>
+
+        <div class="options-list">
+            <button type="button" class="btn-option" onclick="location.href='/admin_Dashboard/system_Logs'">View System Logs</button>
+            <button type="button" class="btn-option" onclick="location.href='/admin_Dashboard/manage_Users'">Manage Users</button>
+            <button type="button" class="btn-option" onclick="location.href='/'">Exit Admin Panel</button>
+        </div>
+    </div>
+</body>
+</html>

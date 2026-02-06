@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="AdminLogin.css">
+</head>
+<body>
+    <div class="login-container">
+        <h1>Admin Login</h1>
+        <div th:if="${error}" class="error-message">
+            <p th:text="${error}"></p>
+        </div>
+        <form action="/Admin_Dashboard/admin_Login" method="POST" id="userForm">
+            
+            <div class="input-box">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" placeholder="Enter your username" required>
+            </div>
+            
+            
+            <div class="input-box">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            </div>
+            
+            
+            <button type="submit" class="btn">Login</button>
+        </form>
+    </div>
+</body>
+</html>
