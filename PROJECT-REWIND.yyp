@@ -36,6 +36,7 @@
   "name":"PROJECT-REWIND",
   "resources":[
     {"id":{"name":"oBullet","path":"objects/oBullet/oBullet.yy",},},
+    {"id":{"name":"oCollision","path":"objects/oCollision/oCollision.yy",},},
     {"id":{"name":"oCrosshair","path":"objects/oCrosshair/oCrosshair.yy",},},
     {"id":{"name":"oDestructibleWall","path":"objects/oDestructibleWall/oDestructibleWall.yy",},},
     {"id":{"name":"oLightProcessorTest","path":"objects/oLightProcessorTest/oLightProcessorTest.yy",},},
@@ -46,6 +47,7 @@
     {"id":{"name":"ProjectShadow","path":"scripts/ProjectShadow/ProjectShadow.yy",},},
     {"id":{"name":"SignTest","path":"scripts/SignTest/SignTest.yy",},},
     {"id":{"name":"sBullet","path":"sprites/sBullet/sBullet.yy",},},
+    {"id":{"name":"sCollision","path":"sprites/sCollision/sCollision.yy",},},
     {"id":{"name":"sCrosshair","path":"sprites/sCrosshair/sCrosshair.yy",},},
     {"id":{"name":"sDestructibleWall","path":"sprites/sDestructibleWall/sDestructibleWall.yy",},},
     {"id":{"name":"sGround","path":"sprites/sGround/sGround.yy",},},
