@@ -1,5 +1,5 @@
 {
-  "$GMSprite":"",
+  "$GMSprite":"v2",
   "%Name":"sBullet",
   "bboxMode":0,
   "bbox_bottom":7,
@@ -12,7 +12,7 @@
   "edgeFiltering":false,
   "For3D":false,
   "frames":[
-    {"$GMSpriteFrame":"","%Name":"5d7d23f5-23fd-4473-92cd-99cd9d1cb83e","name":"5d7d23f5-23fd-4473-92cd-99cd9d1cb83e","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
+    {"$GMSpriteFrame":"v1","%Name":"5d7d23f5-23fd-4473-92cd-99cd9d1cb83e","name":"5d7d23f5-23fd-4473-92cd-99cd9d1cb83e","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
   ],
   "gridX":0,
   "gridY":0,

@@ -1,1 +1,0 @@
-instance_create_depth(oPlayerHitbox.x, oPlayerHitbox.y, 0, oBullet);
