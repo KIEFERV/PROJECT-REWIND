@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registration Form</title>
+    <link rel="stylesheet" href="/css/registerPageStyle.css" />
+  </head>
+  <body>
+    <div id="page" class="site">
+      <div class="container">
+        <div class="wrapper">
+          <div class="signup">
+            <div class="content-heading">
+              <div class="y-style">
+                <div class="logo">
+                  <a href="#">EVM<span>Group</span></a>
+                </div>
+                <div class="welcome">
+                  <h2>Sign Up</h2>
+                </div>
+              </div>
+            </div>
+            <div class="content-form">
+              <div class="y-style">
+                
+                <form th:action="@{/user_dashboard/register}" method="POST">
+                  <p>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    
+                   
+                    <p th:if="${emailError}" th:text="${emailError}" style="color: red; font-size: 12px;"></p>
+
+                  </p>
+
+                  <p>
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                    
+                    <p th:if="${usernameError}" th:text="${usernameError}" style="color: red; font-size: 12px;"></p>
+                  </p>
+
+                  <p>
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                  </p>
+
+                  <p>
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Enter your password" required>
+                    
+                  </p>
+
+                  <p class="check">
+                    <input type="checkbox" id="terms" name = "terms" required
+                    />
+                    <label for="terms">I agree to the <a href="#">terms & conditions</a></label>
+                  </p>
+
+                  <p><button type="submit">Sign Up</button></p>
+                </form>
+
+                <p id="generatedId" class="generated-id">
+                  Your ID will appear here after sign-up.
+                </p>
+                
+                <div class="afterform">
+                  <p>Already Have an Account?</p>
+                  <a href="/user_dashboard/user_login" class="t-login">Login</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

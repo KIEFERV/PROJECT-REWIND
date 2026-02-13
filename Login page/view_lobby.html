@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Events</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="Lobbys-wrapper">
+        <h1>Available Lobbies</h1>
+        <!-- Iterate over events fetched from the database -->
+        <c:forEach var="Lobby" items="${Lobbys}">
+            <div class="Lobby-card">
+                <h2>Event Title: ${Lobby.title}</h2>
+                <p><strong>Date:</strong> ${Lobby.date}</p>
+                <p><strong>Player Count:</strong> ${Lobby.count}</p>
+                <p><strong>Description:</strong> ${Lobby.description}</p>
+                <div class="button-group">
+                   
+                    <!-- Button for exiting -->
+                    <button class="btn exit" onclick="exitPage()">Exit</button>
+                </div>
+            </div>
+        </c:forEach>
+    </div>
+
+    <!-- JavaScript to handle button functionality -->
+    <script>
+       
+        // Function to handle exiting the page
+        function exitPage() {
+            alert("Exiting the page...");
+            window.location.href = "/home"; // Replace with your desired exit URL
+        }
+    </script>
+</body>
+</html>
