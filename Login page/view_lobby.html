@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browse Lobbies</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="view_lobby.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-main">Project</span>
+      <span class="brand-accent">Rewind</span>
+    </div>
+
+    <nav class="topbar-actions" aria-label="Browse actions">
+      <a class="topbar-link" href="User_Dashboard.html">Back</a>
+    </nav>
+  </header>
+
+  <main class="page" role="main">
+    <section class="panel">
+      <div class="panel-header">
+        <h1>Available Lobbies</h1>
+        <p class="muted">Browse public lobbies and join when ready.</p>
+      </div>
+
+      <div id="lobbyList" class="lobby-list" aria-live="polite">
+        
+        <div class="lobby-card">
+          <h2>Loading lobbies…</h2>
+          <p class="muted">If nothing shows, start your Node server and refresh.</p>
+        </div>
+      </div>
+
+      <div class="footer-actions">
+        <a class="btn btn-secondary" href="User_Dashboard.html">Exit</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+   
+    function renderLobbies(lobbies) {
+      const list = document.getElementById("lobbyList");
+
+      if (!Array.isArray(lobbies) || lobbies.length === 0) {
+        list.innerHTML = `
+          <div class="lobby-card">
+            <h2>No lobbies found</h2>
+            <p class="muted">Try creating one first.</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = lobbies.map(lobby => `
+        <article class="lobby-card">
+          <h2>${escapeHtml(lobby.name || lobby.title || "Untitled Lobby")}</h2>
+          <div class="meta">
+            <p><strong>Date:</strong> ${escapeHtml(lobby.date || "TBD")}</p>
+            <p><strong>Player Count:</strong> ${escapeHtml(String(lobby.max_participants || lobby.count || "2–4"))}</p>
+          </div>
+          <p class="desc"><strong>Description:</strong> ${escapeHtml(lobby.description || "No description")}</p>
+
+          <div class="card-actions">
+            <button class="btn btn-primary" type="button" onclick="joinLobby(${Number(lobby.id) || 0})">
+              Join
+            </button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    
+    function joinLobby(id) {
+      if (!id) {
+        alert("This lobby has no ID yet. Connect it to the database first.");
+        return;
+      }
+      alert("Joining lobby ID: " + id);
+      // later: window.location.href = `lobby_room.html?id=${id}`;
+    }
+
+   
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, m => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;",
+        '"': "&quot;", "'": "&#039;"
+      }[m]));
+    }
+
+   
+    async function loadLobbies() {
+      try {
+        const res = await fetch("http://localhost:3000/api/lobbies");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load.");
+        renderLobbies(data);
+      } catch (e) {
+        // fallback: show sample so page still looks good
+        renderLobbies([
+          { id: 1, name: "Example Lobby", date: "TBD", count: "2–4", description: "Start the Node server to load real lobbies." }
+        ]);
+      }
+    }
+
+    loadLobbies();
+  </script>
+</body>
+</html>

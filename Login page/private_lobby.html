@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Private Lobby</title>
+
+   
+    <link rel="stylesheet" href="private_lobby.css" />
+  </head>
+
+  <body>
+    <div id="page" class="site">
+      <div class="container">
+        <div class="wrapper">
+          <div class="privateLobby">
+            <div class="content-heading">
+              <div class="y-style">
+                <div class="logo">
+                  <a href="#">Project <span>Rewind</span></a>
+                </div>
+                <div class="welcome">
+                  <h2>Private Lobby</h2>
+                  <p class="subtitle">Create a lobby and invite up to 3 other players.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="content-form">
+              <div class="y-style">
+             
+                <form id="privateLobbyForm" th:action="@{/lobby/private/create}" method="POST">
+                  <p>
+                    <label for="lobbyName">Lobby Name</label>
+                    <input
+                      type="text"
+                      id="lobbyName"
+                      name="lobbyName"
+                      placeholder="Enter lobby name"
+                      required
+                    />
+                  </p>
+
+                  <p>
+                    <label for="description">Description</label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      rows="4"
+                      placeholder="Describe the lobby rules / theme..."
+                      required
+                    ></textarea>
+                  </p>
+
+                  <p>
+                    <label for="participants">Participants</label>
+                    <select id="participants" name="participants" required>
+                      <option value="" disabled selected>Select 2–4</option>
+                      <option value="2">2 Players</option>
+                      <option value="3">3 Players</option>
+                      <option value="4">4 Players</option>
+                    </select>
+                  </p>
+
+                  <div class="button-row">
+                    <button type="submit" class="btn primary">Create Lobby</button>
+
+                   
+                    <button
+                      type="button"
+                      class="btn secondary"
+                      onclick="goToInvite()"
+                    >
+                      Invite Participants
+                    </button>
+                  </div>
+                </form>
+
+                <div class="afterform">
+                  <a href="User_Dashboard.html">← Back to Dashboard</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function goToInvite() {
+        
+        window.location.href = "invitation.html";
+      }
+    </script>
+  </body>
+</html>

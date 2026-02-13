@@ -1,0 +1,43 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap");
+
+body {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: url("time.jpeg") no-repeat center center;
+  background-size: cover;
+}
+
+.wrapper > div {
+  max-width: 700px;
+  background: rgba(15, 16, 20, 0.9);
+  padding: 40px;
+  border-radius: 14px;
+  color: white;
+  box-shadow: rgba(0, 0, 0, 0.45) 0 25px 20px -20px;
+}
+
+form input,
+form textarea,
+form select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  border: 1px solid rgba(208, 212, 237, 0.5);
+}
+
+form button {
+  background: #f92525;
+  color: white;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+form button:hover {
+  background: #2c4077;
+}

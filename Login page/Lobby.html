@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lobby Page</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="centered-page">
+  <main class="wrapper">
+    <form id="createLobbyForm">
+      <h1>Create Lobby</h1>
+
+      <div class="input-box">
+        <input id="title" name="title" type="text" placeholder="Lobby title" required />
+      </div>
+
+      <div class="input-box">
+        <textarea id="description" name="description" rows="4" placeholder="Lobby description" required></textarea>
+      </div>
+
+      <div class="input-box">
+        <input id="imageUrl" name="imageUrl" type="url" placeholder="Lobby image URL" required />
+      </div>
+
+      <button class="btn btn-primary" type="submit">Submit</button>
+    </form>
+  </main>
+</body>
+</html>
