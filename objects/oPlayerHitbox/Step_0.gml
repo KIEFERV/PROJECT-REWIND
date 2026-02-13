@@ -1,4 +1,4 @@
-///@description 
+///@description Player Logic
 
 //get inputs
 key_right = keyboard_check(ord("D"));
@@ -7,23 +7,16 @@ key_up = keyboard_check(ord("W"));
 key_down = keyboard_check(ord("S"));
 key_sprint = keyboard_check(vk_shift);
 
-//get x and y speeds (base speed)
-hor_speed = sign(key_right - key_left) * move_speed;
-vert_speed = sign(key_down - key_up) * move_speed;
+if (keyboard_check_released(ord("M"))){debug_menu = !debug_menu;}
 
-	//player collision
-//horizontal (x-axis)
-if place_meeting(x + hor_speed, y, oCollision){
-	hor_speed = 0;
-}
-//vertical (y-axis)
-if place_meeting(x, y + vert_speed, oCollision){
-	vert_speed = 0;
-}
+//Base Speed
+var base_hor = sign(key_right - key_left) * move_speed;
+var base_vert = sign(key_down - key_up) * move_speed;
 
-//player states
 
+	//player states
 //Sprinting
+var sprint_speed;
 if (key_sprint){
 	sprinting = true;
 	sprint_speed = 1.5;
@@ -33,20 +26,21 @@ if (key_sprint){
 }
 
 	//movement multipliers
-
 //Sprinting
-player_hor_speed = hor_speed * sprint_speed;
-player_vert_speed = vert_speed * sprint_speed;
+player_hor_speed = base_hor * sprint_speed;
+player_vert_speed = base_vert * sprint_speed;
+
+
+//player collision after speed multipliers
+//horizontal (x-axis)
+if place_meeting(x + player_hor_speed, y, oCollision){
+	player_hor_speed = 0; //this is not affecting sprint
+}
+//vertical (y-axis)
+if place_meeting(x, y + player_vert_speed, oCollision){
+	player_vert_speed = 0; //this is not affecting sprint
+}
 
 //move the player
 x += player_hor_speed;
 y += player_vert_speed;
-
-
-if (keyboard_check_released(ord("M"))){
-	
-	debug_menu = !debug_menu;
-	
-}
-
-
