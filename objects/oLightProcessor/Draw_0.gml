@@ -1,5 +1,5 @@
-var lx = oPlayer.x;
-var ly = oPlayer.y;
+var lx = oPlayerModel.x;
+var ly = oPlayerModel.y;
 var rad = 256;
 
 
