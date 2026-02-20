@@ -1,11 +1,9 @@
 {
   "$GMObject":"",
-  "%Name":"oLightWall",
-  "eventList":[
-    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
-  ],
+  "%Name":"oCollisionBox",
+  "eventList":[],
   "managed":true,
-  "name":"oLightWall",
+  "name":"oCollisionBox",
   "overriddenProperties":[],
   "parent":{
     "name":"Objects",
@@ -30,8 +28,8 @@
   "resourceVersion":"2.0",
   "solid":false,
   "spriteId":{
-    "name":"sLightWall",
-    "path":"sprites/sLightWall/sLightWall.yy",
+    "name":"sCollision",
+    "path":"sprites/sCollision/sCollision.yy",
   },
   "spriteMaskId":null,
   "visible":false,

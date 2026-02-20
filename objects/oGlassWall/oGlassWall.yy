@@ -10,8 +10,8 @@
     "path":"folders/Objects.yy",
   },
   "parentObjectId":{
-    "name":"oCollision",
-    "path":"objects/oCollision/oCollision.yy",
+    "name":"oCollisionBox",
+    "path":"objects/oCollisionBox/oCollisionBox.yy",
   },
   "persistent":false,
   "physicsAngularDamping":0.1,

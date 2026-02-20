@@ -5,7 +5,7 @@ var rad = 256;
 
 vertex_begin(VBuffer, VertexFormat);
 
-with (oLightWall){
+with (oLightBox){
 	
 	var x_width_size = x + sprite_width;
 	var y_length_size = y + sprite_height;

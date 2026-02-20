@@ -33,11 +33,11 @@ player_vert_speed = base_vert * sprint_speed;
 
 //player collision after speed multipliers
 //horizontal (x-axis)
-if place_meeting(x + player_hor_speed, y, oCollision){
+if place_meeting(x + player_hor_speed, y, oCollisionBox){
 	player_hor_speed = 0; //this is not affecting sprint
 }
 //vertical (y-axis)
-if place_meeting(x, y + player_vert_speed, oCollision){
+if place_meeting(x, y + player_vert_speed, oCollisionBox){
 	player_vert_speed = 0; //this is not affecting sprint
 }
 
