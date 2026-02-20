@@ -44,3 +44,9 @@ if place_meeting(x, y + player_vert_speed, oCollisionBox){
 //move the player
 x += player_hor_speed;
 y += player_vert_speed;
+
+//set the audio listener position
+audio_listener_position(x, y, 0);
+
+//detect distance from emitter
+var dist = point_distance(x, y, oAudioEmitter.x, oAudioEmitter.y);
