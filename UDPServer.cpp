@@ -1,5 +1,5 @@
 #include <iostream> //output to console
-#include <ws2tcpip.h> //funcition errors for window socket library
+#include <ws2tcpip.h> //function errors for window socket library
 
 #pragma comment (lib, "ws2_32.lib")
 
