@@ -1,18 +1,18 @@
 {
   "$GMSound":"v2",
-  "%Name":"sdPop",
+  "%Name":"sfxPop",
   "audioGroupId":{
     "name":"audiogroup_default",
     "path":"audiogroups/audiogroup_default",
   },
   "bitDepth":1,
-  "channelFormat":0,
+  "channelFormat":1,
   "compression":0,
   "compressionQuality":4,
   "conversionMode":0,
   "duration":0.72,
   "exportDir":"",
-  "name":"sdPop",
+  "name":"sfxPop",
   "parent":{
     "name":"Sounds",
     "path":"folders/Sounds.yy",
@@ -21,6 +21,6 @@
   "resourceType":"GMSound",
   "resourceVersion":"2.0",
   "sampleRate":44100,
-  "soundFile":"sdPop.mp3",
+  "soundFile":"sfxPop.mp3",
   "volume":1.0,
 }

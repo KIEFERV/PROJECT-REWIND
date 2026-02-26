@@ -48,7 +48,7 @@
     {"id":{"name":"emitAudio","path":"scripts/emitAudio/emitAudio.yy",},},
     {"id":{"name":"ProjectShadow","path":"scripts/ProjectShadow/ProjectShadow.yy",},},
     {"id":{"name":"SignTest","path":"scripts/SignTest/SignTest.yy",},},
-    {"id":{"name":"sdPop","path":"sounds/sdPop/sdPop.yy",},},
+    {"id":{"name":"sfxPop","path":"sounds/sfxPop/sfxPop.yy",},},
     {"id":{"name":"sAudio","path":"sprites/sAudio/sAudio.yy",},},
     {"id":{"name":"sCamera","path":"sprites/sCamera/sCamera.yy",},},
     {"id":{"name":"sCollision","path":"sprites/sCollision/sCollision.yy",},},

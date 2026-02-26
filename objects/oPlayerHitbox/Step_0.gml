@@ -49,4 +49,4 @@ y += player_vert_speed;
 audio_listener_position(x, y, 0);
 
 //detect distance from emitter
-var dist = point_distance(x, y, oAudioEmitter.x, oAudioEmitter.y);
+//var dist = point_distance(x, y, oAudioEmitter.x, oAudioEmitter.y);
