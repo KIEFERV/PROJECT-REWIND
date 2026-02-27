@@ -21,7 +21,7 @@ void main()
 	sockaddr_in serverHint; 
 	serverHint.sin_addr.S_un.S_addr = ADDR_ANY; //give any server address
 	serverHint.sin_family = AF_INET;
-	serverHint.sin_port = htons(5400); //Convert from little to big endian, port 54000  htons = host to network short 
+	serverHint.sin_port = htons(5400); //Convert from little to big endian, port 5400  htons = host to network short 
 
 	//bind socket to serverhint
 		if (bind(in, (sockaddr*)&serverHint, sizeof(serverHint)) == SOCKET_ERROR)
