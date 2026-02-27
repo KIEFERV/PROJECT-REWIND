@@ -1,16 +1,13 @@
 {
   "$GMObject":"",
-  "%Name":"oRewindParent",
-  "eventList":[
-    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
-    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":3,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
-  ],
+  "%Name":"oWoodSplinter",
+  "eventList":[],
   "managed":true,
-  "name":"oRewindParent",
+  "name":"oWoodSplinter",
   "overriddenProperties":[],
   "parent":{
-    "name":"Time Mechanic Objects",
-    "path":"folders/Objects/Time Mechanic Objects.yy",
+    "name":"Wood",
+    "path":"folders/Objects/Environment Objects/Walls/Wood.yy",
   },
   "parentObjectId":null,
   "persistent":false,
@@ -30,7 +27,10 @@
   "resourceType":"GMObject",
   "resourceVersion":"2.0",
   "solid":false,
-  "spriteId":null,
+  "spriteId":{
+    "name":"sWoodSplinter",
+    "path":"sprites/sWoodSplinter/sWoodSplinter.yy",
+  },
   "spriteMaskId":null,
   "visible":true,
 }

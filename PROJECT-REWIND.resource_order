@@ -1,6 +1,26 @@
 {
-  "FolderOrderSettings":[],
+  "FolderOrderSettings":[
+    {"name":"Environment Objects","order":3,"path":"folders/Objects/Environment Objects.yy",},
+    {"name":"Walls","order":6,"path":"folders/Objects/Environment Objects/Walls.yy",},
+    {"name":"Wood","order":6,"path":"folders/Objects/Environment Objects/Walls/Wood.yy",},
+    {"name":"Time Mechanic Objects","order":4,"path":"folders/Objects/Time Mechanic Objects.yy",},
+    {"name":"Wall Sprites","order":1,"path":"folders/Sprites/Object Sprites/Wall Sprites.yy",},
+    {"name":"Wood","order":4,"path":"folders/Sprites/Object Sprites/Wall Sprites/Wood.yy",},
+  ],
   "ResourceOrderSettings":[
-    {"name":"oRewindParent","order":1,"path":"objects/oRewindParent/oRewindParent.yy",},
+    {"name":"oWallIce","order":1,"path":"objects/oWallIce/oWallIce.yy",},
+    {"name":"oWallNormal","order":2,"path":"objects/oWallNormal/oWallNormal.yy",},
+    {"name":"oWallParent","order":3,"path":"objects/oWallParent/oWallParent.yy",},
+    {"name":"oWallTough","order":4,"path":"objects/oWallTough/oWallTough.yy",},
+    {"name":"oWoodBreakAnim","order":1,"path":"objects/oWoodBreakAnim/oWoodBreakAnim.yy",},
+    {"name":"oWoodSplinter","order":2,"path":"objects/oWoodSplinter/oWoodSplinter.yy",},
+    {"name":"scrDamageTypes","order":1,"path":"scripts/scrDamageTypes/scrDamageTypes.yy",},
+    {"name":"Sprite1","order":1,"path":"sprites/Sprite1/Sprite1.yy",},
+    {"name":"Sprite4","order":2,"path":"sprites/Sprite4/Sprite4.yy",},
+    {"name":"Sprite5","order":3,"path":"sprites/Sprite5/Sprite5.yy",},
+    {"name":"sWallBreakAnimation","order":2,"path":"sprites/sWallBreakAnimation/sWallBreakAnimation.yy",},
+    {"name":"sWoodSplinter","order":1,"path":"sprites/sWoodSplinter/sWoodSplinter.yy",},
+    {"name":"ts_Collision","order":2,"path":"tilesets/ts_Collision/ts_Collision.yy",},
+    {"name":"ts_WallTest","order":1,"path":"tilesets/ts_WallTest/ts_WallTest.yy",},
   ],
 }

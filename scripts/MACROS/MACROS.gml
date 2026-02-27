@@ -7,6 +7,3 @@
 #macro RESOLUTION_H 180
 
 //Positions
-#macro COLUMN_ENEMY 270
-#macro COLUMN_NAME 120
-#macro COLUMN_HP 160
