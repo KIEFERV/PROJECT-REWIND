@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You're Invited!</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="centered-page">
+  <main class="wrapper" role="main">
+    <h1>You’re Invited!</h1>
+
+    <p class="muted" style="margin-bottom: 18px;">
+      You’ve been invited to join a lobby.
+    </p>
+
+    <div class="input-box">
+      <p><strong>Lobby:</strong> <span id="lobbyName">Sample Lobby</span></p>
+      <p><strong>Date:</strong> <span id="lobbyDate">TBD</span></p>
+      <p><strong>Player Count:</strong> <span id="lobbyCount">2–4</span></p>
+    </div>
+
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-primary" type="button" onclick="inviteResponse('accepted')">Accept</button>
+      <button class="btn btn-secondary" type="button" onclick="inviteResponse('declined')">Decline</button>
+    </div>
+
+    <p id="responseMessage" class="muted" style="margin-top: 16px; display:none;"></p>
+  </main>
+
+  <script>
+    function inviteResponse(status) {
+      const msg = document.getElementById("responseMessage");
+      msg.style.display = "block";
+      msg.textContent = status === "accepted" ? "Accepted!" : "Declined.";
+    }
+  </script>
+</body>
+</html>
