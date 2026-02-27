@@ -7,3 +7,5 @@ debug_menu = true; //debug menu
 
 audio_listener_orientation(0, 1, 0, 0, 0, 1);
 //dist = 0;
+
+player_health = 100;

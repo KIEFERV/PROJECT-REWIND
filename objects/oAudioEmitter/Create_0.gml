@@ -9,3 +9,6 @@ audio_emitter_position(s_emit, x, y, 0);
 audio_emitter_falloff(s_emit, audio_starts_to_drop_at, audio_max_distance_to_be_heard, 1);
 
 state = 0;
+
+//store selected sound on creation
+audio_id = audio_play_sound(sound, 1, false);
