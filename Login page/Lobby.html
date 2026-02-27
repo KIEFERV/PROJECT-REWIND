@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event Page</title>
+    <link rel="stylesheet" href="Lobbypage.css" />
+  </head>
+  <body>
+    <div id="page" class="site">
+      <div class="container">
+        <div class="wrapper">
+          <div class="createLobby">
+            <div class="" content-heading>
+              <div class="y-style">
+                <div class="logo">
+                  <a href="#">EVM<span>Group</span></a>
+                  <div class="welcome">
+                    <h2>Create Lobby</h2>
+                  </div>
+                </div>
+              </div>
+              <div class="content-form">
+                <div class="y-style">
+                  <form id="createLobby" action="">
+                    <p>
+                      <label for="">Title</label>
+                      <input type="title" placeholder="Enter title of Lobby" />
+                    </p>
+
+                    <p>
+                      <label for="description">Description</label><br />
+                      <textarea
+                        id="description"
+                        name="description"
+                        rows="3"
+                        placeholder="Enter Lobby description"
+                        required
+                      ></textarea>
+                    </p>
+
+                    <p>
+                      <label for="">Date</label>
+                      <input type="date" placeholder="Enter date of event" />
+                    </p>
+
+                    <p>
+                      <label for="imageUrl">Event Image (URL)</label>
+                      <input
+                        type="url"
+                        id="imageUrl"
+                        name="imageUrl"
+                        placeholder="Enter the image URL"
+                        required
+                      />
+                    </p>
+
+                    <p><button type="submit">Submit</button></p>
+                  </form>
+
+                  <h3></h3>
+
+                  <script src="LobbyPage.js"></script>
+
+                  <div class="afterform"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
