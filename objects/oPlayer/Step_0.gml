@@ -3,7 +3,7 @@ x = oPlayerHitbox.x;
 y = oPlayerHitbox.y;
 
 //rotation
-image_angle = point_direction(x, y, mouse_x, mouse_y);
+image_angle = point_direction(x, y, oCrosshair.x, oCrosshair.y);
 
 //shooting
 if (mouse_check_button_pressed(mb_left))
@@ -12,14 +12,13 @@ if (mouse_check_button_pressed(mb_left))
     {
         var b = instance_create_layer(x, y, "Instances", oBullet);
 
-        b.direction = point_direction(x, y, mouse_x, mouse_y);
+        b.direction = point_direction(x, y, oCrosshair.x, oCrosshair.y);
         b.speed = 12;
         b.image_angle = b.direction;
 
         ammo_in_mag -= 1;
     }
 }
-
 
 //reload
 if (keyboard_check_pressed(ord("R")))

@@ -36,6 +36,7 @@
   "name":"PROJECT-REWIND",
   "resources":[
     {"id":{"name":"oAudioEmitter","path":"objects/oAudioEmitter/oAudioEmitter.yy",},},
+    {"id":{"name":"oBullet","path":"objects/oBullet/oBullet.yy",},},
     {"id":{"name":"oCamera","path":"objects/oCamera/oCamera.yy",},},
     {"id":{"name":"oCollisionBox","path":"objects/oCollisionBox/oCollisionBox.yy",},},
     {"id":{"name":"oGlassWall","path":"objects/oGlassWall/oGlassWall.yy",},},
@@ -50,6 +51,7 @@
     {"id":{"name":"SignTest","path":"scripts/SignTest/SignTest.yy",},},
     {"id":{"name":"sfxPop","path":"sounds/sfxPop/sfxPop.yy",},},
     {"id":{"name":"sAudio","path":"sprites/sAudio/sAudio.yy",},},
+    {"id":{"name":"sBullet","path":"sprites/sBullet/sBullet.yy",},},
     {"id":{"name":"sCamera","path":"sprites/sCamera/sCamera.yy",},},
     {"id":{"name":"sCollision","path":"sprites/sCollision/sCollision.yy",},},
     {"id":{"name":"sGlassWall","path":"sprites/sGlassWall/sGlassWall.yy",},},
