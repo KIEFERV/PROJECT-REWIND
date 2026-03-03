@@ -24,7 +24,6 @@
     {"name":"inst_6D6AEF44","path":"rooms/rMovementTesting/rMovementTesting.yy",},
     {"name":"inst_504106E9","path":"rooms/rMovementTesting/rMovementTesting.yy",},
     {"name":"inst_2D36132C","path":"rooms/rMovementTesting/rMovementTesting.yy",},
-    {"name":"inst_6BA2751","path":"rooms/rMovementTesting/rMovementTesting.yy",},
   ],
   "isDnd":false,
   "layers":[
@@ -48,7 +47,6 @@
         {"$GMRInstance":"v4","%Name":"inst_6D6AEF44","colour":4294967295,"frozen":false,"hasCreationCode":false,"ignore":false,"imageIndex":0,"imageSpeed":1.0,"inheritCode":false,"inheritedItemId":null,"inheritItemSettings":false,"isDnd":false,"name":"inst_6D6AEF44","objectId":{"name":"oLightBox","path":"objects/oLightBox/oLightBox.yy",},"properties":[],"resourceType":"GMRInstance","resourceVersion":"2.0","rotation":0.0,"scaleX":6.0,"scaleY":1.0,"x":32.0,"y":160.0,},
         {"$GMRInstance":"v4","%Name":"inst_504106E9","colour":4294967295,"frozen":false,"hasCreationCode":false,"ignore":false,"imageIndex":0,"imageSpeed":1.0,"inheritCode":false,"inheritedItemId":null,"inheritItemSettings":false,"isDnd":false,"name":"inst_504106E9","objectId":{"name":"oLightBox","path":"objects/oLightBox/oLightBox.yy",},"properties":[],"resourceType":"GMRInstance","resourceVersion":"2.0","rotation":0.0,"scaleX":6.0,"scaleY":1.0,"x":32.0,"y":544.0,},
         {"$GMRInstance":"v4","%Name":"inst_2D36132C","colour":4294967295,"frozen":false,"hasCreationCode":false,"ignore":false,"imageIndex":0,"imageSpeed":1.0,"inheritCode":false,"inheritedItemId":null,"inheritItemSettings":false,"isDnd":false,"name":"inst_2D36132C","objectId":{"name":"oCamera","path":"objects/oCamera/oCamera.yy",},"properties":[],"resourceType":"GMRInstance","resourceVersion":"2.0","rotation":0.0,"scaleX":1.0,"scaleY":1.0,"x":736.0,"y":480.0,},
-        {"$GMRInstance":"v4","%Name":"inst_6BA2751","colour":4294967295,"frozen":false,"hasCreationCode":false,"ignore":false,"imageIndex":0,"imageSpeed":1.0,"inheritCode":false,"inheritedItemId":null,"inheritItemSettings":false,"isDnd":false,"name":"inst_6BA2751","objectId":{"name":"oAudioEmitter","path":"objects/oAudioEmitter/oAudioEmitter.yy",},"properties":[],"resourceType":"GMRInstance","resourceVersion":"2.0","rotation":0.0,"scaleX":1.0,"scaleY":1.0,"x":864.0,"y":224.0,},
       ],"layers":[],"name":"Instances","properties":[],"resourceType":"GMRInstanceLayer","resourceVersion":"2.0","userdefinedDepth":false,"visible":true,},
     {"$GMRTileLayer":"","%Name":"WallTiles","depth":200,"effectEnabled":true,"effectType":null,"gridX":32,"gridY":32,"hierarchyFrozen":false,"inheritLayerDepth":false,"inheritLayerSettings":false,"inheritSubLayers":true,"inheritVisibility":true,"layers":[],"name":"WallTiles","properties":[],"resourceType":"GMRTileLayer","resourceVersion":"2.0","tiles":{"SerialiseHeight":34,"SerialiseWidth":60,"TileCompressedData":[
           -61,2,-41,-2147483648,1,0,-16,-2147483648,-2,2,-41,-2147483648,1,0,-16,-2147483648,-2,2,-41,-2147483648,
