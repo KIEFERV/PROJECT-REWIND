@@ -1,5 +1,7 @@
-if(oPlayerHitbox.debug_menu == true){
-	for(radius = 100;radius<=1000;radius+=100){
-		draw_circle(x, y, radius, true);	
-	}	
+/*
+if(oPlayerHitbox.debug_menu == true){	
+	draw_circle(x, y, 50, true);
+	draw_circle(x, y, 500, true);
+	draw_circle(x, y, 1000, true);
 }
+*/
