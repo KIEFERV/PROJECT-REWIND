@@ -1,9 +1,7 @@
-y = room_height/2;
-if (player_id == 0)// first player
-{
-    x = 50;//set player position to half room height
-}
-else if (player_id == 1 )//2nd player
-{
-    x = room_width - 50; //set other player to other side of room
-}
+mag_size = 30;
+ammo_in_mag = mag_size;
+ammo_reserve = 120;
+
+reload_time = 45;
+reload_timer = 0.5;
+reloading = false;

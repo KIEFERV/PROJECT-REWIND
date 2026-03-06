@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"SignTest",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"SignTest",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

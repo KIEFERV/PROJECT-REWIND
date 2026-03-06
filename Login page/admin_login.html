@@ -1,47 +1,33 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Login</title>
-
-  <!-- Use your global theme -->
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="AdminLogin.css">
 </head>
-
-<body class="centered-page">
-  <main class="wrapper" role="main">
-    <form id="adminLoginForm" action="#" method="post" novalidate>
-      <h1>Admin Login</h1>
-
-      <div class="input-box">
-        <input
-          id="adminUsername"
-          name="username"
-          type="text"
-          placeholder="Admin Username"
-          autocomplete="username"
-          required
-        />
-      </div>
-
-      <div class="input-box">
-        <input
-          id="adminPassword"
-          name="password"
-          type="password"
-          placeholder="Password"
-          autocomplete="current-password"
-          required
-        />
-      </div>
-
-      <button type="submit" class="btn btn-primary">Login</button>
-
-      <div class="register-link" style="text-align:center; margin-top:16px;">
-        <p><a href="index.html">Back to main login</a></p>
-      </div>
-    </form>
-  </main>
+<body>
+    <div class="login-container">
+        <h1>Admin Login</h1>
+        <div th:if="${error}" class="error-message">
+            <p th:text="${error}"></p>
+        </div>
+        <form action="/Admin_Dashboard/admin_Login" method="POST" id="userForm">
+            
+            <div class="input-box">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" placeholder="Enter your username" required>
+            </div>
+            
+            
+            <div class="input-box">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            </div>
+            
+            
+            <button type="submit" class="btn">Login</button>
+        </form>
+    </div>
 </body>
 </html>
