@@ -60,6 +60,7 @@ void main()
 
 		// Wait for message
 		int bytesIn = recvfrom(in, buf, 1024, 0, (sockaddr*)&client, &clientLength);
+
 		if (bytesIn == SOCKET_ERROR)
 		{
 			cout << "Error receiving from client " << WSAGetLastError() << endl;

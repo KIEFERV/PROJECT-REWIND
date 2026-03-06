@@ -1,4 +1,4 @@
-show_debug_message(json_encode(async_load));
+show_debug_message(json_encode(async_load)); //for receiving data from server
 
 if(async_load[? "size"]>0){
     var buff = async_load[? "buffer"];
