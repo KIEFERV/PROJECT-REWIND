@@ -36,12 +36,12 @@
   "name":"PROJECT-REWIND",
   "resources":[
     {"id":{"name":"obj_client","path":"objects/obj_client/obj_client.yy",},},
-    {"id":{"name":"Room1","path":"rooms/Room1/Room1.yy",},},
+    {"id":{"name":"networkRoom","path":"rooms/networkRoom/networkRoom.yy",},},
   ],
   "resourceType":"GMProject",
   "resourceVersion":"2.0",
   "RoomOrderNodes":[
-    {"roomId":{"name":"Room1","path":"rooms/Room1/Room1.yy",},},
+    {"roomId":{"name":"networkRoom","path":"rooms/networkRoom/networkRoom.yy",},},
   ],
   "templateType":"game",
   "TextureGroups":[

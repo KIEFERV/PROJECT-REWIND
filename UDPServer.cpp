@@ -1,62 +1,86 @@
-#include <iostream> //output to console
-#include <ws2tcpip.h> //function errors for window socket library
+#include <iostream>
+#include <WS2tcpip.h>
+#include <winsock2.h>
+#include <string>
+
 
 #pragma comment (lib, "ws2_32.lib")
 
-using namespace std; //<- no need for std::out with this
+
+
+using namespace std;
 
 void main()
 {
-//winsock
-	WSADATA data; //winsock data
-	WORD version = MAKEWORD(2, 2); 
-	int wsOk = WSAStartup(version, &data); //winsock version
+	//start up winsock
+	WSADATA data;
+
+	WORD version = MAKEWORD(2, 2);
+
+
+	int wsOk = WSAStartup(version, &data);
 	if (wsOk != 0)
 	{
-		cout << "Winsock could not start" << wsOk;
+
+		cout << "Can't start Winsock! " << wsOk;
 		return;
 	}
-//bind socket to ip address and port
-	SOCKET in = socket(AF_INET, SOCK_DGRAM, 0); //creating a socket
-	sockaddr_in serverHint; 
-	serverHint.sin_addr.S_un.S_addr = ADDR_ANY; //give any server address
-	serverHint.sin_family = AF_INET;
-	serverHint.sin_port = htons(5400); //Convert from little to big endian, port 5400  htons = host to network short 
 
-	//bind socket to serverhint
-		if (bind(in, (sockaddr*)&serverHint, sizeof(serverHint)) == SOCKET_ERROR)
-		{
-			cout << "Socket was not bound " << WSAGetLastError() << endl;
-			return;
+
+
+	// Create a socket
+	SOCKET in = socket(AF_INET, SOCK_DGRAM, 0);
+
+	// Create a server hint structure for the server
+	sockaddr_in serverHint;
+	serverHint.sin_addr.S_un.S_addr = ADDR_ANY; // Us any IP address 
+	serverHint.sin_family = AF_INET; 
+	serverHint.sin_port = htons(54000); // Convert from little to big endian
+
+	// bind the socket to the IP and port
+	if (bind(in, (sockaddr*)&serverHint, sizeof(serverHint)) == SOCKET_ERROR)
+	{
+		cout << "Can't bind socket! " << WSAGetLastError() << endl;
+		return;
 	}
-		sockaddr_in client; //client that is connecting; client metadata
-		ZeroMemory(&client, sizeof(client)); //client information
-		int clientLength = sizeof(client);
-
-		char buf[1024];
 
 
-//enter a loop
-		while (true)
+	// client information 
+	sockaddr_in client;
+	int clientLength = sizeof(client); 
+
+	char buf[1024];
+
+
+	while (true)
+	{
+
+		ZeroMemory(&client, clientLength); 
+		ZeroMemory(buf, 1024); 
+
+		// Wait for message
+		int bytesIn = recvfrom(in, buf, 1024, 0, (sockaddr*)&client, &clientLength);
+		if (bytesIn == SOCKET_ERROR)
 		{
-			ZeroMemory(buf, 1024); //buffer where message gets received into
-			//wait for message
-			int bytesIn = recvfrom(in, buf, 1024, 0, (sockaddr*)&client, &clientLength); //fills in buffer and then fills in client metadata
-			if (bytesIn == SOCKET_ERROR)
-			{
-				cout << "Error receiving from client" << WSAGetLastError() << endl;
-				continue;
-			}
-			//Display message and client info
-			char clientIP[256];
-			ZeroMemory(clientIP, 256);
-
-			inet_ntop(AF_INET, &client.sin_addr, clientIP, 256);  //get client information into a printable form; ntop = number two pointed to a string 
-
-			cout << "Message recv from " << clientIP << " : " << buf << endl; //display information in a message
+			cout << "Error receiving from client " << WSAGetLastError() << endl;
+			continue;
 		}
-	//Close socket 
-		closesocket(in);
-	//Shutdown windows sockets
+
+		// Display message and client info
+		char clientIp[256]; 
+		ZeroMemory(clientIp, 256); 
+		// Convert from byte array to chars
+		inet_ntop(AF_INET, &client.sin_addr, clientIp, 256);
+
+		cout << "Message received from " << clientIp << " : " << buf << endl;
+		
+
+	}
+
+
+
+	closesocket(in);
+
+	
 	WSACleanup();
 }
