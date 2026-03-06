@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"Collider_lib",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"Collider_lib",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}
