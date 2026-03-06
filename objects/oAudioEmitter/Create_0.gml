@@ -22,6 +22,7 @@ if (is_array(sound)){
 }else{
 	sound_to_play = sound;
 }
+
 //random pitch
 var pitch = random_range(pitch_min, pitch_max);
 

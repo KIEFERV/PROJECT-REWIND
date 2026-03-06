@@ -1,6 +1,5 @@
-function emitAudio(xx, yy, sfx)
-{
-    instance_create_layer(xx, yy, "Instances", oAudioEmitter,{
+function emitAudio(xx, yy, sfx){
+    instance_create_layer(xx, yy, "AudioLayer", oAudioEmitter,{
         sound: sfx,
 
         // pitch variation

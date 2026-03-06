@@ -6,6 +6,7 @@ key_left = keyboard_check(ord("A"));
 key_up = keyboard_check(ord("W"));
 key_down = keyboard_check(ord("S"));
 key_sprint = keyboard_check(vk_shift);
+key_sneak = keyboard_check(vk_alt);
 
 if (keyboard_check_released(ord("M"))){debug_menu = !debug_menu;}
 
@@ -17,18 +18,27 @@ var base_vert = sign(key_down - key_up) * move_speed;
 	//player states
 //Sprinting
 var sprint_speed;
-if (key_sprint){
+if (key_sprint && !key_sneak){
 	sprinting = true;
 	sprint_speed = 1.5;
 }else{
 	sprinting = false;
 	sprint_speed = 1.0;
 }
+//Walking
+var sneak_speed;
+if (key_sneak && !key_sprint){
+	sneaking = true;
+	sneak_speed = 0.5;
+}else{
+	sneaking = false;
+	sneak_speed = 1.0;
+}
 
-	//movement multipliers
-//Sprinting
-player_hor_speed = base_hor * sprint_speed;
-player_vert_speed = base_vert * sprint_speed;
+	//Apply the movement multipliers
+player_hor_speed = base_hor * (sprint_speed) * (sneak_speed);
+player_vert_speed = base_vert * (sprint_speed) * (sneak_speed);
+
 
 
 //player collision after speed multipliers
