@@ -1,6 +1,5 @@
 {
   "$GMObject":"",
-<<<<<<<< HEAD:objects/obj_player_client/obj_player_client.yy
   "%Name":"obj_player_client",
   "eventList":[
     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
@@ -10,12 +9,6 @@
   ],
   "managed":true,
   "name":"obj_player_client",
-========
-  "%Name":"tst",
-  "eventList":[],
-  "managed":true,
-  "name":"tst",
->>>>>>>> parent of 1db485b (rollback 11/3/25):objects/tst/tst.yy
   "overriddenProperties":[],
   "parent":{
     "name":"Objects",

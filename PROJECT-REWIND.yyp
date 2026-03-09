@@ -2,7 +2,7 @@
   "$GMProject":"v1",
   "%Name":"PROJECT-REWIND",
   "AudioGroups":[
-    {"$GMAudioGroup":"","%Name":"audiogroup_default","name":"audiogroup_default","resourceType":"GMAudioGroup","resourceVersion":"2.0","targets":-1,},
+    {"$GMAudioGroup":"v1","%Name":"audiogroup_default","exportDir":"","name":"audiogroup_default","resourceType":"GMAudioGroup","resourceVersion":"2.0","targets":-1,},
   ],
   "configs":{
     "children":[],
@@ -31,23 +31,13 @@
   "isEcma":false,
   "LibraryEmitters":[],
   "MetaData":{
-<<<<<<< HEAD
     "IDEVersion":"2024.14.3.217",
   },
   "name":"PROJECT-REWIND",
   "resources":[
     {"id":{"name":"obj_player_client","path":"objects/obj_player_client/obj_player_client.yy",},},
-    {"id":{"name":"oPlayer","path":"objects/oPlayer/oPlayer.yy",},},
     {"id":{"name":"networkRoom","path":"rooms/networkRoom/networkRoom.yy",},},
     {"id":{"name":"ntwk_test_sprite","path":"sprites/ntwk_test_sprite/ntwk_test_sprite.yy",},},
-=======
-    "IDEVersion":"2024.13.1.193",
-  },
-  "name":"PROJECT-REWIND",
-  "resources":[
-    {"id":{"name":"tst","path":"objects/tst/tst.yy",},},
-    {"id":{"name":"Room1","path":"rooms/Room1/Room1.yy",},},
->>>>>>> parent of 1db485b (rollback 11/3/25)
   ],
   "resourceType":"GMProject",
   "resourceVersion":"2.0",
