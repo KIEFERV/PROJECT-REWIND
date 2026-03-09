@@ -36,7 +36,6 @@
   "name":"PROJECT-REWIND",
   "resources":[
     {"id":{"name":"obj_player_client","path":"objects/obj_player_client/obj_player_client.yy",},},
-    {"id":{"name":"oPlayer","path":"objects/oPlayer/oPlayer.yy",},},
     {"id":{"name":"networkRoom","path":"rooms/networkRoom/networkRoom.yy",},},
     {"id":{"name":"ntwk_test_sprite","path":"sprites/ntwk_test_sprite/ntwk_test_sprite.yy",},},
   ],
