@@ -3,6 +3,7 @@
     {"name":"Environment Objects","order":3,"path":"folders/Objects/Environment Objects.yy",},
     {"name":"Walls","order":6,"path":"folders/Objects/Environment Objects/Walls.yy",},
     {"name":"Wood","order":6,"path":"folders/Objects/Environment Objects/Walls/Wood.yy",},
+    {"name":"NetworkGroup","order":6,"path":"folders/Objects/NetworkGroup.yy",},
     {"name":"Time Mechanic Objects","order":4,"path":"folders/Objects/Time Mechanic Objects.yy",},
     {"name":"Wall Sprites","order":1,"path":"folders/Sprites/Object Sprites/Wall Sprites.yy",},
     {"name":"Wood","order":4,"path":"folders/Sprites/Object Sprites/Wall Sprites/Wood.yy",},
