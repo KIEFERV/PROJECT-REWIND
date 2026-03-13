@@ -1,4 +1,6 @@
-	if (!rewind) {
+	
+if( time_phase = "present"){
+	if (!rewind_active) { //want to add an additional condition here to check if its a player or not, since i dont want an object to be able to rewind in the exact way a player does.
 	// Record current state
 	    pos_x[buffer_index] = x;
 	    pos_y[buffer_index] = y;
@@ -30,8 +32,8 @@
 			
 	    }
 		
-		if (!buffer_filled && buffer_index == 0) rewind_active = false;
-		if (buffer_filled == buffer_index) rewind_active = false;
+		if (!buffer_filled && buffer_index == 0) time_travel_end();
+		if (buffer_filled == buffer_index) time_travel_end();
 	}
 
 		// Apply stored state
@@ -40,5 +42,5 @@
 	    image_angle = pos_dir[buffer_index];
 	}
 
-
+}
 

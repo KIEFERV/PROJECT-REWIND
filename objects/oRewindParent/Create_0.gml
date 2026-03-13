@@ -5,7 +5,6 @@ time_phase = "present";
 
 buffer_size = 300; //(5 seconds @ 60 fps), goes by frames(?)
 buffer_index = 0;
-rewind = false;
 rewind_active = false;
 
 //Create buffer arrays-- a different array storing position/other data for each data type stored.
