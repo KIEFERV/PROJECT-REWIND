@@ -1,5 +1,4 @@
-
-
+///@description Create 4 way colission
 collide_right  = method(id, collide_right);
 collide_left   = method(id, collide_left);
 collide_top    = method(id, collide_top);
