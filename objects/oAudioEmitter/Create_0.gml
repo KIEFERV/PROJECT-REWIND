@@ -1,8 +1,8 @@
 ///@description create audio emitter
-
+//make the audio fade with distance
 audio_falloff_set_model(audio_falloff_linear_distance);
 
-// defaults
+// defaults (currently only defaults are used)
 if (!variable_instance_exists(id, "pitch_min")) pitch_min = 1;
 if (!variable_instance_exists(id, "pitch_max")) pitch_max = 1;
 
@@ -11,12 +11,12 @@ if (!variable_instance_exists(id, "volume_max")) volume_max = 1;
 
 if (!variable_instance_exists(id, "falloff_ref")) falloff_ref = 50;
 if (!variable_instance_exists(id, "falloff_max")) falloff_max = 1000;
-if (!variable_instance_exists(id, "falloff_factor")) falloff_factor = 100;
+if (!variable_instance_exists(id, "falloff_factor")) falloff_factor = 1;
 
 if (!variable_instance_exists(id, "priority")) priority = 0;
 
 
-//choose variant
+//choose random variant (if applicable)
 if (is_array(sound)){
 	sound_to_play = sound[irandom(array_length(sound)-1)];
 }else{

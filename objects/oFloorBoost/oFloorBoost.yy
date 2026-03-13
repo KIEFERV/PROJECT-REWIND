@@ -1,13 +1,13 @@
 {
   "$GMObject":"",
-  "%Name":"oGlassWall",
+  "%Name":"oFloorBoost",
   "eventList":[],
   "managed":true,
-  "name":"oGlassWall",
+  "name":"oFloorBoost",
   "overriddenProperties":[],
   "parent":{
-    "name":"Walls",
-    "path":"folders/Objects/Environment Objects/Walls.yy",
+    "name":"Floors",
+    "path":"folders/Objects/Environment Objects/Floors.yy",
   },
   "parentObjectId":null,
   "persistent":false,
@@ -28,8 +28,8 @@
   "resourceVersion":"2.0",
   "solid":false,
   "spriteId":{
-    "name":"sWallGlass",
-    "path":"sprites/sWallGlass/sWallGlass.yy",
+    "name":"sFloorBoost",
+    "path":"sprites/sFloorBoost/sFloorBoost.yy",
   },
   "spriteMaskId":null,
   "visible":true,

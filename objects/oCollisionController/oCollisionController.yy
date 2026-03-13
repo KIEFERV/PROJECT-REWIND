@@ -9,8 +9,8 @@
   "name":"oCollisionController",
   "overriddenProperties":[],
   "parent":{
-    "name":"Objects",
-    "path":"folders/Objects.yy",
+    "name":"Controllers",
+    "path":"folders/Objects/Systems/Controllers.yy",
   },
   "parentObjectId":null,
   "persistent":false,

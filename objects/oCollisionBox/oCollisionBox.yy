@@ -8,8 +8,8 @@
   "name":"oCollisionBox",
   "overriddenProperties":[],
   "parent":{
-    "name":"Objects",
-    "path":"folders/Objects.yy",
+    "name":"Walls",
+    "path":"folders/Objects/Environment Objects/Walls.yy",
   },
   "parentObjectId":null,
   "persistent":false,

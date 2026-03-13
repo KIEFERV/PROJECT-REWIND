@@ -1,19 +1,17 @@
 /// @description Player Movement Test
-/*
-sprinting = false; //whether or not the player is sprinting
-move_speed = 5; //Base player movement speed
-player_hor_speed = 0; //players current horizontal speed (after multipliers)
-player_vert_speed = 0; //players current vertical speed (after multipliers)
-debug_menu = true; //debug menu
 
+debug_menu = true; // Debug menu toggle (!!!CHANGE TO FALSE LATER)
 
+base_move_speed_max = 8; //Base player movement speed
+base_move_accel = 2;
+base_move_decel = 0.8;
 
+sprinting = false; // Whether or not the player is sprinting
+sneaking = false; // Whether or not the player is sneaking/walking
+can_sprint = true; // Is the player allowed to sprint
+can_sneak = true; // Is the player allowed to walk
+
+// Makes the Audio Listener on the player look Properly
 audio_listener_orientation(0, 1, 0, 0, 0, 1);
-//dist = 0;
-
-player_health = 100;
-
-*/
 
 event_inherited();
-

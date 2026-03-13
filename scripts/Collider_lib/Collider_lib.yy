@@ -5,8 +5,8 @@
   "isDnD":false,
   "name":"Collider_lib",
   "parent":{
-    "name":"Scripts",
-    "path":"folders/Scripts.yy",
+    "name":"Libraries",
+    "path":"folders/Scripts/Libraries.yy",
   },
   "resourceType":"GMScript",
   "resourceVersion":"2.0",
