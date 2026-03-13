@@ -1,7 +1,9 @@
 {
   "$GMObject":"",
   "%Name":"oCollisionBox",
-  "eventList":[],
+  "eventList":[
+    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
+  ],
   "managed":true,
   "name":"oCollisionBox",
   "overriddenProperties":[],
@@ -23,7 +25,12 @@
   "physicsShape":1,
   "physicsShapePoints":[],
   "physicsStartAwake":true,
-  "properties":[],
+  "properties":[
+    {"$GMObjectProperty":"v2","%Name":"collide_right","filters":[],"listItems":[],"multiselect":false,"name":"collide_right","rangeEnabled":false,"rangeMax":10.0,"rangeMin":0.0,"resourceType":"GMObjectProperty","resourceVersion":"2.0","value":"collide_right_solid","varType":4,},
+    {"$GMObjectProperty":"v2","%Name":"collide_left","filters":[],"listItems":[],"multiselect":false,"name":"collide_left","rangeEnabled":false,"rangeMax":10.0,"rangeMin":0.0,"resourceType":"GMObjectProperty","resourceVersion":"2.0","value":"collide_left_solid","varType":4,},
+    {"$GMObjectProperty":"v2","%Name":"collide_top","filters":[],"listItems":[],"multiselect":false,"name":"collide_top","rangeEnabled":false,"rangeMax":10.0,"rangeMin":0.0,"resourceType":"GMObjectProperty","resourceVersion":"2.0","value":"collide_top_solid","varType":4,},
+    {"$GMObjectProperty":"v2","%Name":"collide_bottom","filters":[],"listItems":[],"multiselect":false,"name":"collide_bottom","rangeEnabled":false,"rangeMax":10.0,"rangeMin":0.0,"resourceType":"GMObjectProperty","resourceVersion":"2.0","value":"collide_bottom_solid","varType":4,},
+  ],
   "resourceType":"GMObject",
   "resourceVersion":"2.0",
   "solid":false,

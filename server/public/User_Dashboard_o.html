@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css"
+    />
+  </head>
+  <body class="has-background-dark">
+    <nav class="navbar has-background-grey-dark" role="navigation" aria-label="main navigation">
+      <div class="navbar-brand">
+        <h1 class="navbar-item">BookEvents</h1>
+      </div>
+      <form th:action="@{/User_dashboard}" method="POST"></form>
+      <div id="navbarBasicExample" class="navbar-menu">
+        <div class="navbar-end">
+          <div class="navbar-item">
+            <div class="buttons">
+              <a class="button is-light" href="file:///Users/work/sienor%20project/Login%20page/user_login.html">Logout</a>
+                <strong>Sign Out</strong>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <section class="section">
+      <div class="container">
+        <div class="is-flex is-justify-content-center is-align-items-center has-text-link-light" style="height: 200px;">
+          <h1 class="title has-text-warning-light">Your Lobbies</h1>
+        </div>
+
+        <div class="table-container">
+          <table class="table is-fullwidth has-background-dark">
+            <thead>
+              <tr class="has-text-warning-light">
+                <th class="has-text-info">Lobby Name</th>
+                <th class="has-text-success">Date</th>
+                <th class="has-text-danger">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+             
+              <tbody>
+                <tr th:each="Lobby : ${Lobbys}">
+                    <td th:text="${Lobby.title}"></td>
+                    <td th:text="${Lobby.date}"></td>
+                    <td th:text="${Lobby.description}"></td>
+                </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="box is-small has-background-dark" style="position: absolute; right: 1rem; top: 40rem; width: 300px;">
+          <h2 class="subtitle has-text-light has-text-centered title has-text-warning-light">Send Message</h2>
+          <form method="POST" action="/message">
+            <div class="field">
+              <label class="label has-text-light title has-text-warning-light">Your Name</label>
+              <div class="control">
+                <input class="input" type="text" name="senderName" placeholder="Your Name" required />
+              </div>
+            </div>
+            <div class="field">
+              <label class="label has-text-light title has-text-warning-light">Message</label>
+              <div class="control">
+                <textarea class="textarea" name="messageContent" placeholder="Type your message here" required></textarea>
+              </div>
+            </div>
+            <div class="field is-grouped is-grouped-right">
+              <div class="control">
+                <button class="button is-link">Send Message</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="is-flex is-justify-content-center is-align-items-flex-end" style="height: 100vh; position: relative;">
+        <div class="buttons" style="position: absolute; bottom: 3rem;">
+          <a class="button is-link has-background-primary" href="file:///Users/work/sienor%20project/Login%20page/view_Lobby.html">
+            <strong>Browse</strong>
+          </a>
+          <a class="button is-link has-background-primary" href="file:///Users/work/sienor%20project/Login%20page/privateLobby.html">
+            <strong>Create</strong>
+          </a>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>

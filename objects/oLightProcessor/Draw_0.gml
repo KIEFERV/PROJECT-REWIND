@@ -18,9 +18,10 @@ with (oLightBox){
 	||(point_distance(x_width_size, y_length_size, lx, ly)<= rad + sprite_width)){
 	
 	//DEBUG - draw a yellow box to show the render range
+	/*
 	if(oPlayerHitbox.debug_menu == true){
 		draw_circle(lx, ly, rad+sprite_width, true);
-	}
+	}*/
 
 
     // Bounding box
@@ -44,12 +45,11 @@ with (oLightBox){
     // Left edge
     if (!SignTest(px1,py2, px1,py1, lx,ly))
         ProjectShadow(other.VBuffer, px1,py2, px1,py1, lx,ly);
-		
+		/*
 	//DEBUG - draw boxes around objects currently casting shadows
 	if(oPlayerHitbox.debug_menu == true){
-			
 		draw_rectangle(bbox_left, bbox_top, bbox_right, bbox_bottom, false);
-		}
+		}*/
 	}
 		
 }
