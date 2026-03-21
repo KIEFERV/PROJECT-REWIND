@@ -2,7 +2,7 @@
 //make the audio fade with distance
 audio_falloff_set_model(audio_falloff_linear_distance);
 
-// defaults (currently only defaults are used)
+// defaults if no custom parameters are set(currently only defaults are used)
 if (!variable_instance_exists(id, "pitch_min")) pitch_min = 1;
 if (!variable_instance_exists(id, "pitch_max")) pitch_max = 1;
 
@@ -16,7 +16,7 @@ if (!variable_instance_exists(id, "falloff_factor")) falloff_factor = 1;
 if (!variable_instance_exists(id, "priority")) priority = 0;
 
 
-//choose random variant (if applicable)
+//choose random variant through an array(if applicable)
 if (is_array(sound)){
 	sound_to_play = sound[irandom(array_length(sound)-1)];
 }else{

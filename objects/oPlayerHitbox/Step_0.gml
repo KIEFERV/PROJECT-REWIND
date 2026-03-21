@@ -28,7 +28,7 @@ if (key_sprint && can_sprint && !key_sneak){
 	modifier_sprint = 1.0;
 }
 
-//Walking
+// Walking
 var modifier_sneak;
 if (key_sneak && can_sneak && !key_sprint){
 	// Player is Sneaking
@@ -90,7 +90,7 @@ if (place_meeting(x, y, oFloorBoost)){
 #endregion
 
 
-//set the audio listener position
+// Set the audio listener position
 audio_listener_position(x, y, 0);
 
 #region Modifiers
@@ -118,7 +118,7 @@ move_decel = (base_move_decel
 
 #endregion
 
-//move the player
+// Applies the movement logic (Character_lib) to the player
 add_movement_input(_input_x, _input_y);
 
 //inherit the code from parent (oCharacterController)
