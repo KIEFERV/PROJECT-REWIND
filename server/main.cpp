@@ -1,10 +1,10 @@
 #include <winsock2.h>
-#pragma comment(lib, "ws2_32.lib")
 #include <iostream>
 #include <map>
 #include <string>
 
-// Helper: turn an IP+port into a string key like "192.168.1.5:4400"
+#pragma comment(lib, "ws2_32.lib")
+
 std::string addrKey(const sockaddr_in& addr) {
     return std::string(inet_ntoa(addr.sin_addr)) + ":" + std::to_string(ntohs(addr.sin_port));
 }
@@ -12,6 +12,7 @@ std::string addrKey(const sockaddr_in& addr) {
 struct Player {
     std::string id;
     float x, y;
+    sockaddr_in addr;  // store the full address so we can send back to them
 };
 
 int main() {
@@ -28,9 +29,7 @@ int main() {
 
     std::cout << "UDP server ready.\n";
 
-    // Map of "IP:port" → Player
     std::map<std::string, Player> players;
-
     char buffer[512];
     sockaddr_in clientAddr;
     int clientLen = sizeof(clientAddr);
@@ -43,21 +42,38 @@ int main() {
 
         std::string key = addrKey(clientAddr);
 
-        // New player? Register them
+        // Register new player
         if (players.find(key) == players.end()) {
-            players[key] = { key, 0, 0 };
+            players[key] = { key, 0, 0, clientAddr };
             std::cout << "New player: " << key << "\n";
         }
 
-        // Update their position (expecting "x,y" format from GameMaker)
+        // Update their position
         float x, y;
         if (sscanf(buffer, "%f,%f", &x, &y) == 2) {
             players[key].x = x;
             players[key].y = y;
-        }
+            players[key].addr = clientAddr;
 
-        // Send back a simple ack
-        sendto(sock, "ok", 2, 0, (sockaddr*)&clientAddr, clientLen);
+            // Build a broadcast packet: "id:x,y"
+            // e.g. "127.0.0.1:55772:100.00,200.00"
+            char broadcast[512];
+            snprintf(broadcast, sizeof(broadcast), "%s:%f,%f", key.c_str(), x, y);
+
+            // After updating position, add this BEFORE the broadcast loop:
+            const char* ack = "ack";
+            sendto(sock, ack, strlen(ack), 0, (sockaddr*)&clientAddr, clientLen);
+
+            // Send to every OTHER player
+            for (auto& pair : players) {
+                if (pair.first == key) continue;  // skip the sender
+
+                std::cout << "Broadcasting to " << pair.first << ": " << broadcast << "\n";
+                
+                sendto(sock, broadcast, strlen(broadcast), 0,
+                       (sockaddr*)&pair.second.addr, sizeof(pair.second.addr));
+            }
+        }
     }
 
     closesocket(sock);
