@@ -10,7 +10,7 @@ if (mouse_check_button_pressed(mb_left))
 {
     if (!reloading && ammo_in_mag > 0)
     {
-        var b = instance_create_layer(x, y, "Instances", oBullet);
+        var b = instance_create_layer(x, y, "layer_instances", oBullet);
 
         b.direction = point_direction(x, y, mouse_x, mouse_y);
         b.speed = 12;

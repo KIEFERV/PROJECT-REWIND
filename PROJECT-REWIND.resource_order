@@ -5,6 +5,7 @@
     {"name":"Walls","order":6,"path":"folders/Objects/Environment Objects/Walls.yy",},
     {"name":"Wood","order":5,"path":"folders/Objects/Environment Objects/Walls/Wood.yy",},
     {"name":"Players","order":5,"path":"folders/Objects/Players.yy",},
+    {"name":"Server Objects","order":7,"path":"folders/Objects/Server Objects.yy",},
     {"name":"Systems","order":6,"path":"folders/Objects/Systems.yy",},
     {"name":"Controllers","order":2,"path":"folders/Objects/Systems/Controllers.yy",},
     {"name":"Processors","order":3,"path":"folders/Objects/Systems/Processors.yy",},
