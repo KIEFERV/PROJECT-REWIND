@@ -1,4 +1,4 @@
-/// @description Draw Debiug Menu Elements
+/// @description Draw Debug Menu Elements
 #macro NEWLINE _dy += 20
 
 var _dy = 40
