@@ -9,6 +9,8 @@
     {"name":"Systems","order":6,"path":"folders/Objects/Systems.yy",},
     {"name":"Controllers","order":2,"path":"folders/Objects/Systems/Controllers.yy",},
     {"name":"Processors","order":3,"path":"folders/Objects/Systems/Processors.yy",},
+    {"name":"Wood","order":6,"path":"folders/Objects/Environment Objects/Walls/Wood.yy",},
+    {"name":"NetworkGroup","order":6,"path":"folders/Objects/NetworkGroup.yy",},
     {"name":"Time Mechanic Objects","order":4,"path":"folders/Objects/Time Mechanic Objects.yy",},
     {"name":"Libraries","order":2,"path":"folders/Scripts/Libraries.yy",},
     {"name":"Occlusion","order":3,"path":"folders/Scripts/Occlusion.yy",},
