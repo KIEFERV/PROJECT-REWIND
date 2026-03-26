@@ -1,0 +1,1 @@
+global.DAMAGE_FIRE = 1;

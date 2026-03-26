@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link rel="stylesheet" href="style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css'>
+</head>
+
+<body class="centered-page">
+    <div class="wrapper">
+        <form action="">
+            <h1>Login</h1>
+            <div class="input-box">
+                <input type="text" placeholder="Username" required>
+            </div>
+            <div class="input-box">
+                <input type="password" placeholder="Password" required>
+            </div>
+            <div class="input-box">
+                <select id="userType" required onchange="AdminIdInput()">
+                    <option value="" disabled selected>Select User Type</option>
+                    <option value="Player">Player</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+            <div id="AdminIdInput" class="input-box" style="display: none;">
+                <input type="text" placeholder="Admin ID" required>
+            </div>
+            <div class="remember-forgot">
+                <label><input type="checkbox">Remember Me</label>
+                <label><a href="#">Forgot Password?</a></label>
+            </div>
+            <button type="submit" class="btn">Login</button>
+            <div class="register-link">
+                <p>Don't have an account? <a href="register.html">Register here</a></p>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function AdminIdInput() {
+            var userType = document.getElementById('userType').value;
+            var AdminIdInput = document.getElementById('AdminIdInput');
+            if (userType === 'Admin') {
+                AdminIdInput.style.display = 'block';
+            } else {
+                AdminIdInput.style.display = 'none';
+            }
+        }
+        
+    document.querySelector("form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+  const username = document.querySelector('input[placeholder="Username"]').value.trim();
+  const password = document.querySelector('input[placeholder="Password"]').value;
+
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.message || "Login failed");
+
+    // save token for protected routes
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("username", data.username);
+    localStorage.setItem("role", data.role);
+
+    window.location.href = "User_Dashboard.html";
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+    </script>
+</body>
+</html>
