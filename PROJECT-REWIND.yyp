@@ -71,7 +71,6 @@
     {"id":{"name":"oLightProcessor","path":"objects/oLightProcessor/oLightProcessor.yy",},},
     {"id":{"name":"oMultiplayerController","path":"objects/oMultiplayerController/oMultiplayerController.yy",},},
     {"id":{"name":"oPlayerHitbox","path":"objects/oPlayerHitbox/oPlayerHitbox.yy",},},
-    {"id":{"name":"oPlayerModel","path":"objects/oPlayerModel/oPlayerModel.yy",},},
     {"id":{"name":"oRewindParent","path":"objects/oRewindParent/oRewindParent.yy",},},
     {"id":{"name":"oTestPlayer","path":"objects/oTestPlayer/oTestPlayer.yy",},},
     {"id":{"name":"oWall","path":"objects/oWall/oWall.yy",},},

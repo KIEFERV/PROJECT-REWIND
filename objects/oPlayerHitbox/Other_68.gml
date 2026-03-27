@@ -23,7 +23,6 @@ if (ptype == 1) {
     var ohp       = buffer_read(buf, buffer_u8);   // save their health
     var oanim     = buffer_read(buf, buffer_u8);   // save their anim frame
 	var ofacing   = (buffer_read(buf, buffer_u8) / 255.0) * 360; // unpack back to 0-360
-	var ofacing = (buffer_read(buf, buffer_u8) / 255.0) * 360;
 	show_debug_message("ofacing = " + string(ofacing));
 
     // Store in map keyed by numeric ID

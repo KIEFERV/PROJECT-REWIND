@@ -8,7 +8,6 @@
     {"name":"oFloorSlow","order":1,"path":"objects/oFloorSlow/oFloorSlow.yy",},
     {"name":"oGlassWall","order":9,"path":"objects/oGlassWall/oGlassWall.yy",},
     {"name":"oLightBox","order":8,"path":"objects/oLightBox/oLightBox.yy",},
-    {"name":"oPlayerModel","order":1,"path":"objects/oPlayerModel/oPlayerModel.yy",},
     {"name":"oWall","order":7,"path":"objects/oWall/oWall.yy",},
     {"name":"oWallIce","order":1,"path":"objects/oWallIce/oWallIce.yy",},
     {"name":"oWallNormal","order":2,"path":"objects/oWallNormal/oWallNormal.yy",},

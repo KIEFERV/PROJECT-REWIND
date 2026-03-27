@@ -11,6 +11,18 @@ sneaking = false; // Whether or not the player is sneaking/walking
 can_sprint = true; // Is the player allowed to sprint
 can_sneak = true; // Is the player allowed to walk
 
+//Gun variables
+mag_size = 30;
+ammo_in_mag = mag_size;
+ammo_reserve = 120;
+reload_time = 45;
+reload_timer = 0.5;
+reloading = false;
+
+max_hp = 100;
+
+facing = 0; // player look direction
+
 // Makes the Audio Listener on the player look Properly
 audio_listener_orientation(0, 1, 0, 0, 0, 1);
 

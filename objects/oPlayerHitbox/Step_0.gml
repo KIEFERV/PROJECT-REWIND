@@ -12,9 +12,10 @@ if (keyboard_check_released(ord("M"))){debug_menu = !debug_menu;}
 
 #region Player States
 
+// Look Direction
+facing = point_direction(x, y, mouse_x, mouse_y);
 
-
-//Sprinting
+// Sprinting
 var modifier_sprint;
 if (key_sprint && can_sprint && !key_sneak){
 	// Player is Sprinting
@@ -118,8 +119,64 @@ move_decel = (base_move_decel
 
 #endregion
 
+#region Shooting
+
+// hitbox
+//x = oPlayerHitbox.x; //no longer needed
+//y = oPlayerHitbox.y; // no longer needed
+
+//rotation
+image_angle = point_direction(x, y, mouse_x, mouse_y);
+
+//shooting
+if (mouse_check_button_pressed(mb_left))
+{
+    if (!reloading && ammo_in_mag > 0)
+    {
+        var b = instance_create_layer(x, y, "layer_instances", oBullet);
+
+        b.direction = point_direction(x, y, mouse_x, mouse_y);
+        b.speed = 12;
+        b.image_angle = b.direction;
+
+        ammo_in_mag -= 1;
+    }
+}
+
+
+//reload
+if (keyboard_check_pressed(ord("R")))
+{
+    if (!reloading && ammo_in_mag < mag_size && ammo_reserve > 0)
+    {
+        reloading = true;
+        reload_timer = reload_time;
+    }
+}
+
+if (reloading)
+{
+    reload_timer -= 1;
+
+    if (reload_timer <= 0)
+    {
+        var needed = mag_size - ammo_in_mag;
+        var loaded = min(needed, ammo_reserve);
+
+        ammo_in_mag += loaded;
+        ammo_reserve -= loaded;
+
+        reloading = false;
+    }
+}
+
+#endregion
+
 // Applies the movement logic (Character_lib) to the player
 add_movement_input(_input_x, _input_y);
+
+
+#region Networking
 
 var buf = buffer_create(32, buffer_fixed, 1);
 buffer_seek(buf, buffer_seek_start, 0);
@@ -127,12 +184,14 @@ buffer_seek(buf, buffer_seek_start, 0);
 buffer_write(buf, buffer_u8,  1);           // type = 1 (player state)
 buffer_write(buf, buffer_f32, x);           // x position
 buffer_write(buf, buffer_f32, y);           // y position
-buffer_write(buf, buffer_u8,  hitpoints);          // health (0-255)
-buffer_write(buf, buffer_u8,  image_index); // animation frame
-buffer_write(buf, buffer_u8, round((direction / 360.0) * 255)); // facing angle packed into 1 byte
+buffer_write(buf, buffer_u8,  hitpoints);   // health (0-255)
+buffer_write(buf, buffer_u8,  image_index); // animation frame (unused for now)
+buffer_write(buf, buffer_u8,  round((facing / 360.0) * 255)); // facing angle
 
 network_send_udp_raw(socket, "127.0.0.1", 7777, buf, buffer_tell(buf));
 buffer_delete(buf);
+
+#endregion
 
 //inherit the code from parent (oCharacterController)
 event_inherited();
