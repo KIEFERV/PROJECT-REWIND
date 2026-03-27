@@ -121,9 +121,16 @@ move_decel = (base_move_decel
 // Applies the movement logic (Character_lib) to the player
 add_movement_input(_input_x, _input_y);
 
-var buf = buffer_create(64, buffer_fixed, 1);
+var buf = buffer_create(32, buffer_fixed, 1);
 buffer_seek(buf, buffer_seek_start, 0);
-buffer_write(buf, buffer_string, string(x) + "," + string(y));
+
+buffer_write(buf, buffer_u8,  1);           // type = 1 (player state)
+buffer_write(buf, buffer_f32, x);           // x position
+buffer_write(buf, buffer_f32, y);           // y position
+buffer_write(buf, buffer_u8,  hitpoints);          // health (0-255)
+buffer_write(buf, buffer_u8,  image_index); // animation frame
+buffer_write(buf, buffer_u8, round((direction / 360.0) * 255)); // facing angle packed into 1 byte
+
 network_send_udp_raw(socket, "127.0.0.1", 7777, buf, buffer_tell(buf));
 buffer_delete(buf);
 
