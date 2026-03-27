@@ -1,4 +1,4 @@
-//hitbox follow
+// hitbox
 x = oPlayerHitbox.x;
 y = oPlayerHitbox.y;
 

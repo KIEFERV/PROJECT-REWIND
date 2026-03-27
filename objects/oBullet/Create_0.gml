@@ -1,2 +1,2 @@
-direction = 0;
-speed = 0;
+speed = 12;
+image_angle = direction;
