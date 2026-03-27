@@ -7,6 +7,7 @@ buffer_seek(buf, buffer_seek_start, 0);
 show_debug_message("Buffer size = " + string(buffer_get_size(buf)));
 
 var ptype = buffer_read(buf, buffer_u8);  // read the type byte first
+show_debug_message("Packet received! type=" + string(ptype));
 
 // Type 2 = server is telling us our own player ID
 if (ptype == 2) {
