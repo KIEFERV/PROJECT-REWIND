@@ -8,3 +8,7 @@
 #macro TIME_TRAVEL_DURATION 5
 
 //Positions
+
+
+//Rewind
+#macro REWIND_SPEED 5
