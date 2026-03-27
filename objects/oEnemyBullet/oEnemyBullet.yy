@@ -1,16 +1,16 @@
 {
   "$GMObject":"",
-  "%Name":"oPlayerModel",
+  "%Name":"oEnemyBullet",
   "eventList":[
-    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":3,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
+    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":3,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
   ],
   "managed":true,
-  "name":"oPlayerModel",
+  "name":"oEnemyBullet",
   "overriddenProperties":[],
   "parent":{
-    "name":"Players",
-    "path":"folders/Objects/Players.yy",
+    "name":"Objects",
+    "path":"folders/Objects.yy",
   },
   "parentObjectId":null,
   "persistent":false,
@@ -31,8 +31,8 @@
   "resourceVersion":"2.0",
   "solid":false,
   "spriteId":{
-    "name":"sPlayerModel",
-    "path":"sprites/sPlayerModel/sPlayerModel.yy",
+    "name":"sEnemyBullet",
+    "path":"sprites/sEnemyBullet/sEnemyBullet.yy",
   },
   "spriteMaskId":null,
   "visible":true,
