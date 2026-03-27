@@ -89,6 +89,11 @@ if (place_meeting(x, y, oFloorBoost)){
 }
 #endregion
 
+// DEBUG DAMAGE TESTING
+if (place_meeting(x, y, oBullet)){
+	hitpoints -= 10;
+}
+
 
 // Set the audio listener position
 audio_listener_position(x, y, 0);

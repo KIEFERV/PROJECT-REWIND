@@ -11,6 +11,8 @@ sneaking = false; // Whether or not the player is sneaking/walking
 can_sprint = true; // Is the player allowed to sprint
 can_sneak = true; // Is the player allowed to walk
 
+hitpoints = 5;
+
 // Makes the Audio Listener on the player look Properly
 audio_listener_orientation(0, 1, 0, 0, 0, 1);
 
