@@ -1,4 +1,3 @@
-/// @description Draw Debug Menu Elements
 var p = instance_find(oPlayerHitbox, 0);
 if (p != noone)
 {
