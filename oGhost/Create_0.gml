@@ -1,1 +1,0 @@
-sprite_index = sTestObj; // use the same sprite as the player
