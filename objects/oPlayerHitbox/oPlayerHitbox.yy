@@ -11,8 +11,8 @@
   "name":"oPlayerHitbox",
   "overriddenProperties":[],
   "parent":{
-    "name":"Players",
-    "path":"folders/Objects/Players.yy",
+    "name":"Objects",
+    "path":"folders/Objects.yy",
   },
   "parentObjectId":{
     "name":"oCharacterController",

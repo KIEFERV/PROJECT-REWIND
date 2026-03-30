@@ -5,8 +5,8 @@
   "isDnD":false,
   "name":"Entity_lib",
   "parent":{
-    "name":"Libraries",
-    "path":"folders/Scripts/Libraries.yy",
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
   },
   "resourceType":"GMScript",
   "resourceVersion":"2.0",
