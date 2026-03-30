@@ -6,8 +6,8 @@
   "name":"oGlassWall",
   "overriddenProperties":[],
   "parent":{
-    "name":"Objects",
-    "path":"folders/Objects.yy",
+    "name":"Walls",
+    "path":"folders/Objects/Environment Objects/Walls.yy",
   },
   "parentObjectId":null,
   "persistent":false,
@@ -28,8 +28,8 @@
   "resourceVersion":"2.0",
   "solid":false,
   "spriteId":{
-    "name":"sGlassWall",
-    "path":"sprites/sGlassWall/sGlassWall.yy",
+    "name":"sWallGlass",
+    "path":"sprites/sWallGlass/sWallGlass.yy",
   },
   "spriteMaskId":null,
   "visible":true,

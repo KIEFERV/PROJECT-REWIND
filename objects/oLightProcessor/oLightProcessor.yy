@@ -9,8 +9,8 @@
   "name":"oLightProcessor",
   "overriddenProperties":[],
   "parent":{
-    "name":"Objects",
-    "path":"folders/Objects.yy",
+    "name":"Processors",
+    "path":"folders/Objects/Systems/Processors.yy",
   },
   "parentObjectId":null,
   "persistent":false,

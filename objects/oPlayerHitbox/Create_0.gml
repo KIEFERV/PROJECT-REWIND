@@ -8,17 +8,25 @@ current_weapon_index = 0;
 weapons = [];
 
 /// @description Player Movement Test
-/*
-sprinting = false; //whether or not the player is sprinting
-move_speed = 5; //Base player movement speed
-player_hor_speed = 0; //players current horizontal speed (after multipliers)
-player_vert_speed = 0; //players current vertical speed (after multipliers)
-debug_menu = true; //debug menu
 
+debug_menu = true; // Debug menu toggle (!!!CHANGE TO FALSE LATER)
 
+base_move_speed_max = 8; //Base player movement speed
+base_move_accel = 2;
+base_move_decel = 0.8;
 
-audio_listener_orientation(0, 1, 0, 0, 0, 1);
-//dist = 0;
+sprinting = false; // Whether or not the player is sprinting
+sneaking = false; // Whether or not the player is sneaking/walking
+can_sprint = true; // Is the player allowed to sprint
+can_sneak = true; // Is the player allowed to walk
+
+//Gun variables
+mag_size = 30;
+ammo_in_mag = mag_size;
+ammo_reserve = 120;
+reload_time = 45;
+reload_timer = 0.5;
+reloading = false;
 
 // Health
 max_hp = 5;
@@ -80,7 +88,13 @@ current_weapon_index = 0;
 current_weapon = weapons[current_weapon_index];
 player_health = 100;
 
-*/
+facing = 0; // player look direction
+
+// Makes the Audio Listener on the player look Properly
+audio_listener_orientation(0, 1, 0, 0, 0, 1);
+
+socket = network_create_socket(network_socket_udp);
+network_connect_raw(socket, "127.0.0.1", 7777);
+other_players = ds_map_create();
 
 event_inherited();
-
