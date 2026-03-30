@@ -49,12 +49,15 @@
     {"id":{"name":"oCharacterController","path":"objects/oCharacterController/oCharacterController.yy",},},
     {"id":{"name":"oClient","path":"objects/oClient/oClient.yy",},},
     {"id":{"name":"oCollisionBox","path":"objects/oCollisionBox/oCollisionBox.yy",},},
+<<<<<<< HEAD
     {"id":{"name":"oDamageText","path":"objects/oDamageText/oDamageText.yy",},},
     {"id":{"name":"oDummyAlpha","path":"objects/oDummyAlpha/oDummyAlpha.yy",},},
     {"id":{"name":"oDummyBeta","path":"objects/oDummyBeta/oDummyBeta.yy",},},
     {"id":{"name":"oEnemyBullet","path":"objects/oEnemyBullet/oEnemyBullet.yy",},},
     {"id":{"name":"oEnemyParent","path":"objects/oEnemyParent/oEnemyParent.yy",},},
     {"id":{"name":"oCollisionController","path":"objects/oCollisionController/oCollisionController.yy",},},
+=======
+>>>>>>> parent of 1938120 (Dummies n More)
     {"id":{"name":"oGlassWall","path":"objects/oGlassWall/oGlassWall.yy",},},
     {"id":{"name":"oInit","path":"objects/oInit/oInit.yy",},},
     {"id":{"name":"oLightBox","path":"objects/oLightBox/oLightBox.yy",},},
@@ -80,17 +83,17 @@
     {"id":{"name":"Entity_lib","path":"scripts/Entity_lib/Entity_lib.yy",},},
     {"id":{"name":"MACROS","path":"scripts/MACROS/MACROS.yy",},},
     {"id":{"name":"ProjectShadow","path":"scripts/ProjectShadow/ProjectShadow.yy",},},
+<<<<<<< HEAD
     {"id":{"name":"Script4","path":"scripts/Script4/Script4.yy",},},
     {"id":{"name":"scrDamageTypes","path":"scripts/scrDamageTypes/scrDamageTypes.yy",},},
+=======
+>>>>>>> parent of 1938120 (Dummies n More)
     {"id":{"name":"SignTest","path":"scripts/SignTest/SignTest.yy",},},
     {"id":{"name":"sfxPop","path":"sounds/sfxPop/sfxPop.yy",},},
     {"id":{"name":"sAudio","path":"sprites/sAudio/sAudio.yy",},},
     {"id":{"name":"sBullet","path":"sprites/sBullet/sBullet.yy",},},
     {"id":{"name":"sCamera","path":"sprites/sCamera/sCamera.yy",},},
     {"id":{"name":"sCollision","path":"sprites/sCollision/sCollision.yy",},},
-    {"id":{"name":"sDummyAlpha","path":"sprites/sDummyAlpha/sDummyAlpha.yy",},},
-    {"id":{"name":"sDummyBeta","path":"sprites/sDummyBeta/sDummyBeta.yy",},},
-    {"id":{"name":"sEnemyBullet","path":"sprites/sEnemyBullet/sEnemyBullet.yy",},},
     {"id":{"name":"sGlassWall","path":"sprites/sGlassWall/sGlassWall.yy",},},
     {"id":{"name":"sLightBox","path":"sprites/sLightBox/sLightBox.yy",},},
     {"id":{"name":"sPlayerHitbox","path":"sprites/sPlayerHitbox/sPlayerHitbox.yy",},},

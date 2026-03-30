@@ -1,16 +1,13 @@
-// Move bullet
-x += lengthdir_x(speed, direction);
-y += lengthdir_y(speed, direction);
-
+//direction
 image_angle = direction;
 
-// Destroy if outside room
+//despawn
 if (x < 0 || x > room_width || y < 0 || y > room_height)
 {
 	emitAudio(x, y, sfxPop); //debug - remove later
     instance_destroy();
-    exit;
 }
+<<<<<<< HEAD
 
 // Wall collision
 if (place_meeting(x, y, oCollisionBox))
@@ -42,4 +39,6 @@ if (target != noone)
 
     // Destroy bullet
     instance_destroy();
-}
+}}
+=======
+>>>>>>> parent of 1938120 (Dummies n More)
