@@ -1,12 +1,3 @@
-is_dead = false;          // track death
-show_death_screen = false; // whether to draw death UI
-spawn_x = x;              // original spawn point
-spawn_y = y;
-
-// Reset weapons (example)
-current_weapon_index = 0;
-weapons = [];
-
 /// @description Player Movement Test
 /*
 sprinting = false; //whether or not the player is sprinting
@@ -18,6 +9,7 @@ debug_menu = true; //debug menu
 
 
 audio_listener_orientation(0, 1, 0, 0, 0, 1);
+<<<<<<< HEAD
 //dist = 0;
 
 // Health
@@ -84,3 +76,6 @@ player_health = 100;
 
 event_inherited();
 
+=======
+//dist = 0;
+>>>>>>> parent of 1938120 (Dummies n More)
