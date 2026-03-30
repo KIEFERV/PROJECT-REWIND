@@ -1,65 +1,36 @@
-if (is_dead)
-{
-    player_hor_speed = 0;
-    player_vert_speed = 0;
-    exit;
-}
-
-if (hp <= 0 && !is_dead)
-{
-    is_dead = true;
-    show_death_screen = true;
-}
-
-if (is_dead && keyboard_check_pressed(vk_space))
-{
-    hp = max_hp;
-    x = spawn_x;
-    y = spawn_y;
-    is_dead = false;
-    show_death_screen = false;
-
-    // Reset weapons
-    for (var i = 0; i < array_length(weapons); i++)
-    {
-        weapons[i].ammo_in_mag = weapons[i].mag_size;
-        weapons[i].ammo_reserve = weapons[i].max_reserve;
-        weapons[i].reloading = false;
-        weapons[i].fire_timer = 0;
-    }
-    current_weapon_index = 0;
-    current_weapon = weapons[0];
-
-    // Reset enemies
-    with (oEnemyParent)
-    {
-        hp = max_hp;
-    }
-}
+///@description Player Logic
 
 ///@description Player Logic
 /*
 //get inputs
-key_right  = keyboard_check(ord("D"));
-key_left   = keyboard_check(ord("A"));
-key_up     = keyboard_check(ord("W"));
-key_down   = keyboard_check(ord("S"));
+key_right = keyboard_check(ord("D"));
+key_left = keyboard_check(ord("A"));
+key_up = keyboard_check(ord("W"));
+key_down = keyboard_check(ord("S"));
 key_sprint = keyboard_check(vk_shift);
 key_sneak = keyboard_check(vk_alt);
 
-if (keyboard_check_released(ord("M"))) debug_menu = !debug_menu;
+if (keyboard_check_released(ord("M"))){debug_menu = !debug_menu;}
 
-//Base movement
-var base_hor  = sign(key_right - key_left) * move_speed;
+//Base Speed
+var base_hor = sign(key_right - key_left) * move_speed;
 var base_vert = sign(key_down - key_up) * move_speed;
 
 
-// Sprint
-var sprint_speed = key_sprint ? 1.5 : 1.0;
-sprinting = key_sprint;
+	//player states
+//Sprinting
+var sprint_speed;
+if (key_sprint){
+	sprinting = true;
+	sprint_speed = 1.5;
+}else{
+	sprinting = false;
+	sprint_speed = 1.0;
+}
 
-// Player speed with sprint multiplier
-player_hor_speed  = base_hor * sprint_speed;
+	//movement multipliers
+//Sprinting
+player_hor_speed = base_hor * sprint_speed;
 player_vert_speed = base_vert * sprint_speed;
 	//player states
 //Sprinting
@@ -85,10 +56,8 @@ if (key_sneak && !key_sprint){
 player_hor_speed = base_hor * (sprint_speed) * (sneak_speed);
 player_vert_speed = base_vert * (sprint_speed) * (sneak_speed);
 
-// Collision check
-if (place_meeting(x + player_hor_speed, y, oCollisionBox)) player_hor_speed = 0;
-if (place_meeting(x, y + player_vert_speed, oCollisionBox)) player_vert_speed = 0;
 
+<<<<<<< HEAD
 //Move player
 
 // Player collision after speed multipliers
@@ -97,17 +66,30 @@ if place_meeting(x + player_hor_speed, y, oCollisionBox){
 	player_hor_speed = 0; //this is not affecting sprint
 }
 // Vertical (y-axis)
+=======
+//player collision after speed multipliers
+//horizontal (x-axis)
+if place_meeting(x + player_hor_speed, y, oCollisionBox){
+	player_hor_speed = 0; //this is not affecting sprint
+}
+//vertical (y-axis)
+>>>>>>> parent of 1938120 (Dummies n More)
 if place_meeting(x, y + player_vert_speed, oCollisionBox){
 	player_vert_speed = 0; //this is not affecting sprint
 }
 
+<<<<<<< HEAD
 // Move the player
+=======
+//move the player
+>>>>>>> parent of 1938120 (Dummies n More)
 x += player_hor_speed;
 y += player_vert_speed;
 
-//Audio listener
+//set the audio listener position
 audio_listener_position(x, y, 0);
 
+<<<<<<< HEAD
 //dead
 if (is_dead) exit;
 
@@ -281,3 +263,7 @@ event_inherited();
 
 
 
+=======
+//detect distance from emitter
+//var dist = point_distance(x, y, oAudioEmitter.x, oAudioEmitter.y);
+>>>>>>> parent of 1938120 (Dummies n More)
