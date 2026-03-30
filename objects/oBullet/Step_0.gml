@@ -7,6 +7,7 @@ image_angle = direction;
 // Destroy if outside room
 if (x < 0 || x > room_width || y < 0 || y > room_height)
 {
+	emitAudio(x, y, sfxPop); //debug - remove later
     instance_destroy();
     exit;
 }
@@ -16,6 +17,7 @@ if (place_meeting(x, y, oCollisionBox))
 {
     instance_destroy();
     exit;
+	
 }
 
 // Enemy collision

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lobby Page</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="centered-page">
+  <main class="wrapper">
+    <form id="createLobbyForm">
+      <h1>Create Lobby</h1>
+
+      <div class="input-box">
+        <input id="title" name="title" type="text" placeholder="Lobby title" required />
+      </div>
+
+      <div class="input-box">
+        <textarea id="description" name="description" rows="4" placeholder="Lobby description" required></textarea>
+      </div>
+
+      <div class="input-box">
+        <input id="imageUrl" name="imageUrl" type="url" placeholder="Lobby image URL" required />
+      </div>
+
+      <button class="btn btn-primary" type="submit">Submit</button>
+    </form>
+  </main>
+  <script>
+document.getElementById("createLobbyForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  // form fields (from your existing IDs)
+  const name = document.getElementById("title").value.trim();
+  const description = document.getElementById("description").value.trim();
+
+  // optional: you currently collect this, but DB/API don't store it yet
+  // const imageUrl = document.getElementById("imageUrl").value.trim();
+
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("Please login first.");
+    window.location.href = "index.html";
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/lobbies", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        name,
+        description,
+        is_private: 0,
+        max_participants: 4
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.message || "Failed to create lobby");
+
+    alert("Lobby created! ID: " + data.lobby_id);
+    window.location.href = "view_lobby.html";
+  } catch (err) {
+    alert(err.message);
+  }
+});
+</script>
+</body>
+</html>
