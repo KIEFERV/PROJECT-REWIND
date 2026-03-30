@@ -2,31 +2,21 @@ event_inherited();
 
 
 
-<<<<<<< HEAD
-if (keyboard_check_pressed(ord("Z")) && time_phase = "present") { //Rewind phase logic
-	
-	if (!rewind_active) {
-	plr_travel_start();
-	}
+// Trigger the shift on keypress
+if (keyboard_check_pressed(ord("Z")) && time_phase == "present") {
+    if (!rewind_active) {
+        plr_travel_start();
+    }
+}
 
-} else {
-
-	return_to_present();
-	
-=======
-if (keyboard_check_pressed(ord("Z")) && !rewind_active) { //Rewind phase logic
-	
-	rewind = true;
-	rewind_active = true;
-	can_control = true;
-	visible = true;  // optional, hide original player
-	image_alpha = 0.5; // semi-transparent
-
-    // Spawn ghost in past
-    var ghost = instance_create_layer(x, y, layer, oTestPlayer);
-    ghost.can_control = false;
-
->>>>>>> parent of 9fe9b4f (had to break up the commit because )
+// Return condition is checked independently, on its own terms
+if (time_phase == "past") {
+    // Advance the replay head
+   buffer_read_index = (buffer_read_index + 1) mod buffer_size;
+    past_frames_elapsed++;
+    if (past_frames_elapsed >= past_duration) { // actual catch-up condition 
+        return_to_present();
+    }
 }
 
 
@@ -65,20 +55,13 @@ if (other.time_phase != time_phase) {
 
 if (keyboard_check_pressed(ord("G")))  // press G to test
 {
-<<<<<<< HEAD
 	
 	show_debug_message("Time phase = " + time_phase);
-=======
->>>>>>> parent of 9fe9b4f (had to break up the commit because )
     var wall = instance_nearest(x, y, oWallParent);
     
     if (wall != noone)
     {
         wall.take_damage(wall.wall_hp, DAMAGE_TYPE.BULLET);
     }
-<<<<<<< HEAD
 }
 
-=======
-}
->>>>>>> parent of 9fe9b4f (had to break up the commit because )
