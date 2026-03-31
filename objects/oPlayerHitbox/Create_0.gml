@@ -23,6 +23,20 @@ max_hp = 100;
 
 facing = 0; // player look direction
 
+#region Functions
+
+// Spawn a bullet
+function spawnBullet(_x, _y, _dir){
+	var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
+
+        b.direction = _dir;
+        b.speed = 12;
+        b.image_angle = b.direction;
+}
+
+#endregion
+
+
 // Makes the Audio Listener on the player look Properly
 audio_listener_orientation(0, 1, 0, 0, 0, 1);
 

@@ -4,10 +4,10 @@ var buf = async_load[? "buffer"];
 buffer_seek(buf, buffer_seek_start, 0);
 
 // DEBUG
-show_debug_message("Buffer size = " + string(buffer_get_size(buf)));
+//show_debug_message("Buffer size = " + string(buffer_get_size(buf)));
 
 var ptype = buffer_read(buf, buffer_u8);  // read the type byte first
-show_debug_message("Packet received! type=" + string(ptype));
+//show_debug_message("Packet received! type=" + string(ptype));
 
 // Type 2 = server is telling us our own player ID
 if (ptype == 2) {
@@ -24,7 +24,7 @@ if (ptype == 1) {
     var ohp       = buffer_read(buf, buffer_u8);   // save their health
     var oanim     = buffer_read(buf, buffer_u8);   // save their anim frame
 	var ofacing   = (buffer_read(buf, buffer_u8) / 255.0) * 360; // unpack back to 0-360
-	show_debug_message("ofacing = " + string(ofacing));
+	//show_debug_message("ofacing = " + string(ofacing));
 
     // Store in map keyed by numeric ID
     var entry = ds_map_find_value(other_players, pid);
@@ -38,4 +38,31 @@ if (ptype == 1) {
     entry[2] = ohp;
     entry[3] = oanim;
     entry[4] = ofacing;
+	exit;
+}
+
+// Type 4 = another player fired a bullet
+if (ptype == 4){
+
+	var shooter_pid = buffer_read(buf, buffer_u16);
+	var bx = buffer_read(buf, buffer_f32);
+	var by = buffer_read(buf, buffer_f32);
+	var bdir = (buffer_read(buf, buffer_u8) / 255.0) * 360;
+	
+	/*
+	show_debug_message("shooter_pid=" + string(shooter_pid) +
+					   " my_pid=" + string(my_pid) +
+					   " bx=" + string(bx) + " by=" + string(by) +
+					   " bdir=" + string(bdir));
+	*/
+	
+	if (shooter_pid != my_pid){
+		spawnBullet(bx, by, bdir);
+		//USE ENEMY BULLT ON PEW PEW BRANCH TO DIFFERENTIATE KILLS???
+	
+		//show_debug_message("Bullet Spawned!");
+		//show_debug_message("Bullet spawned at " + string(bx) + "," + string(by));
+	}
+	
+	exit;
 }

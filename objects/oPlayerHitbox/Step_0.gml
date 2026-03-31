@@ -133,13 +133,24 @@ if (mouse_check_button_pressed(mb_left))
 {
     if (!reloading && ammo_in_mag > 0)
     {
-        var b = instance_create_layer(x, y, "layer_instances", oBullet);
-
-        b.direction = point_direction(x, y, mouse_x, mouse_y);
-        b.speed = 12;
-        b.image_angle = b.direction;
-
+		//var mydir = point_direction(x, y, mouse_x, mouse_y);
+        spawnBullet(x, y, image_angle);
         ammo_in_mag -= 1;
+		
+		//DEBUG - tell the server we fired a bullet
+		//var buf = buffer_create(16, buffer_fixed, 1);
+		var buf = buffer_create(10, buffer_grow, 1);
+		buffer_seek(buf, buffer_seek_start, 0);
+		buffer_write(buf, buffer_u8, 4);         // type = 4
+		buffer_write(buf, buffer_f32, x);        // spawn x
+		buffer_write(buf, buffer_f32, y);        // spawn y
+		buffer_write(buf, buffer_u8,  round((facing / 360.0) * 255)); // direction packed
+		
+		//show_debug_message("Sending bullet: x=" + string(x) + " y=" + string(y) + " dir=" + string(facing) + " bytes=" + string(buffer_tell(buf)));
+		
+		network_send_udp_raw(socket, "127.0.0.1", 7777, buf, buffer_tell(buf));
+		
+		buffer_delete(buf);
     }
 }
 

@@ -110,10 +110,10 @@ int main() {
             sendto(sock, joinAck, 3, 0, (sockaddr*)&clientAddr, clientLen);
         }
 
-        // Update last seen time
+        // update last seen time
         players[key].lastSeen = Clock::now();
 
-        if (type == 1) {
+        if (type == 1) { // player
             uint16_t senderPid = players[key].pid;
 
             char broadcast[512]; // Build broadcast: [type=1][pid 2 bytes][rest of packet]
@@ -126,6 +126,42 @@ int main() {
                 if (pair.first == key) continue;
                 sendto(sock, broadcast, broadcastSize, 0,
                        (sockaddr*)&pair.second.addr, sizeof(pair.second.addr));
+            }
+        }
+
+        if (type == 4){ // bullets
+            uint16_t senderPid = players[key].pid;
+
+            // DEBUG -  Print raw bytes received
+            /*
+            std::cout << "Bullet received " << bytes << " bytes: ";
+            for (int i = 0; i < bytes; i++) {
+            std::cout << (int)(unsigned char)buffer[i] << " ";
+            }
+            std::cout << "\n";
+            */
+
+            char broadcast[512];
+            broadcast[0] = 4;
+            memcpy(broadcast + 1, &senderPid, 2);
+            memcpy(broadcast + 3, buffer + 1, bytes - 1);
+            int broadcastSize = bytes + 2;
+
+            std::cout << "Player " << senderPid << " fired a bullet\n";
+
+            // DEBUG - Print raw bytes being broadcast
+            /*
+            std::cout << "Bullet broadcast " << broadcastSize << " bytes: ";
+            for (int i = 0; i < broadcastSize; i++) {
+            std::cout << (int)(unsigned char)broadcast[i] << " ";
+            }
+            std::cout << "\n";
+            */
+
+            for(auto& pair : players){
+                if (pair.first == key) continue;
+                sendto(sock, broadcast, broadcastSize, 0, 
+                    (sockaddr*)&pair.second.addr, sizeof(pair.second.addr));
             }
         }
     }
