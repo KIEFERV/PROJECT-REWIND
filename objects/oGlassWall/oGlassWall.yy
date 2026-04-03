@@ -9,7 +9,10 @@
     "name":"Walls",
     "path":"folders/Objects/Environment Objects/Walls.yy",
   },
-  "parentObjectId":null,
+  "parentObjectId":{
+    "name":"oCollisionBox",
+    "path":"objects/oCollisionBox/oCollisionBox.yy",
+  },
   "persistent":false,
   "physicsAngularDamping":0.1,
   "physicsDensity":0.5,
