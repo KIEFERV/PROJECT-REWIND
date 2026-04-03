@@ -6,8 +6,8 @@
   "name":"oGlassWall",
   "overriddenProperties":[],
   "parent":{
-    "name":"Walls",
-    "path":"folders/Objects/Environment Objects/Walls.yy",
+    "name":"Objects",
+    "path":"folders/Objects.yy",
   },
   "parentObjectId":{
     "name":"oCollisionBox",
@@ -31,8 +31,8 @@
   "resourceVersion":"2.0",
   "solid":false,
   "spriteId":{
-    "name":"sWallGlass",
-    "path":"sprites/sWallGlass/sWallGlass.yy",
+    "name":"sGlassWall",
+    "path":"sprites/sGlassWall/sGlassWall.yy",
   },
   "spriteMaskId":null,
   "visible":true,
