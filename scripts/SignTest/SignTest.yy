@@ -5,8 +5,8 @@
   "isDnD":false,
   "name":"SignTest",
   "parent":{
-    "name":"Occlusion",
-    "path":"folders/Scripts/Occlusion.yy",
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
   },
   "resourceType":"GMScript",
   "resourceVersion":"2.0",
