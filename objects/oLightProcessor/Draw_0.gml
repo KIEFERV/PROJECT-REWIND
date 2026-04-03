@@ -1,5 +1,5 @@
-var lx = oPlayerHitbox.x;
-var ly = oPlayerHitbox.y;
+var lx = oPlayerModel.x;
+var ly = oPlayerModel.y;
 var rad = 256;
 
 
