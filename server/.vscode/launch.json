@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "name": "Run server",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}\\main.exe",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "preLaunchTask": "Build server"
+        }
+    ]
+}
