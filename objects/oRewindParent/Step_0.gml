@@ -1,4 +1,10 @@
+<<<<<<< HEAD
+	
+if( time_phase = "present"){
+	if (!rewind_active) { //want to add an additional condition here to check if its a player or not, since i dont want an object to be able to rewind in the exact way a player does.
+=======
 	if (!rewind) {
+>>>>>>> parent of 9fe9b4f (had to break up the commit because )
 	// Record current state
 	    pos_x[buffer_index] = x;
 	    pos_y[buffer_index] = y;
@@ -40,5 +46,9 @@
 	    image_angle = pos_dir[buffer_index];
 	}
 
+<<<<<<< HEAD
+}
+=======
 
+>>>>>>> parent of 9fe9b4f (had to break up the commit because )
 

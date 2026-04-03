@@ -2,6 +2,18 @@ event_inherited();
 
 
 
+<<<<<<< HEAD
+if (keyboard_check_pressed(ord("Z")) && time_phase = "present") { //Rewind phase logic
+	
+	if (!rewind_active) {
+	plr_travel_start();
+	}
+
+} else {
+
+	return_to_present();
+	
+=======
 if (keyboard_check_pressed(ord("Z")) && !rewind_active) { //Rewind phase logic
 	
 	rewind = true;
@@ -14,6 +26,7 @@ if (keyboard_check_pressed(ord("Z")) && !rewind_active) { //Rewind phase logic
     var ghost = instance_create_layer(x, y, layer, oTestPlayer);
     ghost.can_control = false;
 
+>>>>>>> parent of 9fe9b4f (had to break up the commit because )
 }
 
 
@@ -52,10 +65,20 @@ if (other.time_phase != time_phase) {
 
 if (keyboard_check_pressed(ord("G")))  // press G to test
 {
+<<<<<<< HEAD
+	
+	show_debug_message("Time phase = " + time_phase);
+=======
+>>>>>>> parent of 9fe9b4f (had to break up the commit because )
     var wall = instance_nearest(x, y, oWallParent);
     
     if (wall != noone)
     {
         wall.take_damage(wall.wall_hp, DAMAGE_TYPE.BULLET);
     }
+<<<<<<< HEAD
 }
+
+=======
+}
+>>>>>>> parent of 9fe9b4f (had to break up the commit because )

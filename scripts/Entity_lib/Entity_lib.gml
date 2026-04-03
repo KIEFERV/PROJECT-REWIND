@@ -16,7 +16,7 @@ function entity_move_collide(_velocity_x, _velocity_y){
 	// ********** Vertical ****************************** //
 	y += _velocity_y;
 	ds_list_clear(collision_list);
-	_collisions = instance_place_list(x, y + sign(_velocity_y), oWall, collision_list, false);
+	_collisions = instance_place_list(x, y + sign(_velocity_y), oCollisionBox, collision_list, false);
 
 	if (_collisions){
 		var _resolved_y = y;
@@ -41,7 +41,7 @@ function entity_move_collide(_velocity_x, _velocity_y){
 	// ********** Horizontal ****************************** //
 	x += _velocity_x;
 	ds_list_clear(collision_list);
-	var _collisions = instance_place_list(x + sign(_velocity_x), y, oWall, collision_list, false);
+	var _collisions = instance_place_list(x + sign(_velocity_x), y, oCollisionBox, collision_list, false);
 	
 	if (_collisions)
 	{
