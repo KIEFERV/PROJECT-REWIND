@@ -1,4 +1,7 @@
 {
   "FolderOrderSettings":[],
-  "ResourceOrderSettings":[],
+  "ResourceOrderSettings":[
+    {"name":"oGlobalSettings","order":1,"path":"objects/oGlobalSettings/oGlobalSettings.yy",},
+    {"name":"sGlobalSettings","order":1,"path":"sprites/sGlobalSettings/sGlobalSettings.yy",},
+  ],
 }
