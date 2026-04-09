@@ -1,17 +1,20 @@
 {
   "$GMObject":"",
-  "%Name":"oGlassWall",
-  "eventList":[],
+  "%Name":"oDummyAlpha",
+  "eventList":[
+    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":3,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
+    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
+  ],
   "managed":true,
-  "name":"oGlassWall",
+  "name":"oDummyAlpha",
   "overriddenProperties":[],
   "parent":{
-    "name":"Walls",
-    "path":"folders/Objects/Environment Objects/Walls.yy",
+    "name":"Objects",
+    "path":"folders/Objects.yy",
   },
   "parentObjectId":{
-    "name":"oCollisionBox",
-    "path":"objects/oCollisionBox/oCollisionBox.yy",
+    "name":"oEnemyParent",
+    "path":"objects/oEnemyParent/oEnemyParent.yy",
   },
   "persistent":false,
   "physicsAngularDamping":0.1,
@@ -31,8 +34,8 @@
   "resourceVersion":"2.0",
   "solid":false,
   "spriteId":{
-    "name":"sWallGlass",
-    "path":"sprites/sWallGlass/sWallGlass.yy",
+    "name":"sDummyAlpha",
+    "path":"sprites/sDummyAlpha/sDummyAlpha.yy",
   },
   "spriteMaskId":null,
   "visible":true,
