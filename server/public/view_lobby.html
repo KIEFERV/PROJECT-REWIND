@@ -103,7 +103,7 @@
         if (!res.ok || !data.ok) throw new Error(data.message || "Failed to load");
         renderLobbies(data.lobbies);
       } catch (e) {
-        // fallback: show sample so page still looks good
+        
         renderLobbies([
           { id: 1, name: "Example Lobby", date: "TBD", count: "2–4", description: "Start the Node server to load real lobbies." }
         ]);
