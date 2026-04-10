@@ -12,7 +12,10 @@
     "name":"Controllers",
     "path":"folders/Objects/Systems/Controllers.yy",
   },
-  "parentObjectId":null,
+  "parentObjectId":{
+    "name":"oRewindParent",
+    "path":"objects/oRewindParent/oRewindParent.yy",
+  },
   "persistent":false,
   "physicsAngularDamping":0.1,
   "physicsDensity":0.5,

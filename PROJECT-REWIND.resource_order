@@ -1,11 +1,14 @@
 {
-  "FolderOrderSettings":[],
+  "FolderOrderSettings":[
+    {"name":"Rewind Scripts","order":2,"path":"folders/Scripts/Rewind Scripts.yy",},
+  ],
   "ResourceOrderSettings":[
     {"name":"oAudioEmitter","order":1,"path":"objects/oAudioEmitter/oAudioEmitter.yy",},
     {"name":"oCollisionBox","order":6,"path":"objects/oCollisionBox/oCollisionBox.yy",},
     {"name":"oCollisionController","order":1,"path":"objects/oCollisionController/oCollisionController.yy",},
     {"name":"oFloorBoost","order":2,"path":"objects/oFloorBoost/oFloorBoost.yy",},
     {"name":"oFloorSlow","order":1,"path":"objects/oFloorSlow/oFloorSlow.yy",},
+    {"name":"oGhost","order":1,"path":"objects/oGhost/oGhost.yy",},
     {"name":"oGlassWall","order":9,"path":"objects/oGlassWall/oGlassWall.yy",},
     {"name":"oLightBox","order":8,"path":"objects/oLightBox/oLightBox.yy",},
     {"name":"oWall","order":7,"path":"objects/oWall/oWall.yy",},

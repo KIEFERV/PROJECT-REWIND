@@ -11,6 +11,9 @@ sneaking = false; // Whether or not the player is sneaking/walking
 can_sprint = true; // Is the player allowed to sprint
 can_sneak = true; // Is the player allowed to walk
 
+//Rewind set vars
+time_phase = "present";
+
 //Gun variables
 mag_size = 30;
 ammo_in_mag = mag_size;
@@ -43,5 +46,6 @@ audio_listener_orientation(0, 1, 0, 0, 0, 1);
 socket = network_create_socket(network_socket_udp);
 network_connect_raw(socket, "127.0.0.1", 7777);
 other_players = ds_map_create();
+
 
 event_inherited();

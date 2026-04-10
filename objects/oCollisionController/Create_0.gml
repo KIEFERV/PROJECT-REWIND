@@ -1,4 +1,4 @@
-//event_inherited(); // UNUSED DELETE LATER
+event_inherited();
 
 // Stores collision instances
 collision_list = ds_list_create();

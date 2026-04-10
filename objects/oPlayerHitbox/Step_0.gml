@@ -88,6 +88,7 @@ if (place_meeting(x, y, oFloorBoost)){
 	modifier_floor_boost_max = 1.0;
 	modifier_floor_boost_accel = 1.0;
 }
+
 #endregion
 
 
@@ -201,6 +202,26 @@ buffer_write(buf, buffer_u8,  round((facing / 360.0) * 255)); // facing angle
 
 network_send_udp_raw(socket, "127.0.0.1", 7777, buf, buffer_tell(buf));
 buffer_delete(buf);
+
+#endregion
+
+#region
+// Trigger the shift on keypress
+if (keyboard_check_pressed(ord("Z")) && time_phase == "present") {
+    if (!rewind_active) {
+        plr_travel_start();
+    }
+}
+
+// Return condition is checked independently, on its own terms
+if (time_phase == "past") {
+    // Advance the replay head
+   buffer_read_index = (buffer_read_index + 1) mod buffer_size;
+    past_frames_elapsed++;
+    if (past_frames_elapsed >= past_duration) { // actual catch-up condition 
+        return_to_present();
+    }
+}
 
 #endregion
 
