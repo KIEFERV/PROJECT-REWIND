@@ -25,6 +25,7 @@ facing = 0; // player look direction
 
 //NETWORKING (TEMP?)
 time_remaining = 180;
+is_host = false;
 
 #region Functions
 
