@@ -28,6 +28,26 @@ if (mouse_check_button(mb_left) && shoot_timer <= 0) {
 
     shoot_timer = fire_delay;
 }
+if (mouse_check_button(mb_left) && shoot_timer <= 0) {
+    var b = instance_create_layer(x, y, "Instances", obj_bullet);
+    b.direction = point_direction(x, y, mouse_x, mouse_y);
+    b.speed = 10;
+    b.owner = id;
+
+    b.can_ricochet = can_ricochet;
+    b.ricochet_count = can_ricochet ? 2 : 0;
+
+    b.is_gravity_shot = can_gravity_shot;
+    b.gravity_radius = can_gravity_shot ? 120 : 0;
+    b.gravity_duration = can_gravity_shot ? room_speed * 2 : 0;
+    b.gravity_pull = can_gravity_shot ? 0.7 : 0;
+
+    shoot_timer = fire_delay;
+}
+if (keyboard_check_pressed(vk_escape)) {
+    room_goto(rm_menu);
+}
+
 
 // place cover with space 
 if (keyboard_check_pressed(vk_space) && can_place_cover && cover_cooldown <= 0) {
@@ -36,4 +56,5 @@ if (keyboard_check_pressed(vk_space) && can_place_cover && cover_cooldown <= 0) 
 
     instance_create_layer(cx, cy, "Instances", obj_cover);
     cover_cooldown = room_speed; // 1 second cooldown
+	
 }

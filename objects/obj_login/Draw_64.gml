@@ -16,6 +16,7 @@ var panel_h = 320;
 var panel_x = (gui_w - panel_w) / 2;
 var panel_y = (gui_h - panel_h) / 2;
 
+
 draw_set_alpha(0.92);
 draw_set_color(make_color_rgb(18, 20, 28));
 draw_rectangle(panel_x, panel_y, panel_x + panel_w, panel_y + panel_h, false);

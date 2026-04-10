@@ -7,6 +7,8 @@ _player.move_speed = _player.base_move_speed;
 _player.fire_delay = _player.base_fire_delay;
 _player.can_ricochet = false;
 _player.can_place_cover = false;
+_player.can_gravity_shot = false;
+_player.max_cover_count = 0;
 
 var _keys = ds_map_keys_to_array(_player.powerups);
 
@@ -33,6 +35,9 @@ for (var i = 0; i < array_length(_keys); i++) {
         case global.POWER_COVER:
             _player.can_place_cover = true;
         break;
+		case global.POWER_GRAVITY_SHOT:
+			_player.can_gravity_shot = true;
+		break;
     }
 }
 }
