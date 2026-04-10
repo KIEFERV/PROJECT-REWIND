@@ -1,103 +1,83 @@
-
 const express = require("express");
 const mysql = require("mysql2/promise");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const path = require("path");
 
-const app = express();
 const PORT = 8080;
-const SESSION_HOURS = 12;
+const SESSION_DAYS = 7;
 
-// In-memory sessions only.
+const app = express();
 
-const sessions = Object.create(null);
 
-app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
 
-app.use(express.static(path.join(__dirname, "..", "public")));
+app.use(express.static(path.join(__dirname, "public")));
 
-
+//kill me now
 const pool = mysql.createPool({
-  host: "127.0.0.1",
-  user: "root",
-  password: "Rewind",
+  host: "localhost",
+  user: "DB_USER",
+  password: "DB_PASS",
   database: "project_rewind",
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
 });
-//temp
-console.log("DB CONFIG:", {
-  host: "127.0.0.1",
-  user: "root",
-  database: "project_rewind"
-});
-(async () => {
-  try {
-    const [rows] = await pool.execute("SELECT 1");
-    console.log("MySQL connection successful");
-  } catch (err) {
-    console.error("MySQL connection failed:", err.message);
-  }
-})();
-//temp
+
 
 function makeToken() {
-  return crypto.randomBytes(24).toString("hex");
+  return crypto.randomBytes(32).toString("hex"); // 64-char hex
+}
+
+function addDays(date, days) {
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
 function ok(res, data = {}) {
-  res.json({ ok: true, ...data });
+  return res.json({ ok: true, ...data });
 }
 
-function fail(res, status, message) {
-  res.status(status).json({ ok: false, message });
+function fail(res, status, code, message) {
+  return res.status(status).json({ ok: false, code, message });
 }
 
-function getTokenFromRequest(req) {
-  const authHeader = req.headers.authorization || "";
 
-  if (authHeader.startsWith("Bearer ")) {
-    return authHeader.slice(7).trim();
-  }
+function readToken(req) {
+  const auth = req.header("authorization") || "";
+  if (auth.toLowerCase().startsWith("bearer ")) return auth.slice(7).trim();
+
+  const x = (req.header("x-token") || "").trim();
+  if (x) return x;
 
   return (req.body.token || "").trim();
 }
 
-function cleanupSessions() {
-  const now = Date.now();
+//bastard child
+async function requireAuth(req, res, next) {
+  try {
+    const token = readToken(req);
+    if (!token) return fail(res, 401, "UNAUTH", "Missing token");
 
-  for (const token in sessions) {
-    if (sessions[token].expiresAt <= now) {
-      delete sessions[token];
-    }
+    const [rows] = await pool.execute(
+      `SELECT u.id, u.username, u.role
+       FROM sessions s
+       JOIN users u ON u.id = s.user_id
+       WHERE s.token = ? AND s.expires_at > NOW()
+       LIMIT 1`,
+      [token]
+    );
+
+    if (!rows.length) return fail(res, 401, "UNAUTH", "Invalid or expired token");
+
+    req.user = rows[0];
+    next();
+  } catch (err) {
+    console.error(err);
+    return fail(res, 500, "SERVER", "Server error");
   }
 }
-
-//5 min clear
-setInterval(cleanupSessions, 5 * 60 * 1000);
-
-function requireAuth(req, res, next) {
-  const token = getTokenFromRequest(req);
-
-  if (!token || !sessions[token]) {
-    return fail(res, 401, "Unauthorized");
-  }
-
-  const session = sessions[token];
-
-  if (session.expiresAt <= Date.now()) {
-    delete sessions[token];
-    return fail(res, 401, "Session expired");
-  }
-
-  req.user = session;
-  next();
-}
-
 
 app.post("/api/register", async (req, res) => {
   try {
@@ -105,448 +85,123 @@ app.post("/api/register", async (req, res) => {
     const username = (req.body.username || "").trim();
     const password = req.body.password || "";
 
-    if (!username || !password) {
-      return fail(res, 400, "Username and password are required");
-    }
-
-    if (username.length > 50) {
-      return fail(res, 400, "Username is too long");
-    }
+    if (!username || !password) return fail(res, 400, "EMPTY", "Username and password required");
+    if (username.length > 50) return fail(res, 400, "USERLEN", "Username too long");
 
     const passHash = await bcrypt.hash(password, 12);
 
     await pool.execute(
-      `INSERT INTO users (email, username, pass_hash, role)
-       VALUES (?, ?, ?, 'player')`,
+      `INSERT INTO users(email, username, pass_hash, role)
+       VALUES(?, ?, ?, 'player')`,
       [email, username, passHash]
     );
 
-    ok(res);
+    return ok(res);
   } catch (err) {
-    if (err.code === "ER_DUP_ENTRY") {
-      return fail(res, 409, "Username already exists");
-    }
-
-    console.error("REGISTER ERROR:", err);
-    fail(res, 500, "Server error");
+    if (err?.code === "ER_DUP_ENTRY") return fail(res, 409, "TAKEN", "Username already exists");
+    console.error(err);
+    return fail(res, 500, "SERVER", "Server error");
   }
 });
 
-// testing duh
-app.get("/api/test", (req, res) => {
-  res.json({ ok: true, message: "Server works" });
-});
-
-// Login for player/admin
 app.post("/api/login", async (req, res) => {
-  console.log("LOGIN REQUEST:", req.body);
   try {
     const username = (req.body.username || "").trim();
     const password = req.body.password || "";
-    const requestedRole = (req.body.role || "player").trim().toLowerCase();
-    const adminId = (req.body.admin_id || "").trim();
 
-    if (!username || !password) {
-      return fail(res, 400, "Username and password are required");
-    }
+    if (!username || !password) return fail(res, 400, "EMPTY", "Username and password required");
 
     const [rows] = await pool.execute(
-      `SELECT id, username, pass_hash, role, admin_id
-       FROM users
-       WHERE username = ?
-       LIMIT 1`,
+      "SELECT id, username, pass_hash, role FROM users WHERE username=? LIMIT 1",
       [username]
     );
 
-    if (rows.length === 0) {
-      return fail(res, 401, "Invalid username or password");
-    }
+    if (!rows.length) return fail(res, 401, "INVALID_LOGIN", "Bad username or password");
 
     const user = rows[0];
-    const passwordMatches = await bcrypt.compare(password, user.pass_hash);
-
-    if (!passwordMatches) {
-      return fail(res, 401, "Invalid username or password");
-    }
-
-    // Optional admin validation
-    if (requestedRole === "admin") {
-      if (user.role !== "admin") {
-        return fail(res, 403, "This account is not an admin account");
-      }
-
-      if (user.admin_id && adminId !== user.admin_id) {
-        return fail(res, 403, "Invalid admin ID");
-      }
-    }
+    const okPass = await bcrypt.compare(password, user.pass_hash);
+    if (!okPass) return fail(res, 401, "INVALID_LOGIN", "Bad username or password");
 
     const token = makeToken();
+    const expiresAt = addDays(new Date(), SESSION_DAYS);
 
-    sessions[token] = {
-      userId: user.id,
-      username: user.username,
-      role: user.role,
-      expiresAt: Date.now() + SESSION_HOURS * 60 * 60 * 1000
-    };
+    await pool.execute(
+      "INSERT INTO sessions(token, user_id, expires_at) VALUES(?, ?, ?)",
+      [token, user.id, expiresAt]
+    );
 
-    ok(res, {
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        role: user.role
-      }
-    });
+    return ok(res, { token, username: user.username, role: user.role });
   } catch (err) {
-    console.error("LOGIN ERROR:", err);
-    fail(res, 500, "Server error");
+    console.error(err);
+    return fail(res, 500, "SERVER", "Server error");
   }
 });
 
-app.post("/api/logout", (req, res) => {
-  const token = getTokenFromRequest(req);
-
-  if (token && sessions[token]) {
-    delete sessions[token];
+// why not 
+app.post("/api/logout", requireAuth, async (req, res) => {
+  try {
+    const token = readToken(req);
+    await pool.execute("DELETE FROM sessions WHERE token=?", [token]);
+    return ok(res);
+  } catch (err) {
+    console.error(err);
+    return fail(res, 500, "SERVER", "Server error");
   }
-
-  ok(res);
 });
 
-app.get("/api/me", requireAuth, (req, res) => {
-  ok(res, {
-    user: {
-      id: req.user.userId,
-      username: req.user.username,
-      role: req.user.role
-    }
-  });
+// "Who am I"
+app.get("/api/me", requireAuth, async (req, res) => {
+  return ok(res, { user: req.user });
 });
 
 
-
-// Public lobbies 
 app.get("/api/lobbies", async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      `SELECT id, name, description, max_participants, created_at
+      `SELECT id, name, description, max_participants
        FROM lobbies
        WHERE is_private = 0
-       ORDER BY created_at DESC`
+       ORDER BY created_at DESC
+       LIMIT 100`
     );
-
-    ok(res, { lobbies: rows });
+    return ok(res, { lobbies: rows });
   } catch (err) {
-    console.error("GET LOBBIES ERROR:", err);
-    fail(res, 500, "Server error");
+    console.error(err);
+    return fail(res, 500, "SERVER", "Server error");
   }
 });
 
-// Create a lobby
+
 app.post("/api/lobbies", requireAuth, async (req, res) => {
   try {
     const name = (req.body.name || "").trim();
     const description = (req.body.description || "").trim();
     const isPrivate = req.body.is_private ? 1 : 0;
-    const maxParticipants = Number(req.body.max_participants || 4);
+    const max = Number(req.body.max_participants || 4);
 
-    if (!name || !description) {
-      return fail(res, 400, "Name and description are required");
-    }
-
-    if (![2, 3, 4].includes(maxParticipants)) {
-      return fail(res, 400, "max_participants must be 2, 3, or 4");
-    }
+    if (!name || !description) return fail(res, 400, "EMPTY", "Name and description required");
+    if (![2, 3, 4].includes(max)) return fail(res, 400, "BAD_MAX", "max_participants must be 2, 3, or 4");
 
     const [result] = await pool.execute(
-      `INSERT INTO lobbies
-       (owner_user_id, name, description, is_private, max_participants)
-       VALUES (?, ?, ?, ?, ?)`,
-      [req.user.userId, name, description, isPrivate, maxParticipants]
+      `INSERT INTO lobbies(owner_user_id, name, description, is_private, max_participants)
+       VALUES(?, ?, ?, ?, ?)`,
+      [req.user.id, name, description, isPrivate, max]
     );
+
 
     await pool.execute(
-      `INSERT INTO lobby_members (lobby_id, user_id)
-       VALUES (?, ?)`,
-      [result.insertId, req.user.userId]
+      "INSERT INTO lobby_members(lobby_id, user_id) VALUES(?, ?)",
+      [result.insertId, req.user.id]
     );
 
-    ok(res, { lobby_id: result.insertId });
+    return ok(res, { lobby_id: result.insertId });
   } catch (err) {
-    console.error("CREATE LOBBY ERROR:", err);
-    fail(res, 500, "Server error");
+    console.error(err);
+    return fail(res, 500, "SERVER", "Server error");
   }
 });
 
-// Join a public lobby
-app.post("/api/lobbies/:id/join", requireAuth, async (req, res) => {
-  try {
-    const lobbyId = Number(req.params.id);
-
-    if (!lobbyId) {
-      return fail(res, 400, "Invalid lobby ID");
-    }
-
-    const [lobbyRows] = await pool.execute(
-      `SELECT id, is_private, max_participants
-       FROM lobbies
-       WHERE id = ?
-       LIMIT 1`,
-      [lobbyId]
-    );
-
-    if (lobbyRows.length === 0) {
-      return fail(res, 404, "Lobby not found");
-    }
-
-    const lobby = lobbyRows[0];
-
-    if (lobby.is_private) {
-      return fail(res, 403, "Cannot directly join a private lobby");
-    }
-
-    const [memberCountRows] = await pool.execute(
-      `SELECT COUNT(*) AS count
-       FROM lobby_members
-       WHERE lobby_id = ?`,
-      [lobbyId]
-    );
-
-    if (memberCountRows[0].count >= lobby.max_participants) {
-      return fail(res, 400, "Lobby is full");
-    }
-
-    await pool.execute(
-      `INSERT IGNORE INTO lobby_members (lobby_id, user_id)
-       VALUES (?, ?)`,
-      [lobbyId, req.user.userId]
-    );
-
-    ok(res);
-  } catch (err) {
-    console.error("JOIN LOBBY ERROR:", err);
-    fail(res, 500, "Server error");
-  }
-});
-
-
-// Send invite to username 
-app.post("/api/invites", requireAuth, async (req, res) => {
-  try {
-    const lobbyId = Number(req.body.lobby_id);
-    const toUsername = (req.body.to_username || "").trim();
-
-    if (!lobbyId || !toUsername) {
-      return fail(res, 400, "lobby_id and to_username are required");
-    }
-
-    const [lobbyRows] = await pool.execute(
-      `SELECT id, owner_user_id, is_private
-       FROM lobbies
-       WHERE id = ?
-       LIMIT 1`,
-      [lobbyId]
-    );
-
-    if (lobbyRows.length === 0) {
-      return fail(res, 404, "Lobby not found");
-    }
-
-    const lobby = lobbyRows[0];
-
-    if (lobby.owner_user_id !== req.user.userId) {
-      return fail(res, 403, "Only the lobby owner can send invites");
-    }
-
-    if (!lobby.is_private) {
-      return fail(res, 400, "Invites are only for private lobbies");
-    }
-
-    await pool.execute(
-      `INSERT INTO invites (lobby_id, from_user_id, to_username, status)
-       VALUES (?, ?, ?, 'pending')`,
-      [lobbyId, req.user.userId, toUsername]
-    );
-
-    ok(res);
-  } catch (err) {
-    console.error("SEND INVITE ERROR:", err);
-    fail(res, 500, "Server error");
-  }
-});
-
-// Get invite 
-app.get("/api/invites", requireAuth, async (req, res) => {
-  try {
-    const [rows] = await pool.execute(
-      `SELECT i.id, i.lobby_id, i.status, i.created_at, l.name AS lobby_name
-       FROM invites i
-       JOIN lobbies l ON l.id = i.lobby_id
-       WHERE i.to_username = ?
-       ORDER BY i.created_at DESC`,
-      [req.user.username]
-    );
-
-    ok(res, { invites: rows });
-  } catch (err) {
-    console.error("GET INVITES ERROR:", err);
-    fail(res, 500, "Server error");
-  }
-});
-
-// Respond to invite
-app.post("/api/invites/:id/respond", requireAuth, async (req, res) => {
-  try {
-    const inviteId = Number(req.params.id);
-    const status = (req.body.status || "").trim().toLowerCase();
-
-    if (!inviteId) {
-      return fail(res, 400, "Invalid invite ID");
-    }
-
-    if (status !== "accepted" && status !== "declined") {
-      return fail(res, 400, "Status must be accepted or declined");
-    }
-
-    const [inviteRows] = await pool.execute(
-      `SELECT *
-       FROM invites
-       WHERE id = ? AND to_username = ?
-       LIMIT 1`,
-      [inviteId, req.user.username]
-    );
-
-    if (inviteRows.length === 0) {
-      return fail(res, 404, "Invite not found");
-    }
-
-    const invite = inviteRows[0];
-
-    await pool.execute(
-      `UPDATE invites
-       SET status = ?
-       WHERE id = ?`,
-      [status, inviteId]
-    );
-
-    if (status === "accepted") {
-      await pool.execute(
-        `INSERT IGNORE INTO lobby_members (lobby_id, user_id)
-         VALUES (?, ?)`,
-        [invite.lobby_id, req.user.userId]
-      );
-    }
-
-    ok(res);
-  } catch (err) {
-    console.error("RESPOND INVITE ERROR:", err);
-    fail(res, 500, "Server error");
-  }
-});
-app.post("/api/register", async (req, res) => {
-  try {
-    const email = (req.body.email || "").trim() || null;
-    const username = (req.body.username || "").trim();
-    const password = req.body.password || "";
-
-    if (!username || !password) {
-      return fail(res, 400, "Username and password are required");
-    }
-
-    if (username.length > 50) {
-      return fail(res, 400, "Username is too long");
-    }
-
-    const passHash = await bcrypt.hash(password, 12);
-
-    const [result] = await pool.execute(
-      `INSERT INTO users (email, username, pass_hash, role)
-       VALUES (?, ?, ?, 'player')`,
-      [email, username, passHash]
-    );
-
-    await pool.execute(
-      `INSERT INTO player_stats (user_id, kills, deaths, time_played_seconds)
-       VALUES (?, 0, 0, 0)`,
-      [result.insertId]
-    );
-
-    ok(res);
-  } catch (err) {
-    if (err.code === "ER_DUP_ENTRY") {
-      return fail(res, 409, "Username already exists");
-    }
-
-    console.error("REGISTER ERROR:", err);
-    fail(res, 500, "Server error");
-  }
-});
-
-app.get("/api/leaderboard", async (req, res) => {
-  try {
-    const [rows] = await pool.execute(
-      `SELECT 
-         u.username,
-         ps.kills,
-         ps.deaths,
-         ps.time_played_seconds
-       FROM player_stats ps
-       JOIN users u ON u.id = ps.user_id
-       ORDER BY ps.kills DESC, ps.deaths ASC, ps.time_played_seconds DESC
-       LIMIT 50`
-    );
-
-    ok(res, { leaderboard: rows });
-  } catch (err) {
-    console.error("LEADERBOARD ERROR:", err);
-    fail(res, 500, "Server error");
-  }
-});
 //do not forget to Rewind server password and "StrongPasswordHere!" is not a strong passward
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
-
-app.post("/api/stats/update", requireAuth, async (req, res) => {
-  try {
-    const addKills = Number(req.body.kills || 0);
-    const addDeaths = Number(req.body.deaths || 0);
-    const addTime = Number(req.body.time_played_seconds || 0);
-
-    await pool.execute(
-      `UPDATE player_stats
-       SET
-         kills = kills + ?,
-         deaths = deaths + ?,
-         time_played_seconds = time_played_seconds + ?
-       WHERE user_id = ?`,
-      [addKills, addDeaths, addTime, req.user.userId]
-    );
-
-    ok(res);
-  } catch (err) {
-    console.error("UPDATE STATS ERROR:", err);
-    fail(res, 500, "Server error");
-  }
-});
-
-app.get("/api/stats/me", requireAuth, async (req, res) => {
-  try {
-    const [rows] = await pool.execute(
-      `SELECT kills, deaths, time_played_seconds
-       FROM player_stats
-       WHERE user_id = ?
-       LIMIT 1`,
-      [req.user.userId]
-    );
-
-    if (rows.length === 0) {
-      return fail(res, 404, "Stats not found");
-    }
-
-    ok(res, { stats: rows[0] });
-  } catch (err) {
-    console.error("MY STATS ERROR:", err);
-    fail(res, 500, "Server error");
-  }
+  console.log(`Local server running: http://localhost:${PORT}`);
 });
