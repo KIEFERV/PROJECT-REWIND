@@ -47,6 +47,11 @@ int main() {
     sockaddr_in clientAddr;
     int clientLen = sizeof(clientAddr);
 
+    int matchDuration = 180; // 3 minutes (seconds)
+    int timeRemaining = matchDuration;
+    TimePoint lastTimerBroadcast = Clock::now();
+    bool matchRunning = true;
+
     while (true) {
         // Check for timeouts every loop — remove players silent for 5+ seconds
         auto now = Clock::now();
@@ -70,6 +75,43 @@ int main() {
                 ++it;
             }
         }
+
+        if (matchRunning){
+            auto now = Clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastTimerBroadcast).count();
+
+            if (elapsed >= 1){
+                lastTimerBroadcast = Clock::now();
+                timeRemaining--;
+            
+                if (timeRemaining <= 0){
+                    timeRemaining = 0; //Reset in case it falls below 0
+                    matchRunning = false;
+                    std::cout << "Match Over!\n";
+
+                    // Tell all clients match is over
+                    char endPacket[1];
+                    endPacket[0] = 6;
+                    for (auto& pair : players){
+                        sendto(sock, endPacket, 1, 0, (sockaddr*)&pair.second.addr, sizeof(pair.second.addr));
+                    }
+                }
+
+                // Build timer packet: [type 5][time remaining as u16]
+                char timerPacket[3];
+                timerPacket[0] = 5; //set the packet type
+                uint16_t t = (uint16_t)timeRemaining;
+                memcpy(timerPacket + 1, &t, 2);
+
+                //Send to all players
+                for (auto& pair : players){
+                    sendto (sock, timerPacket, 3, 0, (sockaddr*)&pair.second.addr, sizeof(pair.second.addr));
+                }
+
+                std::cout << "Time remaining: " << timeRemaining << "\n";
+            }
+        }
+
 
         int bytes = recvfrom(sock, buffer, sizeof(buffer) - 1, 0,
                              (sockaddr*)&clientAddr, &clientLen);

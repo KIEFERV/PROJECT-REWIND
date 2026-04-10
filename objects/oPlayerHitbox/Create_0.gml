@@ -23,6 +23,9 @@ max_hp = 100;
 
 facing = 0; // player look direction
 
+//NETWORKING (TEMP?)
+time_remaining = 180;
+
 #region Functions
 
 // Spawn a bullet

@@ -12,3 +12,5 @@ if (socket < 0) {
 }
 
 other_players = ds_map_create();
+
+time_remaining = 180;
