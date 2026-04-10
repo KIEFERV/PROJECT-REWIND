@@ -50,7 +50,9 @@ int main() {
     int matchDuration = 180; // 3 minutes (seconds)
     int timeRemaining = matchDuration;
     TimePoint lastTimerBroadcast = Clock::now();
-    bool matchRunning = true;
+
+    bool matchStarted = false;
+    bool matchRunning = false;
 
     while (true) {
         // Check for timeouts every loop — remove players silent for 5+ seconds
@@ -96,7 +98,7 @@ int main() {
                         sendto(sock, endPacket, 1, 0, (sockaddr*)&pair.second.addr, sizeof(pair.second.addr));
                     }
                 }
-
+                
                 // Build timer packet: [type 5][time remaining as u16]
                 char timerPacket[3];
                 timerPacket[0] = 5; //set the packet type
@@ -111,6 +113,8 @@ int main() {
                 std::cout << "Time remaining: " << timeRemaining << "\n";
             }
         }
+
+        
 
 
         int bytes = recvfrom(sock, buffer, sizeof(buffer) - 1, 0,
@@ -204,6 +208,54 @@ int main() {
                 if (pair.first == key) continue;
                 sendto(sock, broadcast, broadcastSize, 0, 
                     (sockaddr*)&pair.second.addr, sizeof(pair.second.addr));
+            }
+        }
+
+        if (type == 7) {
+            uint16_t requesterPid = players[key].pid;
+
+            // Only pid 1 (first player) can start
+            if (requesterPid != 1) {
+                std::cout << "Non-host tried to start match, ignoring.\n";
+            continue;
+            }
+
+            // Need at least 2 players
+            if (players.size() < 1) { //1 FOR DEDBUG CHANGE BACK TO 2 LATER
+                std::cout << "Not enough players to start.\n";
+
+                // Tell the host there aren't enough players
+                char notEnough[1];
+                notEnough[0] = 8;  // type 8 = not enough players
+                sendto(sock, notEnough, 1, 0, (sockaddr*)&clientAddr, clientLen);
+                continue;
+            }
+
+            // Start the match
+            matchStarted = true;
+            matchRunning = true;
+            timeRemaining = matchDuration;
+            lastTimerBroadcast = Clock::now();
+            std::cout << "Match started by host!\n";
+
+            // Tell all clients to start
+            char startPacket[1];
+            startPacket[0] = 7;  // type 7 broadcast = match is starting
+            for (auto& pair : players) {
+                sendto(sock, startPacket, 1, 0,
+               (sockaddr*)&pair.second.addr, sizeof(pair.second.addr));
+            }
+        }
+
+        if (type == 10) {
+            // Join request — player is already registered above, just send them their pid
+            if (players.find(key) != players.end()) {
+                uint16_t assignedId = players[key].pid;
+                char joinAck[3];
+                joinAck[0] = 2;
+                memcpy(joinAck + 1, &assignedId, 2);
+                sendto(sock, joinAck, 3, 0, (sockaddr*)&clientAddr, clientLen);
+                std::cout << "Sent pid " << assignedId << " to " << key << "\n";
             }
         }
     }

@@ -26,6 +26,15 @@ facing = 0; // player look direction
 //NETWORKING (TEMP?)
 time_remaining = 180;
 is_host = false;
+// Socket was created in lobby, just grab it
+if (global.socket == -1) {
+    show_debug_message("ERROR: No socket from lobby!");
+    // Fallback — create our own socket
+    global.socket = network_create_socket(network_socket_udp);
+}
+socket = global.socket;
+my_pid = global.my_pid;
+
 
 #region Functions
 
@@ -44,8 +53,8 @@ function spawnBullet(_x, _y, _dir){
 // Makes the Audio Listener on the player look Properly
 audio_listener_orientation(0, 1, 0, 0, 0, 1);
 
-socket = network_create_socket(network_socket_udp);
-network_connect_raw(socket, "127.0.0.1", 7777);
+
+//network_connect_raw(socket, global.ip_address, global.port);
 other_players = ds_map_create();
 
 event_inherited();

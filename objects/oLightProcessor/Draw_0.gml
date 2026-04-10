@@ -1,6 +1,6 @@
 var lx = oPlayerHitbox.x;
 var ly = oPlayerHitbox.y;
-var rad = 1058;
+var rad = global.shadow_view_radius;
 
 
 vertex_begin(VBuffer, VertexFormat);
