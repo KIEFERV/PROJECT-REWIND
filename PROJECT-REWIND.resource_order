@@ -4,7 +4,6 @@
   ],
   "ResourceOrderSettings":[
     {"name":"oAudioEmitter","order":1,"path":"objects/oAudioEmitter/oAudioEmitter.yy",},
-    {"name":"obJ_player","order":1,"path":"objects/obJ_player/obJ_player.yy",},
     {"name":"oCollisionBox","order":6,"path":"objects/oCollisionBox/oCollisionBox.yy",},
     {"name":"oCollisionController","order":1,"path":"objects/oCollisionController/oCollisionController.yy",},
     {"name":"oFloorBoost","order":2,"path":"objects/oFloorBoost/oFloorBoost.yy",},

@@ -57,7 +57,6 @@
   "name":"PROJECT-REWIND",
   "resources":[
     {"id":{"name":"oAudioEmitter","path":"objects/oAudioEmitter/oAudioEmitter.yy",},},
-    {"id":{"name":"obJ_player","path":"objects/obJ_player/obJ_player.yy",},},
     {"id":{"name":"oBullet","path":"objects/oBullet/oBullet.yy",},},
     {"id":{"name":"oCamera","path":"objects/oCamera/oCamera.yy",},},
     {"id":{"name":"oCharacterController","path":"objects/oCharacterController/oCharacterController.yy",},},
