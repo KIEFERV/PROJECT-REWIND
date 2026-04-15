@@ -17,5 +17,4 @@ _player.can_place_cover = false;
 _player.can_gravity_shot = false;
 _player.cover_count = 0;
 _player.max_cover_count = 3;
-
 }

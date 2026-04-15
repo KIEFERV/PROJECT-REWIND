@@ -9,8 +9,8 @@
   "name":"obj_controler",
   "overriddenProperties":[],
   "parent":{
-    "name":"Objects",
-    "path":"folders/Objects.yy",
+    "name":"UI-Powerups Group",
+    "path":"folders/Objects/UI-Powerups Group.yy",
   },
   "parentObjectId":null,
   "persistent":false,

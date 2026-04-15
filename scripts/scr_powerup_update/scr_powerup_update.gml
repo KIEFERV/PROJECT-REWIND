@@ -1,5 +1,4 @@
 function scr_powerup_update(){
-
 var _player = argument0;
 
 var _keys = ds_map_keys_to_array(_player.powerups);

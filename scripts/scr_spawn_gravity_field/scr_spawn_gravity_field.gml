@@ -1,5 +1,4 @@
 function scr_spawn_gravity_field(){
-
 var _x = argument0;
 var _y = argument1;
 var _radius = argument2;
