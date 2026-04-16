@@ -53,8 +53,6 @@ function spawnBullet(_x, _y, _dir){
 // Makes the Audio Listener on the player look Properly
 audio_listener_orientation(0, 1, 0, 0, 0, 1);
 
-
-//network_connect_raw(socket, global.ip_address, global.port);
 other_players = ds_map_create();
 
 event_inherited();
