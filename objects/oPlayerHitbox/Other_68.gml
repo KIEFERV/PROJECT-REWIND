@@ -66,3 +66,17 @@ if (ptype == 4){
 	
 	exit;
 }
+
+// Type 5 = timer updat efrom server
+if (ptype == 5){
+	time_remaining = buffer_read(buf, buffer_u16);
+    exit;
+}
+
+// Type 6 = match over
+if (ptype == 6){
+	//room_goto();
+	show_debug_message("Match Ended!");
+	exit;
+}
+

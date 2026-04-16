@@ -11,7 +11,17 @@ if(debug_menu = true){
 }
 
 
-
-
 	
-// THIS IS A STABLE WORKING SERVERTEST BRANCH 4/3/2026 3:12 AM
+// Format as MM:SS
+var minutes = floor(time_remaining / 60);
+var seconds = time_remaining mod 60;
+var timeStr = string(minutes) + ":" + (seconds < 10 ? "0" : "") + string(seconds);
+
+// Draw centered at top of screen
+draw_set_halign(fa_center);
+draw_set_valign(fa_top);
+draw_set_color(c_white);
+//draw_set_font(fnt_timer);  // replace with your font, or remove this line to use default
+draw_text(display_get_gui_width() / 2, 20, timeStr);
+draw_set_halign(fa_left);
+draw_set_valign(fa_top);
