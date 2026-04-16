@@ -62,5 +62,10 @@
     {"name":"sWoodSplinter","order":1,"path":"sprites/sWoodSplinter/sWoodSplinter.yy",},
     {"name":"ts_Collision","order":2,"path":"tilesets/ts_Collision/ts_Collision.yy",},
     {"name":"ts_WallTest","order":1,"path":"tilesets/ts_WallTest/ts_WallTest.yy",},
+    {"name":"oGlobalSettings","order":1,"path":"objects/oGlobalSettings/oGlobalSettings.yy",},
+    {"name":"oLobby","order":2,"path":"objects/oLobby/oLobby.yy",},
+    {"name":"rInit","order":2,"path":"rooms/rInit/rInit.yy",},
+    {"name":"rLobby","order":1,"path":"rooms/rLobby/rLobby.yy",},
+    {"name":"sGlobalSettings","order":1,"path":"sprites/sGlobalSettings/sGlobalSettings.yy",},
   ],
 }

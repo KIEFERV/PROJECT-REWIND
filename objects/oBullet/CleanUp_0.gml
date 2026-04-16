@@ -1,0 +1,1 @@
+emitAudio(x, y, sfxPop);
