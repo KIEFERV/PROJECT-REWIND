@@ -1,5 +1,6 @@
 {
   "FolderOrderSettings":[
+    {"name":"Events","order":2,"path":"folders/Objects/Environment Objects/Events.yy",},
     {"name":"UI-Powerups Group","order":2,"path":"folders/Objects/UI-Powerups Group.yy",},
     {"name":"Libraries","order":2,"path":"folders/Scripts/Libraries.yy",},
     {"name":"Occlusion","order":3,"path":"folders/Scripts/Occlusion.yy",},
@@ -56,6 +57,7 @@
     {"name":"sFloorSlow","order":1,"path":"sprites/sFloorSlow/sFloorSlow.yy",},
     {"name":"sGlobalSettings","order":1,"path":"sprites/sGlobalSettings/sGlobalSettings.yy",},
     {"name":"sLightBox","order":3,"path":"sprites/sLightBox/sLightBox.yy",},
+    {"name":"sLobby","order":5,"path":"sprites/sLobby/sLobby.yy",},
     {"name":"sPlayerEnemyModel","order":4,"path":"sprites/sPlayerEnemyModel/sPlayerEnemyModel.yy",},
     {"name":"sPlayerHitbox","order":4,"path":"sprites/sPlayerHitbox/sPlayerHitbox.yy",},
     {"name":"spr_powerup","order":5,"path":"sprites/spr_powerup/spr_powerup.yy",},

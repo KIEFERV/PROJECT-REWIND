@@ -4,7 +4,7 @@ var rad = global.shadow_view_radius;
 
 
 vertex_begin(VBuffer, VertexFormat);
-
+if (oMatchEvent.event_current != "solar_flare"){
 with (oLightBox){
 	
 	var x_width_size = x + sprite_width;
@@ -52,6 +52,7 @@ with (oLightBox){
 		}*/
 	}
 		
+}
 }
 
 vertex_end(VBuffer);

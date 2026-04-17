@@ -88,6 +88,13 @@ if (place_meeting(x, y, oFloorBoost)){
 	modifier_floor_boost_max = 1.0;
 	modifier_floor_boost_accel = 1.0;
 }
+var event = oMatchEvent.event_current;
+var wind_dir = oMatchEvent.event_wind_dir,
+	wind_power = oMatchEvent.event_wind_power;
+
+if(event == "wind"){
+	add_impulse_direction(wind_dir, wind_power);
+}
 
 #endregion
 
