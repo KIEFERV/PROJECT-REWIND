@@ -19,4 +19,3 @@ scr_powerup_init(self);
 
 shoot_timer = 0;
 cover_cooldown = 0;
-
