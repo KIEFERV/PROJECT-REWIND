@@ -2,6 +2,8 @@
 
 debug_menu = true; // Debug menu toggle (!!!CHANGE TO FALSE LATER)
 
+net_send_timer = 0;
+
 base_move_speed_max = 8; //Base player movement speed
 base_move_accel = 2;
 base_move_decel = 0.8;
