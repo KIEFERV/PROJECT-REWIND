@@ -6,7 +6,7 @@ menu_buttons = [];
 
 array_push(menu_buttons, {
     label: "Play Game",
-    target: rm_game,
+    target: rm_loadout,
     action: "room",
     desc: "Enter the arena and test powerups",
     primary: true,

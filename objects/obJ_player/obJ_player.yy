@@ -1,18 +1,18 @@
 {
   "$GMObject":"",
-  "%Name":"obJ_player",
+  "%Name":"obj_player",
   "eventList":[
     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
+    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":3,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":12,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":64,"eventType":8,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
-    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":3,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
   ],
   "managed":true,
-  "name":"obJ_player",
+  "name":"obj_player",
   "overriddenProperties":[],
   "parent":{
-    "name":"UI-Powerups Group",
-    "path":"folders/Objects/UI-Powerups Group.yy",
+    "name":"obj_powerup",
+    "path":"folders/Objects/obj_files/obj_powerup.yy",
   },
   "parentObjectId":null,
   "persistent":false,

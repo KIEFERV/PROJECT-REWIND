@@ -9,8 +9,8 @@
   "name":"obj_bullet_powerup",
   "overriddenProperties":[],
   "parent":{
-    "name":"UI-Powerups Group",
-    "path":"folders/Objects/UI-Powerups Group.yy",
+    "name":"obj_powerup",
+    "path":"folders/Objects.yy",
   },
   "parentObjectId":null,
   "persistent":false,

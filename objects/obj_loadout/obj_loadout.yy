@@ -1,17 +1,17 @@
 {
   "$GMObject":"",
-  "%Name":"obj_cover_powerup",
+  "%Name":"obj_loadout",
   "eventList":[
     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":3,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
-    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":8,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
+    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":64,"eventType":8,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
   ],
   "managed":true,
-  "name":"obj_cover_powerup",
+  "name":"obj_loadout",
   "overriddenProperties":[],
   "parent":{
-    "name":"obj_powerup",
-    "path":"folders/Objects.yy",
+    "name":"obj_UI",
+    "path":"folders/Objects/obj_files/obj_UI.yy",
   },
   "parentObjectId":null,
   "persistent":false,

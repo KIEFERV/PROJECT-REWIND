@@ -2,6 +2,7 @@
   "FolderOrderSettings":[
     {"name":"UI-Powerups Group","order":2,"path":"folders/Objects/UI-Powerups Group.yy",},
     {"name":"Libraries","order":2,"path":"folders/Scripts/Libraries.yy",},
+    {"name":"obj_UI","order":2,"path":"folders/Objects/obj_files/obj_UI.yy",},
     {"name":"Occlusion","order":3,"path":"folders/Scripts/Occlusion.yy",},
     {"name":"Rewind Scripts","order":5,"path":"folders/Scripts/Rewind Scripts.yy",},
   ],
