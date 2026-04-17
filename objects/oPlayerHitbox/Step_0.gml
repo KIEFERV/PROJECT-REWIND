@@ -92,6 +92,7 @@ var event = oMatchEvent.event_current;
 var wind_dir = oMatchEvent.event_wind_dir,
 	wind_power = oMatchEvent.event_wind_power;
 
+// Wind Event
 if(event == "wind"){
 	add_impulse_direction(wind_dir, wind_power);
 }
