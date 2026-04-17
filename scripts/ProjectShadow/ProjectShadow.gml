@@ -17,7 +17,7 @@ var _Lx = argument5;
 var _Ly = argument6;
 
 // shadows are infinite - almost, just enough to go off screen
-var SHADOW_LENGTH = 20000;
+var SHADOW_LENGTH = 50000;
 
 var Adx,Ady,Bdx,Bdy,len
 
