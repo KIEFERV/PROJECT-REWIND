@@ -1,1 +1,0 @@
-life = room_speed * 6;

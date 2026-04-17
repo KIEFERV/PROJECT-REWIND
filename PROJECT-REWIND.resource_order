@@ -1,22 +1,11 @@
 {
   "FolderOrderSettings":[
-    {"name":"UI-Powerups Group","order":2,"path":"folders/Objects/UI-Powerups Group.yy",},
     {"name":"Libraries","order":2,"path":"folders/Scripts/Libraries.yy",},
     {"name":"Occlusion","order":3,"path":"folders/Scripts/Occlusion.yy",},
     {"name":"Rewind Scripts","order":5,"path":"folders/Scripts/Rewind Scripts.yy",},
   ],
   "ResourceOrderSettings":[
     {"name":"oAudioEmitter","order":1,"path":"objects/oAudioEmitter/oAudioEmitter.yy",},
-    {"name":"obj_bullet_powerup","order":2,"path":"objects/obj_bullet_powerup/obj_bullet_powerup.yy",},
-    {"name":"obj_bullet","order":1,"path":"objects/obj_bullet/obj_bullet.yy",},
-    {"name":"obj_controler","order":3,"path":"objects/obj_controler/obj_controler.yy",},
-    {"name":"obj_cover_powerup","order":4,"path":"objects/obj_cover_powerup/obj_cover_powerup.yy",},
-    {"name":"obj_game","order":5,"path":"objects/obj_game/obj_game.yy",},
-    {"name":"obj_gravity_field","order":6,"path":"objects/obj_gravity_field/obj_gravity_field.yy",},
-    {"name":"obj_leaderboard","order":7,"path":"objects/obj_leaderboard/obj_leaderboard.yy",},
-    {"name":"obj_login","order":8,"path":"objects/obj_login/obj_login.yy",},
-    {"name":"obj_menu","order":9,"path":"objects/obj_menu/obj_menu.yy",},
-    {"name":"obj_powerup_pickup","order":10,"path":"objects/obj_powerup_pickup/obj_powerup_pickup.yy",},
     {"name":"oCollisionBox","order":6,"path":"objects/oCollisionBox/oCollisionBox.yy",},
     {"name":"oCollisionController","order":1,"path":"objects/oCollisionController/oCollisionController.yy",},
     {"name":"oFloorBoost","order":2,"path":"objects/oFloorBoost/oFloorBoost.yy",},
