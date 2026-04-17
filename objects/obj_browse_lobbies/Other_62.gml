@@ -27,5 +27,5 @@ if (ds_map_exists(async_load, "id")) {
                 status_text = "Failed to join lobby.";
             }
         }
-    } 
+    }
 }
