@@ -49,7 +49,9 @@
     {"$GMFolder":"","%Name":"Timelines","folderPath":"folders/Timelines.yy","name":"Timelines","resourceType":"GMFolder","resourceVersion":"2.0",},
   ],
   "ForcedPrefabProjectReferences":[],
-  "IncludedFiles":[],
+  "IncludedFiles":[
+    {"$GMIncludedFile":"","%Name":"execute_shell_simple_ext.html","CopyToMask":-1,"filePath":"datafiles","name":"execute_shell_simple_ext.html","resourceType":"GMIncludedFile","resourceVersion":"2.0",},
+  ],
   "isEcma":false,
   "LibraryEmitters":[],
   "MetaData":{
@@ -57,6 +59,7 @@
   },
   "name":"PROJECT-REWIND",
   "resources":[
+    {"id":{"name":"execute_shell_simple_ext","path":"extensions/execute_shell_simple_ext/execute_shell_simple_ext.yy",},},
     {"id":{"name":"oAudioEmitter","path":"objects/oAudioEmitter/oAudioEmitter.yy",},},
     {"id":{"name":"obj_bullet_powerup","path":"objects/obj_bullet_powerup/obj_bullet_powerup.yy",},},
     {"id":{"name":"obj_bullet","path":"objects/obj_bullet/obj_bullet.yy",},},
