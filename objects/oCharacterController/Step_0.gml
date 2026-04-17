@@ -1,3 +1,4 @@
+event_inherited();
 // Update movement vector
 move_x = move_norm_x * move_speed;
 move_y = move_norm_y * move_speed;

@@ -1,0 +1,1 @@
+sprite_index = sPlayerModel; // use the same sprite as the player

@@ -1,6 +1,6 @@
 var lx = oPlayerHitbox.x;
 var ly = oPlayerHitbox.y;
-var rad = 256;
+var rad = global.shadow_view_radius;
 
 
 vertex_begin(VBuffer, VertexFormat);
@@ -18,10 +18,10 @@ with (oLightBox){
 	||(point_distance(x_width_size, y_length_size, lx, ly)<= rad + sprite_width)){
 	
 	//DEBUG - draw a yellow box to show the render range
-	/*
+	
 	if(oPlayerHitbox.debug_menu == true){
 		draw_circle(lx, ly, rad+sprite_width, true);
-	}*/
+	}
 
 
     // Bounding box

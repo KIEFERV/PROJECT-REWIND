@@ -1,12 +1,16 @@
 //Time Phases
+show_debug_message("CREATE EVENT RAN");
 time_phase = "present";
 
 //REWIND Buffer
 
 buffer_size = 300; //(5 seconds @ 60 fps), goes by frames(?)
 buffer_index = 0;
-rewind = false;
 rewind_active = false;
+anchor_index = 1;
+buffer_read_index = 0;
+rewind_frames_travelled = 0;
+playback_index = -1;
 
 //Create buffer arrays-- a different array storing position/other data for each data type stored.
 pos_x = array_create(buffer_size, x);
