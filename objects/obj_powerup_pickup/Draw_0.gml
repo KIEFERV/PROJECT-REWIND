@@ -23,7 +23,7 @@ switch (power_name) {
 }
 
 // Floating animation
-var bob = sin(degtorad(current_time * 0.15 + id)) * 3;
+var bob = sin(degtorad(current_time * 0.15 + real(id))) * 3;
 
 // Pulsing glow strength
 var pulse = 0.5 + 0.5 * sin(current_time * 0.01);

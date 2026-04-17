@@ -52,7 +52,7 @@ for (var i = 0; i < array_length(menu_buttons); i++) {
 
 // Keyboard shortcuts
 if (keyboard_check_pressed(vk_enter)) {
-    room_goto(rm_game);
+    room_goto(rMovementTesting);
 }
 
 if (keyboard_check_pressed(ord("L"))) room_goto(rm_login);
