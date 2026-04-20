@@ -32,7 +32,3 @@ repeat (ds_map_size(other_players)) {
     }
     pid = ds_map_find_next(other_players, pid);
 }
-
-if(debug_menu = true){
-	
-}

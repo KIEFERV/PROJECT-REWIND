@@ -1,5 +1,5 @@
 function scr_powerup_init(){
-var _player = argument0;
+	var _player = argument0;
 
 _player.powerups = ds_map_create();
 

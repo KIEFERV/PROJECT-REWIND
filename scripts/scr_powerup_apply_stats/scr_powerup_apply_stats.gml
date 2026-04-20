@@ -1,4 +1,5 @@
 function scr_powerup_apply_stats(){
+
 var _player = argument0;
 
 // reset to defaults

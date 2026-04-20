@@ -9,7 +9,7 @@
             "program": "${workspaceFolder}\\main.exe",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
-            "preLaunchTask": "C/C++: g++.exe build active file"
+            "preLaunchTask": "Build server"
         }
     ]
 }
