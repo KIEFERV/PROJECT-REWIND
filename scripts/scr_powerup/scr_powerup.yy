@@ -5,8 +5,8 @@
   "isDnD":false,
   "name":"scr_powerup",
   "parent":{
-    "name":"scr_scripts",
-    "path":"folders/Scripts/Rewind Scripts/scr_scripts.yy",
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
   },
   "resourceType":"GMScript",
   "resourceVersion":"2.0",
