@@ -16,7 +16,7 @@
 // IP of the machine running server.exe
 // For a VPS: the VPS public IP,  e.g. "203.0.113.10"
 // For local: "127.0.0.1"
-#macro SERVER_IP     "127.0.0.1"
+#macro SERVER_IP     "206.189.192.97"
 
 // Lobby port (where list requests and join requests go)
 #macro LOBBY_PORT_NUM  8888
@@ -29,7 +29,7 @@
 
 // This machine's public/LAN IP — passed to server.exe so other clients
 // can find this lobby. Only used when hosting locally.
-#macro MY_PUBLIC_IP  "127.0.0.1"
+#macro MY_PUBLIC_IP  "206.189.192.97"
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  SCREEN IDs
