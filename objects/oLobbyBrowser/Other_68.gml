@@ -22,8 +22,8 @@ if (_ptype == 255 && launching) {
     game_socket = -1;
 
     // Destroy DB socket
-    network_destroy(db_socket);
-    db_socket = -1;
+    network_destroy(lobby_socket);
+    lobby_socket = -1;
 
     room_goto(rLobby);
     exit;
@@ -106,8 +106,8 @@ if (_ptype == 31) {
         global.port       = _port;
         show_debug_message("Join approved -> " + _ip + ":" + string(_port));
 
-        network_destroy(db_socket);
-        db_socket = -1;
+        network_destroy(lobby_socket);
+        lobby_socket = -1;
 
         room_goto(rLobby);
 
@@ -115,7 +115,7 @@ if (_ptype == 31) {
         status_msg = "Incorrect password. Please try again.";
     } else if (_result == 2) {
         status_msg = "That lobby no longer exists.";
-        db_request_list();
+        request_lobby_list();
     }
     exit;
 }
