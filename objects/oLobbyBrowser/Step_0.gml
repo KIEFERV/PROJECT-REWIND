@@ -22,7 +22,7 @@ if (launching) {
     launch_poll_timer--;
     if (launch_poll_timer <= 0) {
         launch_poll_timer = LAUNCH_POLL_TICKS;
-        ping_local_server();
+        ping_game_server();
         show_debug_message("Pinging 127.0.0.1:7777... (" + string(launch_timeout) + " ticks remaining)");
     }
 
@@ -91,7 +91,7 @@ if (pw_mode) {
 
     if (keyboard_check_pressed(vk_return)) {
         var _entry = ds_list_find_value(lobby_list, pw_pending_idx);
-        db_send_join(_entry[? "id"], hash_password(pw_input));
+        send_join_request(_entry[? "id"], hash_password(pw_input));
         pw_mode      = false;
         pw_input     = "";
         join_pending = true;
@@ -110,7 +110,7 @@ var _count = ds_list_size(lobby_list);
 refresh_timer++;
 if (refresh_timer >= REFRESH_TICKS && !join_pending) {
     refresh_timer = 0;
-    db_request_list();
+    request_lobby_list();
 }
 
 if (join_pending) {
@@ -136,7 +136,7 @@ if (keyboard_check_pressed(ord("C")) && !join_pending) {
 }
 
 if (keyboard_check_pressed(ord("R")) && !join_pending) {
-    db_request_list();
+    request_lobby_list();
     status_msg = "Refreshing...";
 }
 
@@ -149,7 +149,7 @@ if (keyboard_check_pressed(vk_return) && _count > 0 && !join_pending) {
         pw_pending_idx = selected_index;
         status_msg     = "Enter password:";
     } else {
-        db_send_join(_entry[? "id"], "");
+        send_join_request(_entry[? "id"], "");
         join_pending = true;
         join_timeout = JOIN_TIMEOUT_TICKS;
         status_msg   = "Joining...";
