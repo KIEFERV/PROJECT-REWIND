@@ -9,6 +9,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 //  CONFIGURATION — edit before running
 // ═══════════════════════════════════════════════════════════════════════════
+show_debug_message("HERE:"+ working_directory);
 #macro VPS_IP           "206.189.192.97"
 #macro LOBBY_PORT_NUM   8888
 #macro GAME_PORT_NUM    7777
