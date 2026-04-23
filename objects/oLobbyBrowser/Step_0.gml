@@ -1,3 +1,40 @@
+// ════════════════════════════════════════════════════════════════════════════
+//  SCREEN: SETUP — first-run firewall permission
+// ════════════════════════════════════════════════════════════════════════════
+if (current_screen == SCREEN_SETUP) {
+    setup_timer++;
+
+    // Phase 0 — launch server.exe to trigger Windows firewall dialog
+    if (setup_phase == 0 && setup_timer == game_get_speed(gamespeed_fps) / 2) {
+        run_firewall_setup();
+        setup_phase = 1;
+        status_msg  = "Please allow network access if prompted by Windows.";
+    }
+
+    // Phase 1 — wait for player to interact with firewall dialog
+    if (setup_phase == 1 && setup_timer >= SETUP_DURATION) {
+        // Kill the setup server.exe
+        execute_shell_simple("taskkill", "/F /IM server.exe", "", 0, "");
+        setup_phase = 2;
+        complete_firewall_setup();
+        current_screen = SCREEN_MODE;
+        status_msg     = "";
+    }
+
+    // Player can skip by pressing any key once server has had time to start
+    if (setup_phase == 1 && setup_timer >= game_get_speed(gamespeed_fps) * 2) {
+        if (keyboard_check_pressed(vk_anykey) || mouse_check_button_pressed(mb_any)) {
+            execute_shell_simple("taskkill", "/F /IM server.exe", "", 0, "");
+            setup_phase    = 2;
+            complete_firewall_setup();
+            current_screen = SCREEN_MODE;
+            status_msg     = "";
+        }
+    }
+
+    exit;
+}
+
 /// Step_0 — oLobbyBrowser
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -93,7 +130,7 @@ if (current_screen == SCREEN_LAN) {
         if (disc_ping_timer >= game_get_speed(gamespeed_fps)) {
             disc_ping_timer = 0;
             send_discovery_ping();
-            show_debug_message("Sent discovery ping to 192.168.68.136:" + string(GAME_PORT_NUM));
+            show_debug_message("Sent discovery ping to 255.255.255.255:" + string(GAME_PORT_NUM));
         }
 
         // Expire stale hosts (not seen for LAN_HOST_EXPIRE ms)

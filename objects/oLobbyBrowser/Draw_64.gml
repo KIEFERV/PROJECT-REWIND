@@ -10,6 +10,38 @@ draw_set_halign(fa_center);
 draw_set_valign(fa_top);
 
 // ════════════════════════════════════════════════════════════════════════════
+//  SCREEN: SETUP
+// ════════════════════════════════════════════════════════════════════════════
+if (current_screen == SCREEN_SETUP) {
+    draw_set_color(c_black);
+    draw_set_alpha(1);
+    draw_rectangle(0, 0, _gw, _gh, false);
+
+    draw_set_halign(fa_center);
+    draw_set_color(c_white);
+    draw_text(_cx, _cy - 60, "NETWORK SETUP");
+
+    draw_set_color(c_ltgray);
+    draw_text(_cx, _cy - 20, status_msg);
+
+    if (setup_phase == 0) {
+        draw_set_color(c_dkgray);
+        draw_text(_cx, _cy + 20, "Starting...");
+    } else if (setup_phase == 1) {
+        draw_set_color(c_yellow);
+        draw_text(_cx, _cy + 20, "If a Windows Security Alert appears,");
+        draw_text(_cx, _cy + 44, "click "Allow Access" to enable multiplayer.");
+        draw_set_color(c_dkgray);
+        draw_text(_cx, _cy + 80, "Press any key to continue once done.");
+    }
+
+    var _dots = string_repeat(".", (current_time div 400) mod 4);
+    draw_set_color(c_dkgray);
+    draw_text(_cx, _cy + 110, _dots);
+    exit;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 //  LAUNCH OVERLAY
 // ════════════════════════════════════════════════════════════════════════════
 if (launching) {

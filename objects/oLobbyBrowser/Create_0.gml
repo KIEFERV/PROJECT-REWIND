@@ -1,6 +1,7 @@
 /// Create_0 — oLobbyBrowser
 ///
 /// Screen flow:
+///   SCREEN_SETUP  — first launch only: triggers Windows firewall dialog
 ///   SCREEN_MODE   — player picks ONLINE or LAN
 ///   SCREEN_BROWSE — online lobby list
 ///   SCREEN_CREATE — create a new lobby (online or LAN)
@@ -19,6 +20,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 //  SCREEN IDs
 // ═══════════════════════════════════════════════════════════════════════════
+#macro SCREEN_SETUP   4   // first-run firewall setup
 #macro SCREEN_MODE    0
 #macro SCREEN_BROWSE  1
 #macro SCREEN_CREATE  2
@@ -29,13 +31,10 @@ active_server_ip = VPS_IP;
 is_lan_mode      = false;
 
 // ─── Sockets ──────────────────────────────────────────────────────────────
-// lobby_socket — unbound, used for sending requests and receiving responses
 lobby_socket   = network_create_socket(network_socket_udp);
 game_socket    = -1;
-disc_socket    = -1;   // not used — discovery is request/reply via lobby_socket
+disc_socket    = -1;
 current_screen = SCREEN_MODE;
-
-show_debug_message("lobby_socket=" + string(lobby_socket));
 
 // ─── Connection globals ───────────────────────────────────────────────────
 global.my_pid            = 0;
@@ -56,6 +55,7 @@ lan_hosts       = ds_map_create();
 lan_host_times  = ds_map_create();
 LAN_HOST_EXPIRE = 3000;
 lan_selected    = 0;
+disc_ping_timer = 0;
 
 // ─── Join flow ────────────────────────────────────────────────────────────
 join_pending       = false;
@@ -90,6 +90,28 @@ create_pending   = false;
 create_timeout   = 0;
 CREATE_TIMEOUT   = 5 * game_get_speed(gamespeed_fps);
 
+// ─── First-run firewall setup ─────────────────────────────────────────────
+// Check if firewall setup has been done before (stored in ini file)
+ini_open("project_rewind_settings.ini");
+var _setup_done = ini_read_real("Network", "firewall_setup_done", 0);
+ini_close();
+
+if (_setup_done == 0) {
+    // First launch — show setup screen
+    current_screen  = SCREEN_SETUP;
+    setup_timer     = 0;
+    // 4 seconds: 2s for server to start + 2s for player to see firewall dialog
+    SETUP_DURATION  = 4 * game_get_speed(gamespeed_fps);
+    setup_phase     = 0;  // 0=launching, 1=waiting, 2=done
+    status_msg      = "Setting up network permissions...";
+    show_debug_message("First launch — running firewall setup");
+} else {
+    setup_timer    = 0;
+    SETUP_DURATION = 0;
+    setup_phase    = 2;
+    show_debug_message("Firewall setup already done — skipping");
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 //  FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -105,6 +127,22 @@ function hash_password(_pw) {
     for (var _b = 7; _b >= 0; _b--)
         _hex += string_char_at(_digits, ((_h >> (_b * 4)) & 0xF) + 1);
     return _hex;
+}
+
+/// @desc Launch server.exe briefly to trigger Windows firewall dialog
+function run_firewall_setup() {
+    var _args = "\"Setup\"";
+    var _server_dir = filename_dir(SERVER_EXE) + "\\";
+    execute_shell_simple(SERVER_EXE, _args, "open", 1, _server_dir);
+    show_debug_message("Firewall setup: launched server.exe to trigger Windows dialog");
+}
+
+/// @desc Mark firewall setup as complete and save to ini
+function complete_firewall_setup() {
+    ini_open("project_rewind_settings.ini");
+    ini_write_real("Network", "firewall_setup_done", 1);
+    ini_close();
+    show_debug_message("Firewall setup complete — saved to ini");
 }
 
 /// @desc Request lobby list from Droplet
@@ -144,29 +182,24 @@ function ping_game_server() {
     buffer_delete(_b);
 }
 
-/// @desc Send CREATE_LOBBY_REQUEST (type 50) to the Droplet manager.
-/// Manager spawns a server instance and replies with type 51 + assigned port.
+/// @desc Send CREATE_LOBBY_REQUEST (type 50) to the Droplet manager
 function send_online_create_request() {
     var _pw_arg = "";
     if (create_private && create_pw != "")
         _pw_arg = hash_password(create_pw);
 
-    // Strip double-quote characters from name to avoid arg parsing issues
     var _safe_name = string_replace_all(create_name, "\"", "");
     if (string_trim(_safe_name) == "") _safe_name = "My Lobby";
 
     var _has_pw = (_pw_arg != "");
-
     var _b = buffer_create(128, buffer_grow, 1);
-    buffer_write(_b, buffer_u8, 50);   // PKT_CREATE_REQUEST
+    buffer_write(_b, buffer_u8, 50);
 
-    // length-prefixed lobby name
     var _nlen = min(string_length(_safe_name), 63);
     buffer_write(_b, buffer_u8, _nlen);
     for (var _i = 1; _i <= _nlen; _i++)
         buffer_write(_b, buffer_u8, ord(string_char_at(_safe_name, _i)));
 
-    // password flag + hash
     buffer_write(_b, buffer_u8, _has_pw ? 1 : 0);
     if (_has_pw) {
         var _plen = min(string_length(_pw_arg), 63);
@@ -184,12 +217,9 @@ function send_online_create_request() {
     show_debug_message("CREATE_REQUEST -> " + VPS_IP + ":" + string(MANAGER_PORT_NUM));
 }
 
-/// @desc Launch server.exe locally — used for LAN hosting only.
-/// No lobby name or password — always public, name is fixed.
+/// @desc Launch server.exe locally — LAN hosting only
 function launch_server_and_host() {
-    // Fixed name for LAN — no form needed
     var _args = "\"Local Game\"";
-
     var _server_dir = filename_dir(SERVER_EXE) + "\\";
     execute_shell_simple(SERVER_EXE, _args, "open", 1, _server_dir);
     show_debug_message("Launched LAN server: " + SERVER_EXE + " " + _args);
@@ -208,27 +238,29 @@ function launch_server_and_host() {
     status_msg        = "Starting server...";
 }
 
-/// @desc Start LAN discovery — send type-41 pings via broadcast.
-/// server.exe replies directly with type-40 to whoever pinged.
-/// No special socket binding needed — lobby_socket receives the replies.
+/// @desc Start LAN discovery
 function open_disc_socket() {
-    show_debug_message("LAN discovery started — pinging " + string(GAME_PORT_NUM));
-    // Pings are sent from Step event every second
+    disc_ping_timer = 0;
+    show_debug_message("LAN discovery started");
 }
 
-/// @desc Send a type-41 discovery ping to broadcast address
+/// @desc Send type-41 discovery pings to common subnet broadcasts
 function send_discovery_ping() {
     var _b = buffer_create(1, buffer_fixed, 1);
-    buffer_write(_b, buffer_u8, 41);   // PKT_DISCOVERY_PING
-    // Send to broadcast address on game port — server replies directly
-    network_send_udp_raw(lobby_socket, "192.168.68.136", GAME_PORT_NUM, _b, 1);
+    buffer_write(_b, buffer_u8, 41);
+
+    network_send_udp_raw(lobby_socket, "192.168.0.255",   GAME_PORT_NUM, _b, 1);
+    network_send_udp_raw(lobby_socket, "192.168.1.255",   GAME_PORT_NUM, _b, 1);
+    network_send_udp_raw(lobby_socket, "192.168.2.255",   GAME_PORT_NUM, _b, 1);
+    network_send_udp_raw(lobby_socket, "192.168.68.255",  GAME_PORT_NUM, _b, 1);
+    network_send_udp_raw(lobby_socket, "192.168.100.255", GAME_PORT_NUM, _b, 1);
+    network_send_udp_raw(lobby_socket, "10.0.0.255",      GAME_PORT_NUM, _b, 1);
+
     buffer_delete(_b);
 }
 
 /// @desc Close LAN discovery and clear host list
 function close_disc_socket() {
-    // Don't destroy disc_socket — keep it alive so we can re-enter LAN mode.
-    // Just clear the host list.
     var _key = ds_map_find_first(lan_hosts);
     while (!is_undefined(_key)) {
         var _entry = lan_hosts[? _key];
@@ -239,7 +271,7 @@ function close_disc_socket() {
     ds_map_clear(lan_host_times);
 }
 
-/// @desc Connect directly to a LAN host (bypass lobby browser)
+/// @desc Connect directly to a LAN host
 function lan_direct_connect(_host_ip) {
     global.ip_address        = _host_ip;
     global.port              = GAME_PORT_NUM;
@@ -249,7 +281,7 @@ function lan_direct_connect(_host_ip) {
     room_goto(rLobby);
 }
 
-/// @desc Free online lobby list ds_maps
+/// @desc Free online lobby list
 function cleanup_lobby_list() {
     if (!ds_exists(lobby_list, ds_type_list)) exit;
     for (var _i = 0; _i < ds_list_size(lobby_list); _i++) {
@@ -259,7 +291,7 @@ function cleanup_lobby_list() {
     ds_list_clear(lobby_list);
 }
 
-/// @desc Keyboard text input helper — returns updated string
+/// @desc Keyboard text input helper
 function text_input_step(_str) {
     for (var _k = 32; _k <= 126; _k++) {
         if (keyboard_check_pressed(_k)) {
@@ -273,4 +305,4 @@ function text_input_step(_str) {
     return _str;
 }
 
-show_debug_message("LobbyBrowser ready. VPS=" + VPS_IP + " lobby_socket=" + string(lobby_socket));
+show_debug_message("LobbyBrowser ready. VPS=" + VPS_IP);
