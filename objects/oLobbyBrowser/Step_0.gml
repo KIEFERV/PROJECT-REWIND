@@ -50,8 +50,7 @@ if (current_screen == SCREEN_MODE) {
     // L — LAN
     if (keyboard_check_pressed(ord("L"))) {
         is_lan_mode      = true;
-        active_server_ip = "127.0.0.1";  // host connects locally
-        active_public_ip = "127.0.0.1";  // unused — server auto-detects its IP
+        active_server_ip = "127.0.0.1";
         current_screen   = SCREEN_LAN;
         status_msg       = "Searching for hosts...";
         lan_join_mode    = true;
