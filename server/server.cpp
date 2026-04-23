@@ -914,14 +914,21 @@ int main(int argc, char* argv[]) {
         }
 
         // ── Timeout stale game clients ────────────────────────────────────
+        bool hostTimedOut = false;
         for (auto it = players.begin(); it != players.end(); ) {
             auto age = std::chrono::duration_cast<std::chrono::seconds>(
                            now - it->second.lastSeen).count();
             if (age > TIMEOUT_S) {
                 std::cout << "Timeout: " << it->first << "\n";
+                if (it->second.pid == 1) hostTimedOut = true;
                 broadcast_player_left(gameSock, it->second.pid, it->first);
                 it = players.erase(it);
             } else ++it;
+        }
+        if (hostTimedOut) {
+            std::cout << "Host timed out — deleting lobby and shutting down.\n";
+            supabase_deregister_lobby();
+            goto shutdown;
         }
         if (players.empty() && nextPid != 1) reset_lobby();
 
@@ -1002,10 +1009,17 @@ int main(int argc, char* argv[]) {
             // 9 disconnect
             if (type == PKT_DISCONNECT) {
                 if (players.count(key)) {
-                    std::cout << "Disconnect: " << key << "\n";
-                    broadcast_player_left(gameSock, players[key].pid, key);
+                    uint16_t leavingPid = players[key].pid;
+                    std::cout << "Disconnect: " << key << " pid=" << leavingPid << "\n";
+                    broadcast_player_left(gameSock, leavingPid, key);
                     players.erase(key);
                     supabase_update_players((int)players.size());
+                    if (leavingPid == 1) {
+                        // Host left — delete lobby and shut down
+                        std::cout << "Host disconnected — deleting lobby and shutting down.\n";
+                        supabase_deregister_lobby();
+                        goto shutdown;
+                    }
                     if (players.empty()) reset_lobby();
                 }
                 continue;
@@ -1114,6 +1128,7 @@ int main(int argc, char* argv[]) {
 
     } // end main loop
 
+shutdown:
     supabase_deregister_lobby();
 #ifdef _WIN32
     closesocket(gameSock); closesocket(lobbySock);
