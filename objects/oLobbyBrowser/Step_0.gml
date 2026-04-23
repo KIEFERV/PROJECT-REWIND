@@ -3,6 +3,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 //  SERVER LAUNCH POLLING
 // ════════════════════════════════════════════════════════════════════════════
+show_debug_message("Step: screen=" + string(current_screen) + " L=" + string(keyboard_check_pressed(ord("L"))));
 if (launching) {
     launch_timeout--;
     if (launch_timeout <= 0) {
