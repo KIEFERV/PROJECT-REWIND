@@ -109,7 +109,7 @@
 //  CONFIGURATION — set these to your Supabase project values
 // ═══════════════════════════════════════════════════════════════════════════
 #define SUPABASE_URL  "https://zqnvimeyzogmtgydrkuz.supabase.co"
-#define SUPABASE_KEY  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxbnZpbWV5em9nbXRneWRya3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MjcwNzEsImV4cCI6MjA5MjMwMzA3MX0.vRLJw3_Ve6Az-0K2PJphwg8cE9juG4y2p7VYMPbR5io"
+#define SUPABASE_KEY  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxbnZpbWV5em9nbXRneWRya3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MjcwNzEsImV4cCI6MjA5MjMwMzA3MX0.vRLJw3_Ve6Az-0K2PJphwg8cE9juG4y2p7VYMPbR5ioyour-anon-public-key-here"
 
 // ── Fixed server config ───────────────────────────────────────────────────
 static const uint16_t GAME_PORT   = 7777;
@@ -660,6 +660,7 @@ void reset_lobby() {
 void run_as_manager(const std::string& dropletIp) {
     std::map<uint16_t, pid_t> portInUse;
 
+    // Manager socket — handles create requests on port 9999
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     sockaddr_in addr{};
     addr.sin_family      = AF_INET;
@@ -670,17 +671,31 @@ void run_as_manager(const std::string& dropletIp) {
         return;
     }
 
-    // 1 second timeout so we can reap children regularly
+    // Lobby socket — handles list/join requests on port 8888
+    int lobbySock = socket(AF_INET, SOCK_DGRAM, 0);
+    sockaddr_in lobbyAddr{};
+    lobbyAddr.sin_family      = AF_INET;
+    lobbyAddr.sin_port        = htons(LOBBY_PORT);
+    lobbyAddr.sin_addr.s_addr = INADDR_ANY;
+    if (bind(lobbySock, (sockaddr*)&lobbyAddr, sizeof(lobbyAddr)) < 0) {
+        std::cerr << "Manager: bind failed on lobby port " << LOBBY_PORT << "\n";
+        return;
+    }
+
+    // 1 second timeout on manager socket; lobby socket uses 1ms
     struct timeval tv; tv.tv_sec = 1; tv.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    struct timeval tvLobby; tvLobby.tv_sec = 0; tvLobby.tv_usec = 1000;
+    setsockopt(lobbySock, SOL_SOCKET, SO_RCVTIMEO, &tvLobby, sizeof(tvLobby));
 
     std::cout << "=== Lobby Manager ===\n"
-              << "  Listening on UDP port " << MANAGER_PORT << "\n"
-              << "  Public IP : " << dropletIp << "\n"
-              << "  Port pool : " << PORT_MIN << "-" << PORT_MAX << "\n"
+              << "  Manager port : " << MANAGER_PORT << "\n"
+              << "  Lobby port   : " << LOBBY_PORT << "\n"
+              << "  Public IP    : " << dropletIp << "\n"
+              << "  Port pool    : " << PORT_MIN << "-" << PORT_MAX << "\n"
               << "=====================\n";
 
-    char buf[256];
+    char buf[1500];
     sockaddr_in src{};
     socklen_t srcLen = sizeof(src);
 
@@ -782,9 +797,32 @@ void run_as_manager(const std::string& dropletIp) {
             memcpy(reply + 2, &port, 2);
             sendto(sock, reply, 4, 0, (sockaddr*)&src, srcLen);
         }
+        // ── Drain lobby socket (list and join requests) ───────────────
+        char lbuf[512];
+        sockaddr_in lsrc{};
+        socklen_t lsrcLen = sizeof(lsrc);
+        while (true) {
+            int lbytes = recvfrom(lobbySock, lbuf, sizeof(lbuf) - 1, 0,
+                                  (sockaddr*)&lsrc, &lsrcLen);
+            if (lbytes <= 0) break;
+            uint8_t ltype = (uint8_t)lbuf[0];
+            if (ltype == PKT_LIST_REQUEST) {
+                send_lobby_list(lobbySock, lsrc);
+            } else if (ltype == PKT_JOIN_REQUEST_DB && lbytes >= 6) {
+                uint16_t id_lo, id_hi;
+                memcpy(&id_lo, lbuf + 1, 2);
+                memcpy(&id_hi, lbuf + 3, 2);
+                int64_t lobbyId = (int64_t)id_lo | ((int64_t)id_hi << 16);
+                uint8_t hasPw   = (uint8_t)lbuf[5];
+                std::string cpw;
+                if (hasPw) lp_read(lbuf, 6, lbytes, cpw);
+                handle_join_request(lobbySock, lsrc, lobbyId, hasPw != 0, cpw);
+            }
+        }
     }
 
     close(sock);
+    close(lobbySock);
 }
 #endif  // !_WIN32
 
