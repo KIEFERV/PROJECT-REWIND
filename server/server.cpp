@@ -172,7 +172,9 @@ struct Player {
 
 std::map<std::string, Player> players;
 uint16_t nextPid      = 1;
-bool     matchRunning = false;
+bool     matchRunning   = false;
+bool     matchJustEnded = false;
+TimePoint matchEndTime;
 int      matchDuration = 180;
 int      timeRemaining = 180;
 TimePoint lastTimerBroadcast;
@@ -936,15 +938,29 @@ int main(int argc, char* argv[]) {
                     char ep[1] = { PKT_MATCH_END_BC };
                     broadcast(gameSock, ep, 1, "");
                     supabase_match_end();
-                    // Reset lobby state so players can play again
-                    players.clear();
-                    nextPid = 1;
-                    std::cout << "Lobby reset — ready for next match.\n";
+                    // Clear players so they re-register fresh when returning to lobby
+                    // Small delay allows the broadcast to be sent first
+                    matchJustEnded = true;
+                    matchEndTime   = Clock::now();
                 }
                 char tp[3]; tp[0] = PKT_TIMER;
                 uint16_t t = (uint16_t)timeRemaining;
                 memcpy(tp + 1, &t, 2);
                 broadcast(gameSock, tp, 3, "");
+            }
+        }
+
+        // ── Post-match reset ──────────────────────────────────────────
+        // After match ends, wait 1 second then clear player list so
+        // returning players re-register cleanly with fresh pids.
+        if (matchJustEnded) {
+            auto sinceEnd = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                Clock::now() - matchEndTime).count();
+            if (sinceEnd >= 2000) {
+                players.clear();
+                nextPid        = 1;
+                matchJustEnded = false;
+                std::cout << "Lobby reset — ready for next match.\n";
             }
         }
 
