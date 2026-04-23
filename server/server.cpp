@@ -108,8 +108,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 //  CONFIGURATION — set these to your Supabase project values
 // ═══════════════════════════════════════════════════════════════════════════
-#define SUPABASE_URL  "https://zqnvimeyzogmtgydrkuz.supabase.co"
-#define SUPABASE_KEY  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxbnZpbWV5em9nbXRneWRya3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MjcwNzEsImV4cCI6MjA5MjMwMzA3MX0.vRLJw3_Ve6Az-0K2PJphwg8cE9juG4y2p7VYMPbR5io"
+#define SUPABASE_URL  "https://your-project-id.supabase.co"
+#define SUPABASE_KEY  "your-anon-public-key-here"
 
 // ── Fixed server config ───────────────────────────────────────────────────
 static const uint16_t GAME_PORT   = 7777;
@@ -952,6 +952,19 @@ int main(int argc, char* argv[]) {
 
             std::string key  = addrKey(src);
             uint8_t     type = (uint8_t)gameBuf[0];
+
+            // 41 discovery ping — reply with lobby info directly to sender
+            if (type == PKT_DISCOVERY_PING) {
+                char disc[128]; int doff = 0;
+                disc[doff++] = PKT_DISCOVERY;
+                doff += lp_write(disc, doff, lobbyName);
+                disc[doff++] = (uint8_t)players.size();
+                disc[doff++] = MAX_PLAYERS;
+                disc[doff++] = pwHash.empty() ? 0 : 1;
+                sendto(gameSock, disc, doff, 0, (sockaddr*)&src, srcLen);
+                std::cout << "Discovery ping from " << addrKey(src) << " -> replied\n";
+                continue;
+            }
 
             // 255 ping — echo, no registration
             if (type == 255) {
