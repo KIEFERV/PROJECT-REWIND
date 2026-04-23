@@ -10,4 +10,4 @@ if (ds_exists(lan_host_times, ds_type_map)) ds_map_destroy(lan_host_times);
 
 if (lobby_socket >= 0) network_destroy(lobby_socket);
 if (game_socket  >= 0) network_destroy(game_socket);
-if (disc_socket  >= 0) network_destroy(disc_socket);
+// disc_socket not used in request-reply discovery mode

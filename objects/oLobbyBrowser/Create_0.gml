@@ -32,12 +32,10 @@ is_lan_mode      = false;
 // lobby_socket — unbound, used for sending requests and receiving responses
 lobby_socket   = network_create_socket(network_socket_udp);
 game_socket    = -1;
-// disc_socket — bound to DISC_PORT_NUM (7779) to receive LAN discovery broadcasts
-disc_socket    = network_create_socket_ext(network_socket_udp, DISC_PORT_NUM);
+disc_socket    = -1;   // not used — discovery is request/reply via lobby_socket
 current_screen = SCREEN_MODE;
 
-show_debug_message("lobby_socket=" + string(lobby_socket)
-    + " disc_socket=" + string(disc_socket));
+show_debug_message("lobby_socket=" + string(lobby_socket));
 
 // ─── Connection globals ───────────────────────────────────────────────────
 global.my_pid            = 0;
@@ -210,12 +208,21 @@ function launch_server_and_host() {
     status_msg        = "Starting server...";
 }
 
-/// @desc Open LAN discovery socket bound to DISC_PORT_NUM (7779)
+/// @desc Start LAN discovery — send type-41 pings via broadcast.
+/// server.exe replies directly with type-40 to whoever pinged.
+/// No special socket binding needed — lobby_socket receives the replies.
 function open_disc_socket() {
-    // disc_socket is created at startup bound to DISC_PORT_NUM
-    // Nothing extra needed — just log confirmation
-    show_debug_message("LAN discovery socket=" + string(disc_socket)
-        + " on port " + string(DISC_PORT_NUM));
+    show_debug_message("LAN discovery started — pinging " + string(GAME_PORT_NUM));
+    // Pings are sent from Step event every second
+}
+
+/// @desc Send a type-41 discovery ping to broadcast address
+function send_discovery_ping() {
+    var _b = buffer_create(1, buffer_fixed, 1);
+    buffer_write(_b, buffer_u8, 41);   // PKT_DISCOVERY_PING
+    // Send to broadcast address on game port — server replies directly
+    network_send_udp_raw(lobby_socket, "255.255.255.255", GAME_PORT_NUM, _b, 1);
+    buffer_delete(_b);
 }
 
 /// @desc Close LAN discovery and clear host list

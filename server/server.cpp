@@ -108,8 +108,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 //  CONFIGURATION — set these to your Supabase project values
 // ═══════════════════════════════════════════════════════════════════════════
-#define SUPABASE_URL  "https://your-project-id.supabase.co"
-#define SUPABASE_KEY  "your-anon-public-key-here"
+#define SUPABASE_URL  "https://zqnvimeyzogmtgydrkuz.supabase.co"
+#define SUPABASE_KEY  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxbnZpbWV5em9nbXRneWRya3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MjcwNzEsImV4cCI6MjA5MjMwMzA3MX0.vRLJw3_Ve6Az-0K2PJphwg8cE9juG4y2p7VYMPbR5io"
 
 // ── Fixed server config ───────────────────────────────────────────────────
 static const uint16_t GAME_PORT   = 7777;
@@ -131,7 +131,8 @@ static const int      TIMEOUT_S   = 5;
 #define PKT_JOIN_REQUEST  10
 #define PKT_KILL_REPORT   11
 #define PKT_KEEPALIVE     12
-#define PKT_DISCOVERY     40  // LAN broadcast — clients listen for this
+#define PKT_DISCOVERY     40  // server reply to a discovery ping
+#define PKT_DISCOVERY_PING 41 // joiner sends this to game port; server replies type-40
 
 // ── Lobby packet types (client <-> server, lobby port) ────────────────────
 #define PKT_LIST_REQUEST    25
@@ -877,19 +878,7 @@ int main(int argc, char* argv[]) {
     int gameSock  = make_udp_sock(gamePort,  1);
     int lobbySock = make_udp_sock(lobbyPort, 1);
 
-    // ── Discovery broadcast socket ────────────────────────────────────────
-    // Does NOT bind to a port — it only sends. Enable SO_BROADCAST.
-    int discSock = socket(AF_INET, SOCK_DGRAM, 0);
-    int bcast = 1;
-    setsockopt(discSock, SOL_SOCKET, SO_BROADCAST, SOCKOPT_CAST &bcast, sizeof(bcast));
-    // 1ms recv timeout
-#ifdef _WIN32
-    DWORD discTo = 1;
-    setsockopt(discSock, SOL_SOCKET, SO_RCVTIMEO, SOCKOPT_CAST &discTo, sizeof(discTo));
-#else
-    struct timeval discTo; discTo.tv_sec = 0; discTo.tv_usec = 1000;
-    setsockopt(discSock, SOL_SOCKET, SO_RCVTIMEO, SOCKOPT_CAST &discTo, sizeof(discTo));
-#endif
+    // No broadcast socket needed — discovery is request/reply based
 
     // ── Register lobby in Supabase ────────────────────────────────────────
     supabase_register_lobby();
@@ -910,36 +899,10 @@ int main(int argc, char* argv[]) {
     lastTimerBroadcast = Clock::now();
 
     TimePoint lastPlayerCountUpdate = Clock::now();
-    TimePoint lastDiscoveryBroadcast = Clock::now();  // LAN discovery
 
     while (true) {
         auto now = Clock::now();
 
-        // ── LAN discovery broadcast (every 1 second) ──────────────────────
-        // Sends a type-40 packet to 255.255.255.255 on the LOBBY_PORT (8888).
-        // Clients receive it on their existing lobby_socket — no separate
-        // discovery socket needed, avoiding GML socket binding issues.
-        if (std::chrono::duration_cast<std::chrono::seconds>(
-                now - lastDiscoveryBroadcast).count() >= 1) {
-            lastDiscoveryBroadcast = now;
-
-            char disc[128]; int doff = 0;
-            disc[doff++] = PKT_DISCOVERY;
-            doff += lp_write(disc, doff, lobbyName);
-            disc[doff++] = (uint8_t)players.size();
-            disc[doff++] = MAX_PLAYERS;
-            disc[doff++] = pwHash.empty() ? 0 : 1;
-
-            sockaddr_in bcastAddr{};
-            bcastAddr.sin_family      = AF_INET;
-            bcastAddr.sin_port        = htons(DISC_PORT);  // dedicated discovery port 7779
-            bcastAddr.sin_addr.s_addr = inet_addr("255.255.255.255");
-            int sent = sendto(discSock, disc, doff, 0,
-                   (sockaddr*)&bcastAddr, sizeof(bcastAddr));
-            std::cout << "Discovery broadcast sent to 255.255.255.255:"
-                      << DISC_PORT << " bytes=" << doff
-                      << " result=" << sent << "\n";
-        }
 
         // ── Periodic player count sync to Supabase (every 5s) ────────────
         if (std::chrono::duration_cast<std::chrono::seconds>(
@@ -1120,10 +1083,10 @@ int main(int argc, char* argv[]) {
 
     supabase_deregister_lobby();
 #ifdef _WIN32
-    closesocket(gameSock); closesocket(lobbySock); closesocket(discSock);
+    closesocket(gameSock); closesocket(lobbySock);
     WSACleanup();
 #else
-    close(gameSock); close(lobbySock); close(discSock);
+    close(gameSock); close(lobbySock);
     curl_global_cleanup();
 #endif
     return 0;
