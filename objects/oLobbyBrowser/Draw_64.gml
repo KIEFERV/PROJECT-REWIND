@@ -222,7 +222,7 @@ if (current_screen == SCREEN_LAN) {
         draw_text(_cx, _form_y, "ENTER — Host Lobby");
         draw_set_color(c_dkgray);
         draw_text(_cx, _form_y + 22,
-            "Others join with your IP: " + MY_LAN_IP);
+            "Host a game and others on your network can join automatically.");
     }
 
     // Bottom hints
