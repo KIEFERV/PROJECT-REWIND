@@ -134,10 +134,21 @@ static const int      TIMEOUT_S   = 5;
 #define PKT_DISCOVERY     40  // LAN broadcast — clients listen for this
 
 // ── Lobby packet types (client <-> server, lobby port) ────────────────────
-#define PKT_LIST_REQUEST  25
-#define PKT_LIST_RESPONSE 26
+#define PKT_LIST_REQUEST    25
+#define PKT_LIST_RESPONSE   26
 #define PKT_JOIN_REQUEST_DB 30
 #define PKT_JOIN_RESPONSE   31
+
+// ── Manager packet types (client <-> manager port 9999) ───────────────────
+#define PKT_CREATE_REQUEST  50   // client asks manager to spawn a game server
+#define PKT_CREATE_ACK      51   // manager replies with assigned port
+#define PKT_MANAGER_PING    52   // heartbeat / connectivity check
+#define CREATE_OK           0
+#define CREATE_NO_PORTS     1
+
+static const uint16_t MANAGER_PORT = 9999;
+static const uint16_t PORT_MIN     = 7777;
+static const uint16_t PORT_MAX     = 7800;  // 24 simultaneous online lobbies
 
 // ── Join response codes ───────────────────────────────────────────────────
 #define JOIN_OK            0
@@ -168,6 +179,7 @@ TimePoint lastTimerBroadcast;
 // Supabase IDs for this server instance
 int64_t  myLobbyId = -1;
 int64_t  myMatchId = -1;
+uint16_t myGamePort = 7777;  // set at startup, used by Supabase registration
 
 // Server identity (set from argv)
 std::string lobbyName;
@@ -623,6 +635,153 @@ void reset_lobby() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+//  Manager mode  (Linux / Droplet only)
+//
+//  Usage:  ./server --manager <public_ip>
+//
+//  Listens on UDP port 9999. When a client sends a type-50 CREATE_LOBBY
+//  request, forks a new ./server child process on the next available port
+//  (7777-7800) and replies with type-51 ACK containing the assigned port.
+//  The client then polls that port with type-255 pings until the child
+//  server responds, then transitions to rLobby as the host.
+// ═══════════════════════════════════════════════════════════════════════════
+
+#ifndef _WIN32
+#include <sys/wait.h>
+#include <signal.h>
+
+void run_as_manager(const std::string& dropletIp) {
+    std::map<uint16_t, pid_t> portInUse;
+
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    sockaddr_in addr{};
+    addr.sin_family      = AF_INET;
+    addr.sin_port        = htons(MANAGER_PORT);
+    addr.sin_addr.s_addr = INADDR_ANY;
+    if (bind(sock, (sockaddr*)&addr, sizeof(addr)) < 0) {
+        std::cerr << "Manager: bind failed on port " << MANAGER_PORT << "\n";
+        return;
+    }
+
+    // 1 second timeout so we can reap children regularly
+    struct timeval tv; tv.tv_sec = 1; tv.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+
+    std::cout << "=== Lobby Manager ===\n"
+              << "  Listening on UDP port " << MANAGER_PORT << "\n"
+              << "  Public IP : " << dropletIp << "\n"
+              << "  Port pool : " << PORT_MIN << "-" << PORT_MAX << "\n"
+              << "=====================\n";
+
+    char buf[256];
+    sockaddr_in src{};
+    socklen_t srcLen = sizeof(src);
+
+    while (true) {
+        // Reap finished game server processes and free their ports
+        int status;
+        pid_t dead;
+        while ((dead = waitpid(-1, &status, WNOHANG)) > 0) {
+            for (auto it = portInUse.begin(); it != portInUse.end(); ++it) {
+                if (it->second == dead) {
+                    std::cout << "Server on port " << it->first
+                              << " exited (pid=" << dead << ")\n";
+                    portInUse.erase(it);
+                    break;
+                }
+            }
+        }
+
+        int bytes = recvfrom(sock, buf, sizeof(buf) - 1, 0,
+                             (sockaddr*)&src, &srcLen);
+        if (bytes <= 0) continue;
+
+        uint8_t type = (uint8_t)buf[0];
+
+        // 52 — ping, echo back
+        if (type == PKT_MANAGER_PING) {
+            char pong[1] = { PKT_MANAGER_PING };
+            sendto(sock, pong, 1, 0, (sockaddr*)&src, srcLen);
+            continue;
+        }
+
+        // 50 — create lobby request
+        if (type == PKT_CREATE_REQUEST && bytes >= 2) {
+            std::string lobbyName, pwHash;
+            int off = 1;
+            // read lobby name
+            if (off < bytes) {
+                uint8_t nlen = (uint8_t)buf[off++];
+                for (int i = 0; i < nlen && off < bytes; i++)
+                    lobbyName += (char)buf[off++];
+            }
+            // read password flag + hash
+            uint8_t hasPw = (off < bytes) ? (uint8_t)buf[off++] : 0;
+            if (hasPw && off < bytes) {
+                uint8_t plen = (uint8_t)buf[off++];
+                for (int i = 0; i < plen && off < bytes; i++)
+                    pwHash += (char)buf[off++];
+            }
+
+            std::cout << "Create request: \"" << lobbyName << "\""
+                      << " from " << inet_ntoa(src.sin_addr) << "\n";
+
+            // Find next free port
+            uint16_t port = 0;
+            for (uint16_t p = PORT_MIN; p <= PORT_MAX; p++) {
+                if (portInUse.find(p) == portInUse.end()) { port = p; break; }
+            }
+
+            char reply[4];
+            reply[0] = PKT_CREATE_ACK;
+
+            if (port == 0) {
+                std::cout << "No ports available.\n";
+                reply[1] = CREATE_NO_PORTS;
+                sendto(sock, reply, 2, 0, (sockaddr*)&src, srcLen);
+                continue;
+            }
+
+            // Fork a game server child
+            pid_t pid = fork();
+            if (pid == 0) {
+                // Child: exec the same binary in game-server mode
+                std::string portStr = std::to_string(port);
+                if (pwHash.empty())
+                    execl("/proc/self/exe", "server",
+                          lobbyName.c_str(), dropletIp.c_str(),
+                          portStr.c_str(), (char*)nullptr);
+                else
+                    execl("/proc/self/exe", "server",
+                          lobbyName.c_str(), dropletIp.c_str(),
+                          portStr.c_str(), pwHash.c_str(), (char*)nullptr);
+                std::cerr << "execl failed\n";
+                _exit(1);
+            }
+
+            if (pid < 0) {
+                std::cerr << "fork() failed\n";
+                reply[1] = CREATE_NO_PORTS;
+                sendto(sock, reply, 2, 0, (sockaddr*)&src, srcLen);
+                continue;
+            }
+
+            portInUse[port] = pid;
+            std::cout << "Spawned server \"" << lobbyName
+                      << "\" on port " << port
+                      << " (pid=" << pid << ")\n";
+
+            reply[1] = CREATE_OK;
+            memcpy(reply + 2, &port, 2);
+            sendto(sock, reply, 4, 0, (sockaddr*)&src, srcLen);
+        }
+    }
+
+    close(sock);
+}
+#endif  // !_WIN32
+
+// ═══════════════════════════════════════════════════════════════════════════
 //  main
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -633,6 +792,16 @@ int main(int argc, char* argv[]) {
     curl_global_init(CURL_GLOBAL_ALL);
 #endif
 
+    // ── Manager mode ─────────────────────────────────────────────────────
+    // Usage:  ./server --manager <public_ip>
+    // Runs the lobby manager instead of a game server instance.
+#ifndef _WIN32
+    if (argc >= 3 && std::string(argv[1]) == "--manager") {
+        run_as_manager(argv[2]);
+        return 0;
+    }
+#endif
+
     std::cout << "server.exe argc=" << argc << "\n";
     for (int i = 1; i < argc; i++)
         std::cout << "  argv[" << i << "] = \"" << argv[i] << "\"\n";
@@ -640,39 +809,44 @@ int main(int argc, char* argv[]) {
 
     if (argc < 2) {
         std::cerr
-            << "\nERROR: missing arguments.\n\n"
-            << "Usage:   server.exe <lobby_name> [public_ip] [password_hash]\n"
-            << "Example: server.exe \"My Lobby\"\n"
-            << "Example: server.exe \"My Lobby\" 203.0.113.10\n"
-            << "Example: server.exe \"Private\"  203.0.113.10 a3f1c9b2\n\n"
-            << "public_ip is optional — if omitted the server detects it automatically.\n"
-            << "Launched automatically by the game client.\n";
-        
+            << "\nUsage (game server): server <lobby_name> [public_ip] [port] [password_hash]\n"
+            << "Usage (manager):     server --manager <public_ip>\n\n"
+            << "Examples:\n"
+            << "  server \"My Lobby\"                    (LAN — auto-detects IP)\n"
+            << "  server --manager 203.0.113.10         (Droplet manager mode)\n";
         return 1;
     }
 
     lobbyName = argv[1];
 
-    // ── Winsock must be started before get_lan_ip() ───────────────────────
-    
-
-    // Detect LAN IP first so it's available for all cases
+    // Detect LAN IP — on Droplet this is the public IP, on home PC it's LAN IP
     std::string detectedIp = get_lan_ip();
 
-    // public_ip argument: if second arg looks like an IP use it,
-    // otherwise treat it as the password hash (future-proofing) or skip it.
-    // Simple heuristic: if it contains a dot it's an IP, otherwise it's a hash.
-    if (argc >= 3 && std::string(argv[2]).find('.') != std::string::npos) {
-        publicIp = argv[2];
-        pwHash   = (argc >= 4) ? argv[3] : "";
-    } else {
-        publicIp = detectedIp;
-        pwHash   = (argc >= 3) ? argv[2] : "";
+    // Parse remaining args: [public_ip] [port] [password_hash]
+    // Manager passes: <name> <public_ip> <port> [pw_hash]
+    // GML LAN passes: <name> [pw_hash]
+    // All args after name are classified by content:
+    //   contains dot      → IP override
+    //   all digits        → port override
+    //   anything else     → password hash
+    uint16_t portOverride = 0;
+    for (int i = 2; i < argc; i++) {
+        std::string a = argv[i];
+        if (a.find('.') != std::string::npos) {
+            publicIp = a;
+        } else if (!a.empty() && a.find_first_not_of("0123456789") == std::string::npos) {
+            portOverride = (uint16_t)std::stoi(a);
+        } else {
+            pwHash = a;
+        }
     }
+    if (publicIp.empty()) publicIp = detectedIp;
 
     std::cout << "LAN IP detected: " << detectedIp << "\n";
     if (publicIp != detectedIp)
         std::cout << "Using override IP: " << publicIp << "\n";
+    if (portOverride > 0)
+        std::cout << "Port override: " << portOverride << "\n";
 
     auto make_udp_sock = [](uint16_t port, int timeoutMs) -> int {
         int s = (int)socket(AF_INET, SOCK_DGRAM, 0);
@@ -697,8 +871,11 @@ int main(int argc, char* argv[]) {
         return s;
     };
 
-    int gameSock  = make_udp_sock(GAME_PORT,  1);
-    int lobbySock = make_udp_sock(LOBBY_PORT, 1);
+    uint16_t gamePort  = (portOverride > 0) ? portOverride : GAME_PORT;
+    myGamePort = gamePort;
+    uint16_t lobbyPort = (portOverride > 0) ? (uint16_t)(portOverride + 1111) : LOBBY_PORT;
+    int gameSock  = make_udp_sock(gamePort,  1);
+    int lobbySock = make_udp_sock(lobbyPort, 1);
 
     // ── Discovery broadcast socket ────────────────────────────────────────
     // Does NOT bind to a port — it only sends. Enable SO_BROADCAST.
@@ -719,8 +896,8 @@ int main(int argc, char* argv[]) {
 
     std::cout << "\n=== Server Ready ===\n"
               << "  Lobby    : " << lobbyName << "\n"
-              << "  Game port: " << GAME_PORT  << "\n"
-              << "  Lobby port: " << LOBBY_PORT << "\n"
+              << "  Game port: " << gamePort  << "\n"
+              << "  Lobby port: " << lobbyPort << "\n"
               << "  Public IP: " << publicIp   << "\n"
               << "  Password : " << (pwHash.empty() ? "none" : "set") << "\n"
               << "===================\n\n" << std::flush;
