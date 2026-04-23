@@ -808,6 +808,8 @@ void run_as_manager(const std::string& dropletIp) {
                                   (sockaddr*)&lsrc, &lsrcLen);
             if (lbytes <= 0) break;
             uint8_t ltype = (uint8_t)lbuf[0];
+            std::cout << "Manager lobby recv: type=" << (int)ltype
+                      << " from " << inet_ntoa(lsrc.sin_addr) << "\n";
             if (ltype == PKT_LIST_REQUEST) {
                 send_lobby_list(lobbySock, lsrc);
             } else if (ltype == PKT_JOIN_REQUEST_DB && lbytes >= 6) {
