@@ -9,13 +9,12 @@
 // ═══════════════════════════════════════════════════════════════════════════
 //  CONFIGURATION — edit before running
 // ═══════════════════════════════════════════════════════════════════════════
-show_debug_message("HERE:"+ working_directory);
 #macro VPS_IP           "206.189.192.97"
 #macro LOBBY_PORT_NUM   8888
 #macro GAME_PORT_NUM    7777
 #macro DISC_PORT_NUM    7779
 #macro MANAGER_PORT_NUM 9999
-#macro SERVER_EXE       "C:\\Users\\Kiefer\\GameMakerProjects\\PROJECT-REWIND\\server\\server.exe"
+#macro SERVER_EXE       (working_directory + "server.exe")
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  SCREEN IDs
@@ -180,9 +179,8 @@ function send_online_create_request() {
 /// Passes --lan so server registers with its auto-detected local IP in Supabase.
 function launch_server_and_host() {
     var _args = "\"Local Game\" --lan";
-    var _server_dir = filename_dir(SERVER_EXE) + "\\";
-    execute_shell_simple(SERVER_EXE, _args, "open", 1, _server_dir);
-    show_debug_message("Launched LAN server: " + _args);
+    execute_shell_simple(SERVER_EXE, _args, "open", 1, working_directory);
+    show_debug_message("Launched LAN server: " + SERVER_EXE + " " + _args);
 
     global.is_creating_lobby = true;
     global.ip_address        = "127.0.0.1";  // server runs locally
