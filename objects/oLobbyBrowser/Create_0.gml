@@ -1,11 +1,10 @@
 /// Create_0 — oLobbyBrowser
 ///
 /// Screen flow:
-///   SCREEN_SETUP  — first launch only: triggers Windows firewall dialog
 ///   SCREEN_MODE   — player picks ONLINE or LAN
 ///   SCREEN_BROWSE — online lobby list
-///   SCREEN_CREATE — create a new lobby (online or LAN)
-///   SCREEN_LAN    — LAN auto-discovery
+///   SCREEN_CREATE — create a new lobby (online)
+///   SCREEN_LAN    — LAN lobby list / host tab
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  CONFIGURATION — edit before running
@@ -101,14 +100,6 @@ function hash_password(_pw) {
     for (var _b = 7; _b >= 0; _b--)
         _hex += string_char_at(_digits, ((_h >> (_b * 4)) & 0xF) + 1);
     return _hex;
-}
-
-/// @desc Launch server.exe briefly to trigger Windows firewall dialog
-function run_firewall_setup() {
-    var _args = "\"Setup\"";
-    var _server_dir = filename_dir(SERVER_EXE) + "\\";
-    execute_shell_simple(SERVER_EXE, _args, "open", 1, _server_dir);
-    show_debug_message("Firewall setup: launched server.exe to trigger Windows dialog");
 }
 
 /// @desc Request lobby list from Droplet

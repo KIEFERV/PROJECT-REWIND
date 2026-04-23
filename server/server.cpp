@@ -939,9 +939,13 @@ int main(int argc, char* argv[]) {
 
     uint16_t gamePort  = (portOverride > 0) ? portOverride : GAME_PORT;
     myGamePort = gamePort;
-    uint16_t lobbyPort = (portOverride > 0) ? (uint16_t)(portOverride + 1111) : LOBBY_PORT;
-    int gameSock  = make_udp_sock(gamePort,  1);
-    int lobbySock = make_udp_sock(lobbyPort, 1);
+    // Manager-spawned instances (portOverride > 0) don't bind the lobby port —
+    // the manager handles all list/join requests on port 8888.
+    // LAN host (no port override) binds lobby port normally.
+    uint16_t lobbyPort = (portOverride > 0) ? 0 : LOBBY_PORT;
+    int gameSock  = make_udp_sock(gamePort, 1);
+    int lobbySock = (lobbyPort > 0) ? make_udp_sock(lobbyPort, 1)
+                                    : (int)socket(AF_INET, SOCK_DGRAM, 0);
 
     // No broadcast socket needed — discovery is request/reply based
 
