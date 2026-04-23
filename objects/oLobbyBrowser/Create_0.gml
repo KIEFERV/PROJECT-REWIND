@@ -21,9 +21,7 @@
 // Full path to server.exe (used when hosting locally — LAN or online from this PC)
 #macro SERVER_EXE    "C:\\Users\\Kiefer\\GameMakerProjects\\PROJECT-REWIND\\server\\server.exe"
 
-// This machine's LAN IP (used when hosting a LAN game)
-// Change this to your local network IP e.g. "192.168.1.50"
-#macro MY_LAN_IP     "127.0.0.1"
+// No MY_LAN_IP or MY_PUBLIC_IP needed — server.exe auto-detects its own IP.
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  SCREEN IDs
@@ -33,10 +31,8 @@
 #macro SCREEN_CREATE  2   // create lobby form
 #macro SCREEN_LAN     3   // LAN direct connect
 
-// ─── Active connection target (set when player picks online/LAN) ──────────
-// These are variables, not macros, so they can be changed at runtime.
+// ─── Active connection target ─────────────────────────────────────────────
 active_server_ip   = VPS_IP;        // where lobby requests go
-active_public_ip   = VPS_IP;        // what IP this machine advertises
 is_lan_mode        = false;
 
 // ─── Sockets ──────────────────────────────────────────────────────────────
@@ -153,8 +149,10 @@ function launch_server_and_host() {
     var _safe_name = string_replace_all(create_name, "\"", "");
     if (_safe_name == "") _safe_name = "My Lobby";
 
-    // server.exe now takes: <lobby_name> [password_hash]
-    // public_ip is detected automatically by the server
+    // server.exe detects its own IP automatically via get_lan_ip():
+    //   On the Droplet  → returns the public IP  (e.g. 206.x.x.x)
+    //   On a home PC    → returns the LAN IP     (e.g. 192.168.x.x)
+    // No need to pass it — just lobby name and optional password hash.
     var _args = "\"" + _safe_name + "\"";
     if (_pw_arg != "") _args += " " + _pw_arg;
 

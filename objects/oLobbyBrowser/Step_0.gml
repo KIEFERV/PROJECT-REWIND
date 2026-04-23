@@ -29,7 +29,6 @@ if (current_screen == SCREEN_MODE) {
     if (keyboard_check_pressed(ord("O"))) {
         is_lan_mode      = false;
         active_server_ip = VPS_IP;
-        active_public_ip = VPS_IP;
         current_screen   = SCREEN_BROWSE;
         status_msg       = "Fetching lobbies...";
         request_lobby_list();
