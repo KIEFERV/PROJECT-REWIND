@@ -221,7 +221,7 @@ function send_discovery_ping() {
     var _b = buffer_create(1, buffer_fixed, 1);
     buffer_write(_b, buffer_u8, 41);   // PKT_DISCOVERY_PING
     // Send to broadcast address on game port — server replies directly
-    network_send_udp_raw(lobby_socket, "255.255.255.255", GAME_PORT_NUM, _b, 1);
+    network_send_udp_raw(lobby_socket, "192.168.68.136", GAME_PORT_NUM, _b, 1);
     buffer_delete(_b);
 }
 

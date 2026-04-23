@@ -93,7 +93,7 @@ if (current_screen == SCREEN_LAN) {
         if (disc_ping_timer >= game_get_speed(gamespeed_fps)) {
             disc_ping_timer = 0;
             send_discovery_ping();
-            show_debug_message("Sent discovery ping to 255.255.255.255:" + string(GAME_PORT_NUM));
+            show_debug_message("Sent discovery ping to 192.168.68.136:" + string(GAME_PORT_NUM));
         }
 
         // Expire stale hosts (not seen for LAN_HOST_EXPIRE ms)
