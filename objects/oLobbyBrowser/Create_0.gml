@@ -29,12 +29,15 @@ active_server_ip = VPS_IP;
 is_lan_mode      = false;
 
 // ─── Sockets ──────────────────────────────────────────────────────────────
-// lobby_socket is bound to LOBBY_PORT_NUM (8888) so it receives both
-// lobby list responses AND LAN discovery broadcasts from server.exe.
-lobby_socket   = network_create_socket_ext(network_socket_udp, LOBBY_PORT_NUM);
+// lobby_socket — unbound, used for sending requests and receiving responses
+lobby_socket   = network_create_socket(network_socket_udp);
 game_socket    = -1;
-disc_socket    = -1;
+// disc_socket — bound to DISC_PORT_NUM (7779) to receive LAN discovery broadcasts
+disc_socket    = network_create_socket_ext(network_socket_udp, DISC_PORT_NUM);
 current_screen = SCREEN_MODE;
+
+show_debug_message("lobby_socket=" + string(lobby_socket)
+    + " disc_socket=" + string(disc_socket));
 
 // ─── Connection globals ───────────────────────────────────────────────────
 global.my_pid            = 0;
@@ -207,17 +210,18 @@ function launch_server_and_host() {
     status_msg        = "Starting server...";
 }
 
-/// @desc Open LAN discovery — no separate socket needed.
-/// server.exe now broadcasts on the lobby port (8888) so the
-/// existing lobby_socket receives discovery packets automatically.
+/// @desc Open LAN discovery socket bound to DISC_PORT_NUM (7779)
 function open_disc_socket() {
-    // lobby_socket already handles port 8888 — nothing extra needed.
-    show_debug_message("LAN discovery ready on lobby_socket (port " + string(LOBBY_PORT_NUM) + ")");
+    // disc_socket is created at startup bound to DISC_PORT_NUM
+    // Nothing extra needed — just log confirmation
+    show_debug_message("LAN discovery socket=" + string(disc_socket)
+        + " on port " + string(DISC_PORT_NUM));
 }
 
 /// @desc Close LAN discovery and clear host list
 function close_disc_socket() {
-    // disc_socket is no longer used — just clear the host list
+    // Don't destroy disc_socket — keep it alive so we can re-enter LAN mode.
+    // Just clear the host list.
     var _key = ds_map_find_first(lan_hosts);
     while (!is_undefined(_key)) {
         var _entry = lan_hosts[? _key];

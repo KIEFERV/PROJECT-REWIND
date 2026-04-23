@@ -2,21 +2,23 @@
 
 if (async_load[? "type"] != network_type_data) exit;
 
-var _buf = async_load[? "buffer"];
+var _buf    = async_load[? "buffer"];
+var _sockid = async_load[? "id"];   // which socket received this packet
 buffer_seek(_buf, buffer_seek_start, 0);
 var _ptype = buffer_read(_buf, buffer_u8);
 
-// Debug — log all incoming packets to confirm socket is receiving
+// Debug — log all incoming packets
 show_debug_message("LobbyBrowser async: ptype=" + string(_ptype)
-    + " screen=" + string(current_screen)
-    + " lan_join=" + string(lan_join_mode));
+    + " socket=" + string(_sockid)
+    + " lobby=" + string(lobby_socket)
+    + " disc=" + string(disc_socket));
 
 // ════════════════════════════════════════════════════════════════════════════
 //  type 40 — LAN DISCOVERY broadcast from a host on the local network
 //  [u8:40][lpstr:lobby_name][u8:current_players][u8:max_players][u8:has_pw]
 //  The sender's IP is extracted from async_load and used as the host address.
 // ════════════════════════════════════════════════════════════════════════════
-if (_ptype == 40 && current_screen == SCREEN_LAN && lan_join_mode) {
+if (_ptype == 40) {
     // Read lobby info
     var _name_len = buffer_read(_buf, buffer_u8);
     var _name = "";

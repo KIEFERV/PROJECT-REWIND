@@ -932,12 +932,12 @@ int main(int argc, char* argv[]) {
 
             sockaddr_in bcastAddr{};
             bcastAddr.sin_family      = AF_INET;
-            bcastAddr.sin_port        = htons(lobbyPort);  // lobby port so clients receive on lobby_socket
+            bcastAddr.sin_port        = htons(DISC_PORT);  // dedicated discovery port 7779
             bcastAddr.sin_addr.s_addr = inet_addr("255.255.255.255");
             int sent = sendto(discSock, disc, doff, 0,
                    (sockaddr*)&bcastAddr, sizeof(bcastAddr));
             std::cout << "Discovery broadcast sent to 255.255.255.255:"
-                      << lobbyPort << " bytes=" << doff
+                      << DISC_PORT << " bytes=" << doff
                       << " result=" << sent << "\n";
         }
 
