@@ -30,7 +30,7 @@ if (current_screen == SCREEN_SETUP) {
     } else if (setup_phase == 1) {
         draw_set_color(c_yellow);
         draw_text(_cx, _cy + 20, "If a Windows Security Alert appears,");
-        draw_text(_cx, _cy + 44, "click "Allow Access" to enable multiplayer.");
+        draw_text(_cx, _cy + 44, "click Allow Access to enable multiplayer.");
         draw_set_color(c_dkgray);
         draw_text(_cx, _cy + 80, "Press any key to continue once done.");
     }
