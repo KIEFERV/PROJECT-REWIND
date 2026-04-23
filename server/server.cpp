@@ -89,6 +89,7 @@
   #include <netinet/in.h>
   #include <arpa/inet.h>
   #include <unistd.h>
+  #include <fcntl.h>
   #include <curl/curl.h>
   #include <errno.h>
   #define CLOSE_SOCK(s) close(s)
@@ -684,11 +685,9 @@ void run_as_manager(const std::string& dropletIp) {
     }
     std::cout << "Manager: lobby socket bound to port " << LOBBY_PORT << "\n";
 
-    // 1 second timeout on manager socket; lobby socket uses 1ms
-    struct timeval tv; tv.tv_sec = 1; tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-    struct timeval tvLobby; tvLobby.tv_sec = 0; tvLobby.tv_usec = 1000;
-    setsockopt(lobbySock, SOL_SOCKET, SO_RCVTIMEO, &tvLobby, sizeof(tvLobby));
+    // Set both sockets non-blocking for drain loops
+    fcntl(sock,      F_SETFL, O_NONBLOCK);
+    fcntl(lobbySock, F_SETFL, O_NONBLOCK);
 
     std::cout << "=== Lobby Manager ===\n"
               << "  Manager port : " << MANAGER_PORT << "\n"
@@ -715,6 +714,46 @@ void run_as_manager(const std::string& dropletIp) {
                 }
             }
         }
+
+        // Use select() to monitor both sockets simultaneously
+        fd_set fds;
+        FD_ZERO(&fds);
+        FD_SET(sock,      &fds);
+        FD_SET(lobbySock, &fds);
+        int maxfd = std::max(sock, lobbySock) + 1;
+        struct timeval stv; stv.tv_sec = 1; stv.tv_usec = 0;
+        int ready = select(maxfd, &fds, nullptr, nullptr, &stv);
+        if (ready <= 0) continue;
+
+        // ── Drain lobby socket first (list/join requests) ────────────
+        if (FD_ISSET(lobbySock, &fds)) {
+            char lbuf[512];
+            sockaddr_in lsrc{};
+            socklen_t lsrcLen = sizeof(lsrc);
+            while (true) {
+                int lbytes = recvfrom(lobbySock, lbuf, sizeof(lbuf) - 1, 0,
+                                      (sockaddr*)&lsrc, &lsrcLen);
+                if (lbytes <= 0) break;
+                uint8_t ltype = (uint8_t)lbuf[0];
+                std::cout << "Manager lobby recv: type=" << (int)ltype
+                          << " from " << inet_ntoa(lsrc.sin_addr) << "\n";
+                if (ltype == PKT_LIST_REQUEST) {
+                    send_lobby_list(lobbySock, lsrc);
+                } else if (ltype == PKT_JOIN_REQUEST_DB && lbytes >= 6) {
+                    uint16_t id_lo, id_hi;
+                    memcpy(&id_lo, lbuf + 1, 2);
+                    memcpy(&id_hi, lbuf + 3, 2);
+                    int64_t lobbyId = (int64_t)id_lo | ((int64_t)id_hi << 16);
+                    uint8_t hasPw   = (uint8_t)lbuf[5];
+                    std::string cpw;
+                    if (hasPw) lp_read(lbuf, 6, lbytes, cpw);
+                    handle_join_request(lobbySock, lsrc, lobbyId, hasPw != 0, cpw);
+                }
+            }
+        }
+
+        // ── Drain manager socket (create requests) ───────────────────
+        if (!FD_ISSET(sock, &fds)) continue;
 
         int bytes = recvfrom(sock, buf, sizeof(buf) - 1, 0,
                              (sockaddr*)&src, &srcLen);
@@ -798,30 +837,6 @@ void run_as_manager(const std::string& dropletIp) {
             reply[1] = CREATE_OK;
             memcpy(reply + 2, &port, 2);
             sendto(sock, reply, 4, 0, (sockaddr*)&src, srcLen);
-        }
-        // ── Drain lobby socket (list and join requests) ───────────────
-        char lbuf[512];
-        sockaddr_in lsrc{};
-        socklen_t lsrcLen = sizeof(lsrc);
-        while (true) {
-            int lbytes = recvfrom(lobbySock, lbuf, sizeof(lbuf) - 1, 0,
-                                  (sockaddr*)&lsrc, &lsrcLen);
-            if (lbytes <= 0) break;
-            uint8_t ltype = (uint8_t)lbuf[0];
-            std::cout << "Manager lobby recv: type=" << (int)ltype
-                      << " from " << inet_ntoa(lsrc.sin_addr) << "\n";
-            if (ltype == PKT_LIST_REQUEST) {
-                send_lobby_list(lobbySock, lsrc);
-            } else if (ltype == PKT_JOIN_REQUEST_DB && lbytes >= 6) {
-                uint16_t id_lo, id_hi;
-                memcpy(&id_lo, lbuf + 1, 2);
-                memcpy(&id_hi, lbuf + 3, 2);
-                int64_t lobbyId = (int64_t)id_lo | ((int64_t)id_hi << 16);
-                uint8_t hasPw   = (uint8_t)lbuf[5];
-                std::string cpw;
-                if (hasPw) lp_read(lbuf, 6, lbytes, cpw);
-                handle_join_request(lobbySock, lsrc, lobbyId, hasPw != 0, cpw);
-            }
         }
     }
 
