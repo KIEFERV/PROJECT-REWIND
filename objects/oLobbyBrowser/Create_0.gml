@@ -1,48 +1,51 @@
 /// Create_0 — oLobbyBrowser
 ///
-/// Connects to the merged game+lobby server.
-/// The server handles both game traffic (port 7777) and lobby browsing (port 8888).
-/// There is no longer a separate lobby_db_server process.
-///
-/// ─── SETUP ────────────────────────────────────────────────────────────────
-///   • Set SERVER_IP to the public IP of your VPS (or 127.0.0.1 for local)
-///   • Set SERVER_EXE to the full path to server.exe (local hosting only)
-///   • Set MY_PUBLIC_IP to this machine's public IP (local hosting only)
+/// Screen flow:
+///   SCREEN_MODE   — player picks ONLINE or LAN
+///   SCREEN_BROWSE — lobby list (online only)
+///   SCREEN_CREATE — create a new lobby (online or LAN)
+///   SCREEN_LAN    — LAN quick-connect (enter host IP, join directly)
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-// IP of the machine running server.exe
-// For a VPS: the VPS public IP,  e.g. "203.0.113.10"
-// For local: "127.0.0.1"
-#macro SERVER_IP     "206.189.192.97"
+// VPS public IP
+#macro VPS_IP        "206.189.192.97"
 
-// Lobby port (where list requests and join requests go)
+// Ports
 #macro LOBBY_PORT_NUM  8888
-
-// Game port (where actual gameplay traffic goes)
 #macro GAME_PORT_NUM   7777
+#macro DISC_PORT_NUM   7779   // LAN discovery broadcast port
 
-// Full absolute path to server.exe (only used when hosting locally)
+// Full path to server.exe (used when hosting locally — LAN or online from this PC)
 #macro SERVER_EXE    "C:\\Users\\Kiefer\\GameMakerProjects\\PROJECT-REWIND\\server\\server.exe"
 
-// This machine's public/LAN IP — passed to server.exe so other clients
-// can find this lobby. Only used when hosting locally.
-#macro MY_PUBLIC_IP  "206.189.192.97"
+// This machine's LAN IP (used when hosting a LAN game)
+// Change this to your local network IP e.g. "192.168.1.50"
+#macro MY_LAN_IP     "127.0.0.1"
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  SCREEN IDs
 // ═══════════════════════════════════════════════════════════════════════════
-#macro SCREEN_BROWSE  0
-#macro SCREEN_CREATE  1
+#macro SCREEN_MODE    0   // online vs LAN selection
+#macro SCREEN_BROWSE  1   // online lobby list
+#macro SCREEN_CREATE  2   // create lobby form
+#macro SCREEN_LAN     3   // LAN direct connect
+
+// ─── Active connection target (set when player picks online/LAN) ──────────
+// These are variables, not macros, so they can be changed at runtime.
+active_server_ip   = VPS_IP;        // where lobby requests go
+active_public_ip   = VPS_IP;        // what IP this machine advertises
+is_lan_mode        = false;
 
 // ─── Sockets ──────────────────────────────────────────────────────────────
-// lobby_socket — talks to server lobby port (8888) for browse/join
-// game_socket  — temporary poll socket used only during server launch
 lobby_socket   = network_create_socket(network_socket_udp);
 game_socket    = -1;
-current_screen = SCREEN_BROWSE;
+// Discovery socket — listens for type-40 broadcasts from LAN hosts
+// Created when entering LAN mode, destroyed when leaving
+disc_socket    = -1;
+current_screen = SCREEN_MODE;
 
 // Reset connection globals
 global.my_pid            = 0;
@@ -54,16 +57,24 @@ global.is_creating_lobby = false;
 // ─── Browse state ─────────────────────────────────────────────────────────
 lobby_list     = ds_list_create();
 selected_index = 0;
-status_msg     = "Fetching lobbies...";
+status_msg     = "";
 refresh_timer  = 0;
 REFRESH_TICKS  = 3 * game_get_speed(gamespeed_fps);
+
+// ─── LAN discovered hosts ─────────────────────────────────────────────────
+// ds_map keyed on "ip:port" string, value is a ds_map with host info.
+// Entries expire after 3 seconds of no broadcast.
+lan_hosts         = ds_map_create();
+lan_host_times    = ds_map_create();  // key -> last-seen timestamp (ms)
+LAN_HOST_EXPIRE   = 3000;             // ms before removing a silent host
+lan_selected      = 0;                // selected index in the discovered list
 
 // ─── Join flow ────────────────────────────────────────────────────────────
 join_pending       = false;
 join_timeout       = 0;
 JOIN_TIMEOUT_TICKS = 5 * game_get_speed(gamespeed_fps);
 
-// ─── Password prompt (joining private lobby) ──────────────────────────────
+// ─── Password prompt ──────────────────────────────────────────────────────
 pw_mode        = false;
 pw_input       = "";
 pw_pending_idx = -1;
@@ -73,6 +84,10 @@ create_focus   = "name";
 create_name    = "";
 create_private = false;
 create_pw      = "";
+
+// ─── LAN screen state ────────────────────────────────────────────────────
+lan_join_mode  = true;   // true = join tab, false = host tab
+lan_focus      = "name"; // field focus on host tab
 
 // ─── Server launch / poll state ───────────────────────────────────────────
 launching         = false;
@@ -94,15 +109,15 @@ function hash_password(_pw) {
     return _hex;
 }
 
-// ─── Send lobby list request (type 25) to lobby port ──────────────────────
+// ─── Fetch lobby list from active server ──────────────────────────────────
 function request_lobby_list() {
     var _b = buffer_create(1, buffer_fixed, 1);
     buffer_write(_b, buffer_u8, 25);
-    network_send_udp_raw(lobby_socket, SERVER_IP, LOBBY_PORT_NUM, _b, 1);
+    network_send_udp_raw(lobby_socket, active_server_ip, LOBBY_PORT_NUM, _b, 1);
     buffer_delete(_b);
 }
 
-// ─── Send join request (type 30) to lobby port ────────────────────────────
+// ─── Send join request to active server ───────────────────────────────────
 function send_join_request(_lobby_id, _pw_hash) {
     var _has_pw = (_pw_hash != "");
     var _b = buffer_create(64, buffer_grow, 1);
@@ -116,31 +131,31 @@ function send_join_request(_lobby_id, _pw_hash) {
         for (var _i = 1; _i <= _len; _i++)
             buffer_write(_b, buffer_u8, ord(string_char_at(_pw_hash, _i)));
     }
-    network_send_udp_raw(lobby_socket, SERVER_IP, LOBBY_PORT_NUM, _b, buffer_tell(_b));
+    network_send_udp_raw(lobby_socket, active_server_ip, LOBBY_PORT_NUM, _b, buffer_tell(_b));
     buffer_delete(_b);
 }
 
-// ─── Ping game server (type 255) — confirms it is alive without registering
+// ─── Ping game server (type 255) — readiness check ────────────────────────
 function ping_game_server() {
     if (game_socket < 0) exit;
     var _b = buffer_create(1, buffer_fixed, 1);
     buffer_write(_b, buffer_u8, 255);
-    network_send_udp_raw(game_socket, SERVER_IP, GAME_PORT_NUM, _b, 1);
+    network_send_udp_raw(game_socket, active_server_ip, GAME_PORT_NUM, _b, 1);
     buffer_delete(_b);
 }
 
-// ─── Launch server.exe locally and poll until ready ───────────────────────
+// ─── Launch server.exe and begin polling ──────────────────────────────────
 function launch_server_and_host() {
-    var _pw_arg    = "";
+    var _pw_arg = "";
     if (create_private && create_pw != "")
         _pw_arg = hash_password(create_pw);
 
     var _safe_name = string_replace_all(create_name, "\"", "");
     if (_safe_name == "") _safe_name = "My Lobby";
 
-    // server.exe now takes: <lobby_name> <public_ip> [password_hash]
-    // (no db_ip arg — Supabase URL is compiled into the server)
-    var _args = "\"" + _safe_name + "\" " + MY_PUBLIC_IP;
+    // server.exe now takes: <lobby_name> [password_hash]
+    // public_ip is detected automatically by the server
+    var _args = "\"" + _safe_name + "\"";
     if (_pw_arg != "") _args += " " + _pw_arg;
 
     var _server_dir = filename_dir(SERVER_EXE) + "\\";
@@ -148,7 +163,7 @@ function launch_server_and_host() {
     show_debug_message("Launched: " + SERVER_EXE + " " + _args);
 
     global.is_creating_lobby = true;
-    global.ip_address        = SERVER_IP;
+    global.ip_address        = active_server_ip;
     global.port              = GAME_PORT_NUM;
 
     if (game_socket >= 0) network_destroy(game_socket);
@@ -160,7 +175,49 @@ function launch_server_and_host() {
     status_msg        = "Starting server...";
 }
 
-// ─── Free lobby list ds_maps ──────────────────────────────────────────────
+// ─── Open/close the LAN discovery socket ──────────────────────────────────
+function open_disc_socket() {
+    if (disc_socket >= 0) network_destroy(disc_socket);
+    disc_socket = network_create_socket(network_socket_udp);
+    // Bind to the discovery port so we receive broadcasts
+    network_set_config(network_config_connect_timeout, 1000);
+    // GML UDP sockets don't support explicit bind to a port in raw mode,
+    // so we use network_create_socket_ext to bind to DISC_PORT_NUM
+    network_destroy(disc_socket);
+    disc_socket = network_create_socket_ext(network_socket_udp, DISC_PORT_NUM);
+    show_debug_message("Discovery socket opened on port " + string(DISC_PORT_NUM));
+}
+
+function close_disc_socket() {
+    if (disc_socket >= 0) {
+        network_destroy(disc_socket);
+        disc_socket = -1;
+    }
+    // Clear the host list
+    var _key = ds_map_find_first(lan_hosts);
+    while (!is_undefined(_key)) {
+        var _entry = lan_hosts[? _key];
+        if (ds_exists(_entry, ds_type_map)) ds_map_destroy(_entry);
+        _key = ds_map_find_next(lan_hosts, _key);
+    }
+    ds_map_clear(lan_hosts);
+    ds_map_clear(lan_host_times);
+}
+
+// ─── Direct LAN connect to a discovered host ─────────────────────────────
+function lan_direct_connect(_host_ip) {
+    global.ip_address        = _host_ip;
+    global.port              = GAME_PORT_NUM;
+    global.is_creating_lobby = false;
+
+    close_disc_socket();
+    network_destroy(lobby_socket);
+    lobby_socket = -1;
+
+    room_goto(rLobby);
+}
+
+// ─── Free lobby list ──────────────────────────────────────────────────────
 function cleanup_lobby_list() {
     if (!ds_exists(lobby_list, ds_type_list)) exit;
     for (var _i = 0; _i < ds_list_size(lobby_list); _i++) {
@@ -169,8 +226,6 @@ function cleanup_lobby_list() {
     }
     ds_list_clear(lobby_list);
 }
-
-// ─── Text input helper ────────────────────────────────────────────────────
 function text_input_step(_str) {
     for (var _k = 32; _k <= 126; _k++) {
         if (keyboard_check_pressed(_k)) {
@@ -184,6 +239,4 @@ function text_input_step(_str) {
     return _str;
 }
 
-// ─── Initial fetch ────────────────────────────────────────────────────────
-request_lobby_list();
-show_debug_message("LobbyBrowser ready. Server=" + SERVER_IP + ":" + string(LOBBY_PORT_NUM));
+show_debug_message("LobbyBrowser ready.");

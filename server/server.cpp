@@ -1,0 +1,949 @@
+/*
+ * server.cpp  —  Merged game + lobby server  v4
+ *
+ * Single executable. Handles all game traffic AND the lobby browser.
+ * Writes lobby/match/stats data to Supabase (hosted PostgreSQL).
+ * Replaces both server.exe and lobby_db_server.exe.
+ *
+ * ─── USAGE ───────────────────────────────────────────────────────────────────
+ *
+ *   server.exe <lobby_name> <public_ip> [password_hash]
+ *
+ *   lobby_name     Human-readable lobby name (quote if it contains spaces)
+ *   public_ip      This machine's public IP that clients will connect to
+ *   password_hash  (optional) djb2 hex hash of lobby password
+ *
+ *   Example (public):   server.exe "My Lobby" 203.0.113.10
+ *   Example (private):  server.exe "Secret"   203.0.113.10 a3f1c9b2
+ *
+ * ─── PORTS ───────────────────────────────────────────────────────────────────
+ *   7777  Game traffic  (player state, bullets, match control)
+ *   8888  Lobby traffic (list requests, join requests from clients)
+ *         Both ports on the same machine. Clients connect to public_ip.
+ *
+ * ─── SUPABASE SETUP ──────────────────────────────────────────────────────────
+ *   1. Create a free project at https://supabase.com
+ *   2. In the SQL editor, run the schema at the bottom of this file
+ *   3. Go to Settings -> API and copy:
+ *        Project URL  -> set SUPABASE_URL below
+ *        anon/public key -> set SUPABASE_KEY below
+ *
+ * ─── BUILD ───────────────────────────────────────────────────────────────────
+ *   Compile natively on Linux (the Droplet):
+ *
+ *   apt install -y g++ libcurl4-openssl-dev
+ *   g++ server.cpp -o server -lcurl
+ *
+ * ─── SUPABASE SCHEMA (run once in Supabase SQL editor) ───────────────────────
+ *
+ *   CREATE TABLE lobbies (
+ *     id              BIGSERIAL PRIMARY KEY,
+ *     lobby_name      TEXT NOT NULL,
+ *     host_ip         TEXT NOT NULL,
+ *     host_port       INTEGER NOT NULL,
+ *     max_players     INTEGER NOT NULL,
+ *     current_players INTEGER NOT NULL DEFAULT 0,
+ *     password_hash   TEXT DEFAULT NULL,
+ *     is_active       BOOLEAN NOT NULL DEFAULT FALSE,
+ *     match_id        BIGINT DEFAULT NULL,
+ *     created_at      TIMESTAMPTZ DEFAULT NOW()
+ *   );
+ *
+ *   CREATE TABLE matches (
+ *     id          BIGSERIAL PRIMARY KEY,
+ *     lobby_id    BIGINT NOT NULL,
+ *     started_at  TIMESTAMPTZ DEFAULT NOW(),
+ *     ended_at    TIMESTAMPTZ DEFAULT NULL
+ *   );
+ *
+ *   CREATE TABLE players (
+ *     id           BIGSERIAL PRIMARY KEY,
+ *     pid          INTEGER NOT NULL,
+ *     display_name TEXT NOT NULL DEFAULT 'Player',
+ *     created_at   TIMESTAMPTZ DEFAULT NOW()
+ *   );
+ *
+ *   CREATE TABLE match_players (
+ *     id         BIGSERIAL PRIMARY KEY,
+ *     match_id   BIGINT NOT NULL REFERENCES matches(id),
+ *     player_id  BIGINT NOT NULL REFERENCES players(id),
+ *     pid        INTEGER NOT NULL,
+ *     kills      INTEGER NOT NULL DEFAULT 0,
+ *     deaths     INTEGER NOT NULL DEFAULT 0
+ *   );
+ */
+
+#ifdef _WIN32
+  #include <winsock2.h>
+  #include <windows.h>
+  #include <winhttp.h>
+  #pragma comment(lib, "ws2_32.lib")
+  #pragma comment(lib, "winhttp.lib")
+  #define CLOSE_SOCK(s) closesocket(s)
+  #define SOCK_T SOCKET
+  #define INVALID_SOCK INVALID_SOCKET
+  typedef int socklen_t;  // Windows uses int where POSIX uses socklen_t
+  #define SOCKOPT_CAST (const char*)
+#else
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+  #include <arpa/inet.h>
+  #include <unistd.h>
+  #include <curl/curl.h>
+  #include <errno.h>
+  #define CLOSE_SOCK(s) close(s)
+  #define SOCK_T int
+  #define INVALID_SOCK (-1)
+  #define SOCKOPT_CAST (const void*)
+#endif
+#include <iostream>
+#include <string>
+#include <map>
+#include <vector>
+#include <cstdint>
+#include <cstring>
+#include <chrono>
+#include <sstream>
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CONFIGURATION — set these to your Supabase project values
+// ═══════════════════════════════════════════════════════════════════════════
+#define SUPABASE_URL  "https://zqnvimeyzogmtgydrkuz.supabase.co"
+#define SUPABASE_KEY  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxbnZpbWV5em9nbXRneWRya3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MjcwNzEsImV4cCI6MjA5MjMwMzA3MX0.vRLJw3_Ve6Az-0K2PJphwg8cE9juG4y2p7VYMPbR5io"
+
+// ── Fixed server config ───────────────────────────────────────────────────
+static const uint16_t GAME_PORT   = 7777;
+static const uint16_t LOBBY_PORT  = 8888;
+static const uint16_t DISC_PORT   = 7779;  // LAN discovery broadcast port
+static const uint8_t  MAX_PLAYERS = 4;
+static const int      TIMEOUT_S   = 5;
+
+// ── Game packet types (client <-> server) ─────────────────────────────────
+#define PKT_PLAYER_STATE  1
+#define PKT_ID_ASSIGN     2
+#define PKT_PLAYER_LEFT   3
+#define PKT_BULLET        4
+#define PKT_TIMER         5
+#define PKT_MATCH_END_BC  6
+#define PKT_MATCH_START   7
+#define PKT_NOT_ENOUGH    8
+#define PKT_DISCONNECT    9
+#define PKT_JOIN_REQUEST  10
+#define PKT_KILL_REPORT   11
+#define PKT_KEEPALIVE     12
+#define PKT_DISCOVERY     40  // LAN broadcast — clients listen for this
+
+// ── Lobby packet types (client <-> server, lobby port) ────────────────────
+#define PKT_LIST_REQUEST  25
+#define PKT_LIST_RESPONSE 26
+#define PKT_JOIN_REQUEST_DB 30
+#define PKT_JOIN_RESPONSE   31
+
+// ── Join response codes ───────────────────────────────────────────────────
+#define JOIN_OK            0
+#define JOIN_WRONG_PW      1
+#define JOIN_NOT_FOUND     2
+
+using Clock     = std::chrono::steady_clock;
+using TimePoint = std::chrono::time_point<Clock>;
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Server state
+// ═══════════════════════════════════════════════════════════════════════════
+
+struct Player {
+    std::string key;
+    sockaddr_in addr;
+    uint16_t    pid;
+    TimePoint   lastSeen;
+};
+
+std::map<std::string, Player> players;
+uint16_t nextPid      = 1;
+bool     matchRunning = false;
+int      matchDuration = 180;
+int      timeRemaining = 180;
+TimePoint lastTimerBroadcast;
+
+// Supabase IDs for this server instance
+int64_t  myLobbyId = -1;
+int64_t  myMatchId = -1;
+
+// Server identity (set from argv)
+std::string lobbyName;
+std::string publicIp;
+std::string pwHash;
+
+// ── Auto-detect LAN IP ────────────────────────────────────────────────────
+// Connects a UDP socket to a public address (no data sent) and reads back
+// the local IP the OS chose — this is the LAN IP on the active interface.
+// Works on Windows without enumerating adapters or parsing ipconfig output.
+std::string get_lan_ip() {
+#ifdef _WIN32
+    WSADATA _wsa; WSAStartup(MAKEWORD(2,2), &_wsa);
+#endif
+    SOCK_T s = socket(AF_INET, SOCK_DGRAM, 0);
+    if (s == INVALID_SOCK) return "127.0.0.1";
+
+    sockaddr_in dest{};
+    dest.sin_family      = AF_INET;
+    dest.sin_port        = htons(80);
+    dest.sin_addr.s_addr = inet_addr("8.8.8.8");
+
+    if (connect(s, (sockaddr*)&dest, sizeof(dest)) < 0) {
+        CLOSE_SOCK(s);
+        return "127.0.0.1";
+    }
+
+    sockaddr_in local{};
+    socklen_t len = sizeof(local);
+    if (getsockname(s, (sockaddr*)&local, &len) < 0) {
+        CLOSE_SOCK(s);
+        return "127.0.0.1";
+    }
+
+    CLOSE_SOCK(s);
+    return std::string(inet_ntoa(local.sin_addr));
+}
+
+std::string addrKey(const sockaddr_in& a) {
+    return std::string(inet_ntoa(a.sin_addr)) + ":" +
+           std::to_string(ntohs(a.sin_port));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Packet string helpers
+// ═══════════════════════════════════════════════════════════════════════════
+
+int lp_write(char* buf, int off, const std::string& s) {
+    uint8_t len = (uint8_t)(s.size() > 63 ? 63 : s.size());
+    buf[off] = (char)len;
+    memcpy(buf + off + 1, s.c_str(), len);
+    return 1 + len;
+}
+
+int lp_read(const char* buf, int off, int bufLen, std::string& out) {
+    if (off >= bufLen) return 0;
+    uint8_t len = (uint8_t)buf[off];
+    if (off + 1 + len > bufLen) return 0;
+    out = std::string(buf + off + 1, len);
+    return 1 + len;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Supabase HTTP helpers
+//  Windows: WinHTTP (built-in, no dependencies)
+//  Linux:   libcurl (apt install libcurl4-openssl-dev)
+// ═══════════════════════════════════════════════════════════════════════════
+
+#ifdef _WIN32
+
+static void parse_url(const std::string& url, std::wstring& host, std::wstring& base) {
+    std::string u = url;
+    size_t e = u.find("://"); if (e != std::string::npos) u = u.substr(e+3);
+    size_t s = u.find('/');
+    std::string h = (s==std::string::npos)?u:u.substr(0,s);
+    host = std::wstring(h.begin(),h.end());
+    base = std::wstring();
+}
+
+std::string supabase_request(const std::string& method, const std::string& path,
+                              const std::string& body="", const std::string& prefer="") {
+    std::wstring host, base;
+    parse_url(SUPABASE_URL, host, base);
+    std::string fullPathStr = "/rest/v1/" + path;
+    std::wstring fullPath(fullPathStr.begin(), fullPathStr.end());
+    std::wstring wmethod(method.begin(), method.end());
+    std::string result;
+    HINTERNET hSess = WinHttpOpen(L"GameServer/1.0",WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+        WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0);
+    if (!hSess) return "";
+    HINTERNET hConn = WinHttpConnect(hSess,host.c_str(),INTERNET_DEFAULT_HTTPS_PORT,0);
+    if (!hConn){WinHttpCloseHandle(hSess);return "";}
+    HINTERNET hReq  = WinHttpOpenRequest(hConn,wmethod.c_str(),fullPath.c_str(),
+        NULL,WINHTTP_NO_REFERER,WINHTTP_DEFAULT_ACCEPT_TYPES,WINHTTP_FLAG_SECURE);
+    if (!hReq){WinHttpCloseHandle(hConn);WinHttpCloseHandle(hSess);return "";}
+    DWORD sf=SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE
+            |SECURITY_FLAG_IGNORE_CERT_CN_INVALID|SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
+    WinHttpSetOption(hReq,WINHTTP_OPTION_SECURITY_FLAGS,&sf,sizeof(sf));
+    std::wstring key(SUPABASE_KEY,SUPABASE_KEY+strlen(SUPABASE_KEY));
+    std::wstring hdrs=L"apikey: "+key+L"\r\nAuthorization: Bearer "+key
+                     +L"\r\nContent-Type: application/json\r\n";
+    if (!prefer.empty()){std::wstring wp(prefer.begin(),prefer.end());hdrs+=L"Prefer: "+wp+L"\r\n";}
+    WinHttpSendRequest(hReq,hdrs.c_str(),(DWORD)-1L,
+        body.empty()?WINHTTP_NO_REQUEST_DATA:(LPVOID)body.c_str(),
+        (DWORD)body.size(),(DWORD)body.size(),0);
+    WinHttpReceiveResponse(hReq,NULL);
+    DWORD avail=0;
+    while(WinHttpQueryDataAvailable(hReq,&avail)&&avail>0){
+        std::string chunk(avail,'\0'); DWORD rd=0;
+        WinHttpReadData(hReq,&chunk[0],avail,&rd);
+        result.append(chunk,0,rd);
+    }
+    WinHttpCloseHandle(hReq);WinHttpCloseHandle(hConn);WinHttpCloseHandle(hSess);
+    return result;
+}
+
+#else  // Linux — libcurl
+
+static size_t curl_write_cb(void* ptr, size_t size, size_t nmemb, std::string* s) {
+    s->append((char*)ptr, size * nmemb);
+    return size * nmemb;
+}
+
+std::string supabase_request(const std::string& method, const std::string& path,
+                              const std::string& body="", const std::string& prefer="") {
+    CURL* curl = curl_easy_init();
+    if (!curl) return "";
+    std::string url = std::string(SUPABASE_URL) + "/rest/v1/" + path;
+    std::string result;
+    struct curl_slist* hdrs = nullptr;
+    hdrs = curl_slist_append(hdrs, ("apikey: " + std::string(SUPABASE_KEY)).c_str());
+    hdrs = curl_slist_append(hdrs, ("Authorization: Bearer " + std::string(SUPABASE_KEY)).c_str());
+    hdrs = curl_slist_append(hdrs, "Content-Type: application/json");
+    if (!prefer.empty())
+        hdrs = curl_slist_append(hdrs, ("Prefer: " + prefer).c_str());
+    curl_easy_setopt(curl, CURLOPT_URL,           url.c_str());
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER,    hdrs);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA,     &result);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT,       10L);
+    if (method == "POST") {
+        curl_easy_setopt(curl, CURLOPT_POST,       1L);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
+    } else if (method == "PATCH") {
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PATCH");
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS,    body.c_str());
+    } else if (method == "DELETE") {
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+    }
+    CURLcode res = curl_easy_perform(curl);
+    long statusCode = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &statusCode);
+    if (res != CURLE_OK)
+        std::cout << "[Supabase] curl error: " << curl_easy_strerror(res) << "\n";
+    else if (statusCode > 0 && statusCode != 200 && statusCode != 201)
+        std::cout << "[Supabase] " << method << " " << path << " -> HTTP " << statusCode << "\n";
+    curl_slist_free_all(hdrs);
+    curl_easy_cleanup(curl);
+    return result;
+}
+
+#endif
+
+// Minimal JSON int64 extractor — finds the first "key":number in a JSON string
+// Sufficient for extracting auto-generated IDs from Supabase responses.
+int64_t json_extract_int64(const std::string& json, const std::string& key) {
+    std::string search = "\"" + key + "\":";
+    auto pos = json.find(search);
+    if (pos == std::string::npos) return -1;
+    pos += search.size();
+    while (pos < json.size() && (json[pos] == ' ' || json[pos] == '"')) pos++;
+    int64_t val = 0;
+    bool neg = (json[pos] == '-');
+    if (neg) pos++;
+    while (pos < json.size() && isdigit(json[pos]))
+        val = val * 10 + (json[pos++] - '0');
+    return neg ? -val : val;
+}
+
+// Escape a string for embedding in a JSON value
+std::string json_str(const std::string& s) {
+    std::string out;
+    for (char c : s) {
+        if (c == '"')  out += "\\\"";
+        else if (c == '\\') out += "\\\\";
+        else out += c;
+    }
+    return out;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Supabase lobby/match operations
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Called on startup — wipes stale rows, then inserts this lobby
+void supabase_register_lobby() {
+    // Delete any leftover rows with this host_ip+host_port (from a crashed run)
+    supabase_request("DELETE",
+        "lobbies?host_ip=eq." + publicIp +
+        "&host_port=eq." + std::to_string(GAME_PORT));
+
+    std::string body =
+        "{\"lobby_name\":\"" + json_str(lobbyName) + "\","
+        "\"host_ip\":\""     + json_str(publicIp)  + "\","
+        "\"host_port\":"     + std::to_string(GAME_PORT) + ","
+        "\"max_players\":"   + std::to_string(MAX_PLAYERS) + ","
+        "\"current_players\":0,"
+        "\"password_hash\":"  + (pwHash.empty() ? "null" : "\"" + json_str(pwHash) + "\"") +
+        ",\"is_active\":false}";
+
+    std::string resp = supabase_request("POST", "lobbies", body, "return=representation");
+    myLobbyId = json_extract_int64(resp, "id");
+
+    if (myLobbyId > 0)
+        std::cout << "Lobby registered in Supabase. ID=" << myLobbyId << "\n";
+    else
+        std::cout << "WARNING: Supabase lobby registration failed. Response: " << resp << "\n";
+}
+
+void supabase_update_players(int count) {
+    if (myLobbyId < 0) return;
+    supabase_request("PATCH",
+        "lobbies?id=eq." + std::to_string(myLobbyId),
+        "{\"current_players\":" + std::to_string(count) + "}");
+}
+
+void supabase_deregister_lobby() {
+    if (myLobbyId < 0) return;
+    supabase_request("DELETE", "lobbies?id=eq." + std::to_string(myLobbyId));
+    std::cout << "Lobby deregistered from Supabase.\n";
+    myLobbyId = -1;
+}
+
+void supabase_set_active(bool active) {
+    if (myLobbyId < 0) return;
+    std::string body = active
+        ? "{\"is_active\":true,\"match_id\":"  + std::to_string(myMatchId) + "}"
+        : "{\"is_active\":false,\"match_id\":null}";
+    supabase_request("PATCH",
+        "lobbies?id=eq." + std::to_string(myLobbyId), body);
+}
+
+void supabase_match_start() {
+    // 1. Insert match row
+    std::string body = "{\"lobby_id\":" + std::to_string(myLobbyId) + "}";
+    std::string resp = supabase_request("POST", "matches", body, "return=representation");
+    myMatchId = json_extract_int64(resp, "id");
+    std::cout << "Match created in Supabase. ID=" << myMatchId << "\n";
+
+    // 2. Insert match_players rows
+    for (auto& pair : players) {
+        uint16_t pid = pair.second.pid;
+        std::string dname = "Player" + std::to_string(pid);
+
+        // Find or create player record
+        std::string prsp = supabase_request("GET",
+            "players?pid=eq." + std::to_string(pid) + "&limit=1",
+            "", "return=representation");
+        int64_t playerId = json_extract_int64(prsp, "id");
+        if (playerId < 0) {
+            std::string pb = "{\"pid\":" + std::to_string(pid) +
+                             ",\"display_name\":\"" + json_str(dname) + "\"}";
+            std::string pr2 = supabase_request("POST", "players", pb, "return=representation");
+            playerId = json_extract_int64(pr2, "id");
+        }
+
+        // Insert match_players row
+        if (playerId > 0) {
+            std::string mpb =
+                "{\"match_id\":"  + std::to_string(myMatchId) +
+                ",\"player_id\":" + std::to_string(playerId) +
+                ",\"pid\":"       + std::to_string(pid) + "}";
+            supabase_request("POST", "match_players", mpb);
+        }
+    }
+
+    supabase_set_active(true);
+}
+
+void supabase_record_kill(uint16_t killerPid, uint16_t victimPid) {
+    if (myMatchId < 0) return;
+    // Increment killer kills
+    supabase_request("PATCH",
+        "match_players?match_id=eq." + std::to_string(myMatchId) +
+        "&pid=eq." + std::to_string(killerPid),
+        "{\"kills\":\"kills + 1\"}");
+    // Increment victim deaths
+    supabase_request("PATCH",
+        "match_players?match_id=eq." + std::to_string(myMatchId) +
+        "&pid=eq." + std::to_string(victimPid),
+        "{\"deaths\":\"deaths + 1\"}");
+
+    std::cout << "Kill recorded: " << killerPid << " -> " << victimPid << "\n";
+}
+
+void supabase_match_end() {
+    if (myMatchId < 0) return;
+    supabase_request("PATCH",
+        "matches?id=eq." + std::to_string(myMatchId),
+        "{\"ended_at\":\"now()\"}");
+    supabase_set_active(false);
+    std::cout << "Match " << myMatchId << " ended in Supabase.\n";
+    myMatchId = -1;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Lobby list — fetched from Supabase and sent to requesting clients
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Parse a JSON array of lobby objects from Supabase and send as type-26 packet
+void send_lobby_list(int sock, const sockaddr_in& dest) {
+    // Fetch all lobbies from Supabase
+    std::string resp = supabase_request("GET",
+        "lobbies?select=id,lobby_name,host_ip,host_port,current_players,"
+        "max_players,password_hash,is_active&order=id");
+
+    // Very simple JSON array parser — extracts field values sequentially
+    // Works correctly with the flat JSON Supabase returns for this schema
+    struct LobbyRow {
+        int64_t     id;
+        std::string name, ip;
+        uint16_t    port;
+        uint8_t     cur, max, hasPw, active;
+    };
+    std::vector<LobbyRow> rows;
+
+    // Parse each {...} object in the array
+    size_t pos = 0;
+    while ((pos = resp.find('{', pos)) != std::string::npos) {
+        LobbyRow r{};
+        auto end = resp.find('}', pos);
+        if (end == std::string::npos) break;
+        std::string obj = resp.substr(pos, end - pos + 1);
+        pos = end + 1;
+
+        r.id     = json_extract_int64(obj, "id");
+        r.cur    = (uint8_t)json_extract_int64(obj, "current_players");
+        r.max    = (uint8_t)json_extract_int64(obj, "max_players");
+        r.port   = (uint16_t)json_extract_int64(obj, "host_port");
+        r.hasPw  = (obj.find("\"password_hash\":null") == std::string::npos) ? 1 : 0;
+        r.active = (obj.find("\"is_active\":true") != std::string::npos) ? 1 : 0;
+
+        // Extract string fields
+        auto extract_str = [&](const std::string& key) -> std::string {
+            std::string search = "\"" + key + "\":\"";
+            auto p = obj.find(search);
+            if (p == std::string::npos) return "";
+            p += search.size();
+            auto e = obj.find('"', p);
+            return (e == std::string::npos) ? "" : obj.substr(p, e - p);
+        };
+        r.name = extract_str("lobby_name");
+        r.ip   = extract_str("host_ip");
+
+        if (r.id > 0 && !r.name.empty()) rows.push_back(r);
+    }
+    if (rows.size() > 20) rows.resize(20);
+
+    // Build type-26 packet
+    char buf[1400];
+    int off = 0;
+    buf[off++] = PKT_LIST_RESPONSE;
+    buf[off++] = (uint8_t)rows.size();
+    for (auto& r : rows) {
+        // id as two u16s
+        uint16_t id_lo = (uint16_t)(r.id & 0xFFFF);
+        uint16_t id_hi = (uint16_t)((r.id >> 16) & 0xFFFF);
+        memcpy(buf + off, &id_lo, 2); off += 2;
+        memcpy(buf + off, &id_hi, 2); off += 2;
+        off += lp_write(buf, off, r.name);
+        off += lp_write(buf, off, r.ip);    // client discards this but must read it
+        memcpy(buf + off, &r.port, 2); off += 2;
+        buf[off++] = r.cur;
+        buf[off++] = r.max;
+        buf[off++] = r.hasPw;
+        buf[off++] = r.active;
+    }
+    sendto(sock, buf, off, 0, (const sockaddr*)&dest, sizeof(dest));
+    std::cout << "Sent lobby list (" << rows.size() << ") to "
+              << inet_ntoa(dest.sin_addr) << "\n";
+}
+
+// Handle a client join request — validate password, return host address
+void handle_join_request(int sock, const sockaddr_in& src,
+                          int64_t lobbyId, bool hasPw, const std::string& clientPwHash) {
+    char reply[128];
+    int off = 0;
+    reply[off++] = PKT_JOIN_RESPONSE;
+
+    // Fetch lobby from Supabase
+    std::string resp = supabase_request("GET",
+        "lobbies?id=eq." + std::to_string(lobbyId) +
+        "&select=host_ip,host_port,password_hash&limit=1");
+
+    if (resp.find("host_ip") == std::string::npos) {
+        reply[off++] = JOIN_NOT_FOUND;
+        sendto(sock, reply, off, 0, (const sockaddr*)&src, sizeof(src));
+        return;
+    }
+
+    // Extract fields
+    auto extract_str = [&](const std::string& key) -> std::string {
+        std::string search = "\"" + key + "\":\"";
+        auto p = resp.find(search);
+        if (p == std::string::npos) return "";
+        p += search.size();
+        auto e = resp.find('"', p);
+        return (e == std::string::npos) ? "" : resp.substr(p, e - p);
+    };
+
+    std::string hostIp   = extract_str("host_ip");
+    uint16_t    hostPort = (uint16_t)json_extract_int64(resp, "host_port");
+    bool        dbHasPw  = (resp.find("\"password_hash\":null") == std::string::npos);
+    std::string dbPwHash = dbHasPw ? extract_str("password_hash") : "";
+
+    if (dbHasPw && (!hasPw || clientPwHash != dbPwHash)) {
+        reply[off++] = JOIN_WRONG_PW;
+        sendto(sock, reply, off, 0, (const sockaddr*)&src, sizeof(src));
+        std::cout << "Join denied (wrong pw) lobby " << lobbyId << "\n";
+        return;
+    }
+
+    reply[off++] = JOIN_OK;
+    off += lp_write(reply, off, hostIp);
+    memcpy(reply + off, &hostPort, 2); off += 2;
+    sendto(sock, reply, off, 0, (const sockaddr*)&src, sizeof(src));
+    std::cout << "Join approved: lobby " << lobbyId
+              << " -> " << hostIp << ":" << hostPort << "\n";
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Game packet helpers
+// ═══════════════════════════════════════════════════════════════════════════
+
+void broadcast(int sock, const char* buf, int len, const std::string& excludeKey) {
+    for (auto& p : players) {
+        if (p.first == excludeKey) continue;
+        sendto(sock, buf, len, 0,
+               (sockaddr*)&p.second.addr, sizeof(p.second.addr));
+    }
+}
+
+void broadcast_player_left(int sock, uint16_t pid, const std::string& excludeKey) {
+    char msg[3]; msg[0] = PKT_PLAYER_LEFT;
+    memcpy(msg + 1, &pid, 2);
+    broadcast(sock, msg, 3, excludeKey);
+}
+
+void reset_lobby() {
+    nextPid      = 1;
+    matchRunning = false;
+    std::cout << "Lobby empty — pid counter reset.\n";
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  main
+// ═══════════════════════════════════════════════════════════════════════════
+
+int main(int argc, char* argv[]) {
+#ifdef _WIN32
+    WSADATA _wsa; WSAStartup(MAKEWORD(2,2), &_wsa);
+#else
+    curl_global_init(CURL_GLOBAL_ALL);
+#endif
+
+    std::cout << "server.exe argc=" << argc << "\n";
+    for (int i = 1; i < argc; i++)
+        std::cout << "  argv[" << i << "] = \"" << argv[i] << "\"\n";
+    std::cout << std::flush;
+
+    if (argc < 2) {
+        std::cerr
+            << "\nERROR: missing arguments.\n\n"
+            << "Usage:   server.exe <lobby_name> [public_ip] [password_hash]\n"
+            << "Example: server.exe \"My Lobby\"\n"
+            << "Example: server.exe \"My Lobby\" 203.0.113.10\n"
+            << "Example: server.exe \"Private\"  203.0.113.10 a3f1c9b2\n\n"
+            << "public_ip is optional — if omitted the server detects it automatically.\n"
+            << "Launched automatically by the game client.\n";
+        
+        return 1;
+    }
+
+    lobbyName = argv[1];
+
+    // ── Winsock must be started before get_lan_ip() ───────────────────────
+    
+
+    // Detect LAN IP first so it's available for all cases
+    std::string detectedIp = get_lan_ip();
+
+    // public_ip argument: if second arg looks like an IP use it,
+    // otherwise treat it as the password hash (future-proofing) or skip it.
+    // Simple heuristic: if it contains a dot it's an IP, otherwise it's a hash.
+    if (argc >= 3 && std::string(argv[2]).find('.') != std::string::npos) {
+        publicIp = argv[2];
+        pwHash   = (argc >= 4) ? argv[3] : "";
+    } else {
+        publicIp = detectedIp;
+        pwHash   = (argc >= 3) ? argv[2] : "";
+    }
+
+    std::cout << "LAN IP detected: " << detectedIp << "\n";
+    if (publicIp != detectedIp)
+        std::cout << "Using override IP: " << publicIp << "\n";
+
+    auto make_udp_sock = [](uint16_t port, int timeoutMs) -> int {
+        int s = (int)socket(AF_INET, SOCK_DGRAM, 0);
+        if (s < 0) return s;
+        sockaddr_in addr{};
+        addr.sin_family      = AF_INET;
+        addr.sin_port        = htons(port);
+        addr.sin_addr.s_addr = INADDR_ANY;
+        if (bind(s, (sockaddr*)&addr, sizeof(addr)) < 0) {
+            std::cerr << "Bind failed on port " << port
+                      << " (WSA " << errno << ")\n"
+                      << "Is another instance already running?\n";
+            exit(1);
+        }
+#ifdef _WIN32
+        DWORD tv = (DWORD)timeoutMs;
+        setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, SOCKOPT_CAST &tv, sizeof(tv));
+#else
+        struct timeval tv; tv.tv_sec = timeoutMs/1000; tv.tv_usec = (timeoutMs%1000)*1000;
+        setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, SOCKOPT_CAST &tv, sizeof(tv));
+#endif
+        return s;
+    };
+
+    int gameSock  = make_udp_sock(GAME_PORT,  1);
+    int lobbySock = make_udp_sock(LOBBY_PORT, 1);
+
+    // ── Discovery broadcast socket ────────────────────────────────────────
+    // Does NOT bind to a port — it only sends. Enable SO_BROADCAST.
+    int discSock = socket(AF_INET, SOCK_DGRAM, 0);
+    int bcast = 1;
+    setsockopt(discSock, SOL_SOCKET, SO_BROADCAST, SOCKOPT_CAST &bcast, sizeof(bcast));
+    // 1ms recv timeout
+#ifdef _WIN32
+    DWORD discTo = 1;
+    setsockopt(discSock, SOL_SOCKET, SO_RCVTIMEO, SOCKOPT_CAST &discTo, sizeof(discTo));
+#else
+    struct timeval discTo; discTo.tv_sec = 0; discTo.tv_usec = 1000;
+    setsockopt(discSock, SOL_SOCKET, SO_RCVTIMEO, SOCKOPT_CAST &discTo, sizeof(discTo));
+#endif
+
+    // ── Register lobby in Supabase ────────────────────────────────────────
+    supabase_register_lobby();
+
+    std::cout << "\n=== Server Ready ===\n"
+              << "  Lobby    : " << lobbyName << "\n"
+              << "  Game port: " << GAME_PORT  << "\n"
+              << "  Lobby port: " << LOBBY_PORT << "\n"
+              << "  Public IP: " << publicIp   << "\n"
+              << "  Password : " << (pwHash.empty() ? "none" : "set") << "\n"
+              << "===================\n\n" << std::flush;
+
+    char     gameBuf[512];
+    char     lobbyBuf[1024];
+    sockaddr_in src{};
+    socklen_t srcLen = sizeof(src);
+
+    lastTimerBroadcast = Clock::now();
+
+    TimePoint lastPlayerCountUpdate = Clock::now();
+    TimePoint lastDiscoveryBroadcast = Clock::now();  // LAN discovery
+
+    while (true) {
+        auto now = Clock::now();
+
+        // ── LAN discovery broadcast (every 1 second) ──────────────────────
+        // Sends a type-40 packet to 255.255.255.255:7779 so any client on
+        // the same network can find this server without typing an IP.
+        if (std::chrono::duration_cast<std::chrono::seconds>(
+                now - lastDiscoveryBroadcast).count() >= 1) {
+            lastDiscoveryBroadcast = now;
+
+            char disc[128]; int doff = 0;
+            disc[doff++] = PKT_DISCOVERY;
+            doff += lp_write(disc, doff, lobbyName);
+            disc[doff++] = (uint8_t)players.size();
+            disc[doff++] = MAX_PLAYERS;
+            disc[doff++] = pwHash.empty() ? 0 : 1;
+
+            sockaddr_in bcastAddr{};
+            bcastAddr.sin_family      = AF_INET;
+            bcastAddr.sin_port        = htons(DISC_PORT);
+            bcastAddr.sin_addr.s_addr = inet_addr("255.255.255.255");  // 255.255.255.255
+            sendto(discSock, disc, doff, 0,
+                   (sockaddr*)&bcastAddr, sizeof(bcastAddr));
+        }
+
+        // ── Periodic player count sync to Supabase (every 5s) ────────────
+        if (std::chrono::duration_cast<std::chrono::seconds>(
+                now - lastPlayerCountUpdate).count() >= 5) {
+            lastPlayerCountUpdate = now;
+            supabase_update_players((int)players.size());
+        }
+
+        // ── Timeout stale game clients ────────────────────────────────────
+        for (auto it = players.begin(); it != players.end(); ) {
+            auto age = std::chrono::duration_cast<std::chrono::seconds>(
+                           now - it->second.lastSeen).count();
+            if (age > TIMEOUT_S) {
+                std::cout << "Timeout: " << it->first << "\n";
+                broadcast_player_left(gameSock, it->second.pid, it->first);
+                it = players.erase(it);
+            } else ++it;
+        }
+        if (players.empty() && nextPid != 1) reset_lobby();
+
+        // ── Match timer ───────────────────────────────────────────────────
+        if (matchRunning) {
+            auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+                               now - lastTimerBroadcast).count();
+            if (elapsed >= 1) {
+                lastTimerBroadcast = now;
+                if (--timeRemaining <= 0) {
+                    timeRemaining = 0;
+                    matchRunning  = false;
+                    std::cout << "Match over!\n";
+                    char ep[1] = { PKT_MATCH_END_BC };
+                    broadcast(gameSock, ep, 1, "");
+                    supabase_match_end();
+                }
+                char tp[3]; tp[0] = PKT_TIMER;
+                uint16_t t = (uint16_t)timeRemaining;
+                memcpy(tp + 1, &t, 2);
+                broadcast(gameSock, tp, 3, "");
+            }
+        }
+
+        // ── Drain game socket ─────────────────────────────────────────────
+        while (true) {
+            int bytes = recvfrom(gameSock, gameBuf, sizeof(gameBuf) - 1, 0,
+                                 (sockaddr*)&src, &srcLen);
+            if (bytes <= 0) break;
+
+            std::string key  = addrKey(src);
+            uint8_t     type = (uint8_t)gameBuf[0];
+
+            // 255 ping — echo, no registration
+            if (type == 255) {
+                char pong[1] = { (char)255 };
+                sendto(gameSock, pong, 1, 0, (sockaddr*)&src, srcLen);
+                continue;
+            }
+
+            // 12 keepalive
+            if (type == PKT_KEEPALIVE) {
+                if (players.count(key)) players[key].lastSeen = Clock::now();
+                continue;
+            }
+
+            // 9 disconnect
+            if (type == PKT_DISCONNECT) {
+                if (players.count(key)) {
+                    std::cout << "Disconnect: " << key << "\n";
+                    broadcast_player_left(gameSock, players[key].pid, key);
+                    players.erase(key);
+                    supabase_update_players((int)players.size());
+                    if (players.empty()) reset_lobby();
+                }
+                continue;
+            }
+
+            // Register new player
+            if (!players.count(key)) {
+                if ((int)players.size() >= MAX_PLAYERS) {
+                    std::cout << "Lobby full, rejecting: " << key << "\n";
+                    continue;
+                }
+                players[key] = { key, src, nextPid++, Clock::now() };
+                uint16_t pid = players[key].pid;
+                std::cout << (pid == 1 ? "HOST" : "Player")
+                          << " registered: " << key << " pid=" << pid << "\n";
+                char ja[3]; ja[0] = PKT_ID_ASSIGN;
+                memcpy(ja + 1, &pid, 2);
+                sendto(gameSock, ja, 3, 0, (sockaddr*)&src, srcLen);
+                supabase_update_players((int)players.size());
+            }
+            players[key].lastSeen = Clock::now();
+
+            // 1 player state
+            if (type == PKT_PLAYER_STATE) {
+                uint16_t spid = players[key].pid;
+                char bc[512]; bc[0] = PKT_PLAYER_STATE;
+                memcpy(bc + 1, &spid, 2);
+                memcpy(bc + 3, gameBuf + 1, bytes - 1);
+                broadcast(gameSock, bc, bytes + 2, key);
+            }
+
+            // 4 bullet
+            if (type == PKT_BULLET) {
+                uint16_t spid = players[key].pid;
+                char bc[512]; bc[0] = PKT_BULLET;
+                memcpy(bc + 1, &spid, 2);
+                memcpy(bc + 3, gameBuf + 1, bytes - 1);
+                broadcast(gameSock, bc, bytes + 2, key);
+            }
+
+            // 7 match start
+            if (type == PKT_MATCH_START) {
+                uint16_t pid = players[key].pid;
+                std::cout << "Match start requested by pid=" << pid << "\n";
+                if (pid != 1) {
+                    std::cout << "Non-host ignored.\n"; continue;
+                }
+                if ((int)players.size() < 2) {
+                    std::cout << "Not enough players.\n";
+                    char ne[1] = { PKT_NOT_ENOUGH };
+                    sendto(gameSock, ne, 1, 0, (sockaddr*)&src, srcLen);
+                    continue;
+                }
+                matchRunning       = true;
+                timeRemaining      = matchDuration;
+                lastTimerBroadcast = Clock::now();
+                std::cout << "Match started!\n";
+                char sp[1] = { PKT_MATCH_START };
+                broadcast(gameSock, sp, 1, "");
+                supabase_match_start();
+            }
+
+            // 10 join request
+            if (type == PKT_JOIN_REQUEST && players.count(key)) {
+                uint16_t pid = players[key].pid;
+                char ja[3]; ja[0] = PKT_ID_ASSIGN;
+                memcpy(ja + 1, &pid, 2);
+                sendto(gameSock, ja, 3, 0, (sockaddr*)&src, srcLen);
+            }
+
+            // 11 kill report
+            if (type == PKT_KILL_REPORT && bytes >= 5 && matchRunning) {
+                uint16_t killer, victim;
+                memcpy(&killer, gameBuf + 1, 2);
+                memcpy(&victim, gameBuf + 3, 2);
+                if (killer == players[key].pid)
+                    supabase_record_kill(killer, victim);
+            }
+        } // end game drain loop
+
+        // ── Drain lobby socket ────────────────────────────────────────────
+        while (true) {
+            int bytes = recvfrom(lobbySock, lobbyBuf, sizeof(lobbyBuf) - 1, 0,
+                                 (sockaddr*)&src, &srcLen);
+            if (bytes <= 0) break;
+
+            uint8_t type = (uint8_t)lobbyBuf[0];
+
+            // 25 list request
+            if (type == PKT_LIST_REQUEST) {
+                send_lobby_list(lobbySock, src);
+            }
+
+            // 30 join request
+            if (type == PKT_JOIN_REQUEST_DB && bytes >= 6) {
+                uint16_t id_lo, id_hi;
+                memcpy(&id_lo, lobbyBuf + 1, 2);
+                memcpy(&id_hi, lobbyBuf + 3, 2);
+                int64_t lobbyId = (int64_t)id_lo | ((int64_t)id_hi << 16);
+                uint8_t hasPw   = (uint8_t)lobbyBuf[5];
+                std::string cpw;
+                if (hasPw) lp_read(lobbyBuf, 6, bytes, cpw);
+                handle_join_request(lobbySock, src, lobbyId, hasPw != 0, cpw);
+            }
+        } // end lobby drain loop
+
+    } // end main loop
+
+    supabase_deregister_lobby();
+#ifdef _WIN32
+    closesocket(gameSock); closesocket(lobbySock); closesocket(discSock);
+    WSACleanup();
+#else
+    close(gameSock); close(lobbySock); close(discSock);
+    curl_global_cleanup();
+#endif
+    return 0;
+}

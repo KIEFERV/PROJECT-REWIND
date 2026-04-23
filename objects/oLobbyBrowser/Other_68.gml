@@ -7,6 +7,46 @@ buffer_seek(_buf, buffer_seek_start, 0);
 var _ptype = buffer_read(_buf, buffer_u8);
 
 // ════════════════════════════════════════════════════════════════════════════
+//  type 40 — LAN DISCOVERY broadcast from a host on the local network
+//  [u8:40][lpstr:lobby_name][u8:current_players][u8:max_players][u8:has_pw]
+//  The sender's IP is extracted from async_load and used as the host address.
+// ════════════════════════════════════════════════════════════════════════════
+if (_ptype == 40 && current_screen == SCREEN_LAN && lan_join_mode) {
+    // Read lobby info
+    var _name_len = buffer_read(_buf, buffer_u8);
+    var _name = "";
+    for (var _c = 0; _c < _name_len; _c++)
+        _name += chr(buffer_read(_buf, buffer_u8));
+    var _cur   = buffer_read(_buf, buffer_u8);
+    var _max   = buffer_read(_buf, buffer_u8);
+    var _has_pw = buffer_read(_buf, buffer_u8);
+
+    // Get sender IP from async_load
+    var _ip = async_load[? "ip"];
+
+    // Use ip as the map key
+    var _map_key = _ip;
+
+    // Create or update the host entry
+    if (!ds_map_exists(lan_hosts, _map_key)) {
+        var _entry = ds_map_create();
+        ds_map_add(lan_hosts, _map_key, _entry);
+    }
+    var _host_entry = lan_hosts[? _map_key];
+    _host_entry[? "ip"]      = _ip;
+    _host_entry[? "name"]    = _name;
+    _host_entry[? "current"] = _cur;
+    _host_entry[? "max"]     = _max;
+    _host_entry[? "has_pw"]  = _has_pw;
+
+    // Stamp the last-seen time
+    lan_host_times[? _map_key] = current_time;
+
+    show_debug_message("Discovered LAN host: " + _name + " at " + _ip);
+    exit;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 //  type 255 — PING response from game server
 //  Server echoes 255 back without registering a player slot.
 //  This confirms server.exe is alive. We destroy the poll socket and
