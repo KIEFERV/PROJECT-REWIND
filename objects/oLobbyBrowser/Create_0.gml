@@ -184,14 +184,16 @@ function send_online_create_request() {
 }
 
 /// @desc Launch server.exe locally — LAN hosting only
+/// Passes --lan so server registers with local IP in Supabase as a LAN lobby.
 function launch_server_and_host() {
-    var _args = "\"Local Game\"";
+    var _local_ip = network_get_ip_address();
+    var _args = "\"Local Game\" " + _local_ip + " --lan";
     var _server_dir = filename_dir(SERVER_EXE) + "\\";
     execute_shell_simple(SERVER_EXE, _args, "open", 1, _server_dir);
-    show_debug_message("Launched LAN server: " + SERVER_EXE + " " + _args);
+    show_debug_message("Launched LAN server: " + _args);
 
     global.is_creating_lobby = true;
-    global.ip_address        = "127.0.0.1";
+    global.ip_address        = _local_ip;
     global.port              = GAME_PORT_NUM;
     online_game_port         = 0;
 

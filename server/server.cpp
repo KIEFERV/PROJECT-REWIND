@@ -183,6 +183,7 @@ TimePoint lastTimerBroadcast;
 int64_t  myLobbyId = -1;
 int64_t  myMatchId = -1;
 uint16_t myGamePort = 7777;  // set at startup, used by Supabase registration
+bool     isLan      = false; // true when launched for LAN hosting
 
 // Server identity (set from argv)
 std::string lobbyName;
@@ -391,7 +392,8 @@ void supabase_register_lobby() {
         "\"max_players\":"   + std::to_string(MAX_PLAYERS) + ","
         "\"current_players\":0,"
         "\"password_hash\":"  + (pwHash.empty() ? "null" : "\"" + json_str(pwHash) + "\"") +
-        ",\"is_active\":false}";
+        + (isLan ? ",\"is_lan\":true}" : ",\"is_lan\":false}");
+        // ^^ is_lan flag for LAN vs online lobbies
 
     std::string resp = supabase_request("POST", "lobbies", body, "return=representation");
     myLobbyId = json_extract_int64(resp, "id");
@@ -497,7 +499,9 @@ void send_lobby_list(int sock, const sockaddr_in& dest) {
     // Fetch all lobbies from Supabase
     std::string resp = supabase_request("GET",
         "lobbies?select=id,lobby_name,host_ip,host_port,current_players,"
-        "max_players,password_hash,is_active&order=id");
+        "max_players,password_hash,is_active,is_lan"
+        "&is_lan=eq." + std::string(isLan ? "true" : "false")
+        + "&order=id");
 
     // Very simple JSON array parser — extracts field values sequentially
     // Works correctly with the flat JSON Supabase returns for this schema
@@ -835,7 +839,9 @@ int main(int argc, char* argv[]) {
     uint16_t portOverride = 0;
     for (int i = 2; i < argc; i++) {
         std::string a = argv[i];
-        if (a.find('.') != std::string::npos) {
+        if (a == "--lan") {
+            isLan = true;
+        } else if (a.find('.') != std::string::npos) {
             publicIp = a;
         } else if (!a.empty() && a.find_first_not_of("0123456789") == std::string::npos) {
             portOverride = (uint16_t)std::stoi(a);

@@ -49,11 +49,14 @@ if (current_screen == SCREEN_MODE) {
 
     // L — LAN
     if (keyboard_check_pressed(ord("L"))) {
-        is_lan_mode    = true;
-        current_screen = SCREEN_LAN;
-        lan_join_mode  = true;
-        lan_ip_input   = "";
-        status_msg     = "";
+        is_lan_mode      = true;
+        active_server_ip = VPS_IP;   // lobby list comes from Droplet
+        current_screen   = SCREEN_LAN;
+        lan_join_mode    = true;
+        selected_index   = 0;
+        cleanup_lobby_list();
+        request_lobby_list();
+        status_msg = "Fetching LAN lobbies...";
     }
 
     exit;
@@ -61,65 +64,92 @@ if (current_screen == SCREEN_MODE) {
 
 // ════════════════════════════════════════════════════════════════════════════
 //  SCREEN: LAN
+//  Uses the same lobby browser as online, but filtered to LAN lobbies.
+//  Host launches server.exe locally with --lan flag which registers in
+//  Supabase with the local IP. Joiner browses and joins like online.
 // ════════════════════════════════════════════════════════════════════════════
 if (current_screen == SCREEN_LAN) {
 
     // TAB switches between Join and Host tabs
     if (keyboard_check_pressed(vk_tab)) {
         lan_join_mode = !lan_join_mode;
-        lan_ip_input  = "";
         status_msg    = "";
 
-        // Launch server immediately when switching to HOST tab
         if (!lan_join_mode && !launching) {
+            // HOST tab — launch server.exe with --lan flag
             launch_server_and_host();
+        } else if (lan_join_mode) {
+            // JOIN tab — refresh lobby list
+            request_lobby_list();
+            status_msg = "Fetching LAN lobbies...";
         }
     }
 
     if (lan_join_mode) {
-        // ── JOIN TAB — type host IP and press ENTER ───────────────────────
-        // Accept digits and dots only
-        for (var _k = ord("0"); _k <= ord("9"); _k++) {
-            if (keyboard_check_pressed(_k) && string_length(lan_ip_input) < 15)
-                lan_ip_input += chr(_k);
-        }
-        if (keyboard_check_pressed(vk_numpad0)) lan_ip_input += "0";
-        if (keyboard_check_pressed(vk_numpad1)) lan_ip_input += "1";
-        if (keyboard_check_pressed(vk_numpad2)) lan_ip_input += "2";
-        if (keyboard_check_pressed(vk_numpad3)) lan_ip_input += "3";
-        if (keyboard_check_pressed(vk_numpad4)) lan_ip_input += "4";
-        if (keyboard_check_pressed(vk_numpad5)) lan_ip_input += "5";
-        if (keyboard_check_pressed(vk_numpad6)) lan_ip_input += "6";
-        if (keyboard_check_pressed(vk_numpad7)) lan_ip_input += "7";
-        if (keyboard_check_pressed(vk_numpad8)) lan_ip_input += "8";
-        if (keyboard_check_pressed(vk_numpad9)) lan_ip_input += "9";
-        if ((keyboard_check_pressed(ord(".")) || keyboard_check_pressed(110) || keyboard_check_pressed(190)) && string_length(lan_ip_input) < 15)
-            lan_ip_input += ".";
-        if (keyboard_check_pressed(vk_backspace) && string_length(lan_ip_input) > 0)
-            lan_ip_input = string_copy(lan_ip_input, 1, string_length(lan_ip_input) - 1);
+        // ── JOIN TAB — browse LAN lobbies from Supabase ───────────────────
+        var _count = ds_list_size(lobby_list);
 
-        // ENTER — connect to typed IP
-        if (keyboard_check_pressed(vk_return)) {
-            if (string_length(lan_ip_input) >= 7) {  // minimum valid IP length
-                global.ip_address        = lan_ip_input;
-                global.port              = GAME_PORT_NUM;
-                global.is_creating_lobby = false;
-                if (lobby_socket >= 0) { network_destroy(lobby_socket); lobby_socket = -1; }
-                room_goto(rLobby);
+        refresh_timer++;
+        if (refresh_timer >= REFRESH_TICKS && !join_pending) {
+            refresh_timer = 0;
+            request_lobby_list();
+        }
+
+        if (join_pending) {
+            join_timeout--;
+            if (join_timeout <= 0) {
+                join_pending = false;
+                status_msg   = "No response. Try again.";
+            }
+        }
+
+        if (keyboard_check_pressed(vk_up))
+            selected_index = max(0, selected_index - 1);
+        if (keyboard_check_pressed(vk_down))
+            selected_index = min(max(0, _count - 1), selected_index + 1);
+
+        if (keyboard_check_pressed(ord("R")) && !join_pending) {
+            request_lobby_list();
+            status_msg = "Refreshing...";
+        }
+
+        if (keyboard_check_pressed(vk_return) && _count > 0 && !join_pending) {
+            var _entry  = ds_list_find_value(lobby_list, selected_index);
+            var _has_pw = _entry[? "has_password"];
+            if (_has_pw) {
+                pw_mode = true; pw_input = ""; pw_pending_idx = selected_index;
+                status_msg = "Enter password:";
             } else {
-                status_msg = "Enter a valid IP address.";
+                send_join_request(_entry[? "id"], "");
+                join_pending = true; join_timeout = JOIN_TIMEOUT_TICKS;
+                status_msg   = "Joining...";
             }
         }
 
     } else {
-        // ── HOST TAB — server is running, show local IP ───────────────────
-        // Nothing to do here — draw event shows the IP
+        // ── HOST TAB — server launched, nothing to do here
+    }
+
+    // Password overlay
+    if (pw_mode) {
+        pw_input = text_input_step(pw_input);
+        if (keyboard_check_pressed(vk_escape)) {
+            pw_mode = false; pw_input = ""; pw_pending_idx = -1;
+            status_msg = "Join cancelled.";
+        }
+        if (keyboard_check_pressed(vk_return)) {
+            var _entry = ds_list_find_value(lobby_list, pw_pending_idx);
+            send_join_request(_entry[? "id"], hash_password(pw_input));
+            pw_mode = false; pw_input = "";
+            join_pending = true; join_timeout = JOIN_TIMEOUT_TICKS;
+            status_msg = "Joining...";
+        }
     }
 
     // ESC — back to mode select
-    if (keyboard_check_pressed(vk_escape)) {
+    if (keyboard_check_pressed(vk_escape) && !pw_mode) {
         current_screen = SCREEN_MODE;
-        lan_ip_input   = "";
+        cleanup_lobby_list();
         status_msg     = "";
     }
 
