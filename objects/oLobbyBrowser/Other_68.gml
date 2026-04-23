@@ -187,8 +187,9 @@ if (_ptype == 31) {
             _ip += chr(buffer_read(_buf, buffer_u8));
         var _port = buffer_read(_buf, buffer_u16);
 
-        global.ip_address = _ip;
-        global.port       = _port;
+        global.ip_address        = _ip;
+        global.port              = _port;
+        global.is_creating_lobby = false;  // joiner is never the host
         show_debug_message("Join approved -> " + _ip + ":" + string(_port));
 
         network_destroy(lobby_socket);

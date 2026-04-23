@@ -28,12 +28,11 @@ network_send_udp_raw(socket, global.ip_address, global.port,
                      _buf, buffer_tell(_buf));
 buffer_delete(_buf);
 
-// If we created this lobby we know we will be pid=1 (host).
-// Show the host UI immediately rather than waiting for the server ack,
-// so there is no awkward "Waiting for server..." flash on the host's screen.
+// If we created this lobby show a temporary status while waiting for pid ack.
+// is_host is NOT set here — it is set authoritatively when the server sends
+// pid=1 in the type-2 packet, so both host and joiner go through the same path.
 if (global.is_creating_lobby) {
-    is_host    = true;
-    status_msg = "You are the host. Press SPACE to start.";
+    status_msg = "Waiting for server...";
     show_debug_message("oLobby: host path — waiting for pid ack.");
 }
 
