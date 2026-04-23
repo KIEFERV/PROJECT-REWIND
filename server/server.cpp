@@ -936,6 +936,10 @@ int main(int argc, char* argv[]) {
                     char ep[1] = { PKT_MATCH_END_BC };
                     broadcast(gameSock, ep, 1, "");
                     supabase_match_end();
+                    // Reset lobby state so players can play again
+                    players.clear();
+                    nextPid = 1;
+                    std::cout << "Lobby reset — ready for next match.\n";
                 }
                 char tp[3]; tp[0] = PKT_TIMER;
                 uint16_t t = (uint16_t)timeRemaining;

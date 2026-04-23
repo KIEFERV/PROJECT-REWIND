@@ -96,7 +96,8 @@ if (ptype == 5) {
 
 // ── Type 6: match over ────────────────────────────────────────────────────────
 if (ptype == 6) {
-    show_debug_message("Match ended.");
-    // room_goto(rPostMatch);  // uncomment and set your post-match room
+    show_debug_message("Match ended — returning to lobby.");
+    global.is_creating_lobby = false;
+    room_goto(rLobby);
     exit;
 }
