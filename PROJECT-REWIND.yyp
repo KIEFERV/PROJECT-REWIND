@@ -118,6 +118,7 @@
     {"id":{"name":"rm_create_lobby","path":"rooms/rm_create_lobby/rm_create_lobby.yy",},},
     {"id":{"name":"rm_game","path":"rooms/rm_game/rm_game.yy",},},
     {"id":{"name":"rm_leaderboard","path":"rooms/rm_leaderboard/rm_leaderboard.yy",},},
+    {"id":{"name":"rm_loadout","path":"rooms/rm_loadout/rm_loadout.yy",},},
     {"id":{"name":"rm_login","path":"rooms/rm_login/rm_login.yy",},},
     {"id":{"name":"rm_menu","path":"rooms/rm_menu/rm_menu.yy",},},
     {"id":{"name":"rm_register","path":"rooms/rm_register/rm_register.yy",},},
@@ -174,9 +175,9 @@
   "resourceType":"GMProject",
   "resourceVersion":"2.0",
   "RoomOrderNodes":[
+    {"roomId":{"name":"rm_menu","path":"rooms/rm_menu/rm_menu.yy",},},
     {"roomId":{"name":"rServerBrowser","path":"rooms/rServerBrowser/rServerBrowser.yy",},},
     {"roomId":{"name":"rm_login","path":"rooms/rm_login/rm_login.yy",},},
-    {"roomId":{"name":"rm_menu","path":"rooms/rm_menu/rm_menu.yy",},},
     {"roomId":{"name":"rm_register","path":"rooms/rm_register/rm_register.yy",},},
     {"roomId":{"name":"rm_create_lobby","path":"rooms/rm_create_lobby/rm_create_lobby.yy",},},
     {"roomId":{"name":"rm_browse_lobbies","path":"rooms/rm_browse_lobbies/rm_browse_lobbies.yy",},},
@@ -189,6 +190,7 @@
     {"roomId":{"name":"rm_game","path":"rooms/rm_game/rm_game.yy",},},
     {"roomId":{"name":"rm_leaderboard","path":"rooms/rm_leaderboard/rm_leaderboard.yy",},},
     {"roomId":{"name":"rm_menu","path":"rooms/rm_menu/rm_menu.yy",},},
+    {"roomId":{"name":"rm_loadout","path":"rooms/rm_loadout/rm_loadout.yy",},},
   ],
   "templateType":"game",
   "TextureGroups":[
