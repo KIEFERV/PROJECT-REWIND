@@ -140,6 +140,7 @@ function send_join_request(_lobby_id, _pw_hash) {
 /// @desc Ping the game server with type-255 (no registration)
 function ping_game_server() {
     if (game_socket < 0) exit;
+    // LAN host pings localhost; online host pings VPS at assigned port
     var _ip   = is_lan_mode ? "127.0.0.1" : VPS_IP;
     var _port = (online_game_port > 0) ? online_game_port : GAME_PORT_NUM;
     var _b = buffer_create(1, buffer_fixed, 1);
@@ -184,16 +185,15 @@ function send_online_create_request() {
 }
 
 /// @desc Launch server.exe locally — LAN hosting only
-/// Passes --lan so server registers with local IP in Supabase as a LAN lobby.
+/// Passes --lan so server registers with its auto-detected local IP in Supabase.
 function launch_server_and_host() {
-    var _local_ip = network_get_ip_address();
-    var _args = "\"Local Game\" " + _local_ip + " --lan";
+    var _args = "\"Local Game\" --lan";
     var _server_dir = filename_dir(SERVER_EXE) + "\\";
     execute_shell_simple(SERVER_EXE, _args, "open", 1, _server_dir);
     show_debug_message("Launched LAN server: " + _args);
 
     global.is_creating_lobby = true;
-    global.ip_address        = _local_ip;
+    global.ip_address        = "127.0.0.1";  // server runs locally
     global.port              = GAME_PORT_NUM;
     online_game_port         = 0;
 
