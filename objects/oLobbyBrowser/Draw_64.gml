@@ -162,67 +162,15 @@ if (current_screen == SCREEN_LAN) {
 
     } else {
         // ── HOST TAB CONTENT ──────────────────────────────────────────────
-        // Lobby name
-        draw_set_halign(fa_left);
-        draw_set_color(c_ltgray);
-        draw_text(_label_x, _form_y + 6, "Lobby Name");
-
-        var _nfoc = (lan_focus == "name");
-        draw_set_color(_nfoc ? make_color_rgb(30,50,90) : make_color_rgb(20,20,30));
-        draw_rectangle(_field_x, _form_y, _field_x + _field_w, _form_y + _field_h, false);
-        draw_set_color(_nfoc ? c_aqua : c_dkgray);
-        draw_rectangle(_field_x, _form_y, _field_x + _field_w, _form_y + _field_h, true);
-        var _cur_n = (_nfoc && ((current_time div 500) mod 2 == 0)) ? "|" : "";
+        // LAN lobbies are always public and need no name — just press ENTER
+        draw_set_halign(fa_center);
         draw_set_color(c_white);
-        draw_text(_field_x + 6, _form_y + 6, create_name + _cur_n);
-        _form_y += 50;
-
-        // Public/Private toggle
+        draw_text(_cx, _cy - 30, "Host a LAN Game");
         draw_set_color(c_ltgray);
-        draw_text(_label_x, _form_y + 6, "Visibility");
-        var _pub_x  = _field_x;
-        var _priv_x = _field_x + 120;
-        var _btn_w  = 110;
-        draw_set_color(!create_private ? make_color_rgb(40,120,60) : make_color_rgb(30,30,30));
-        draw_rectangle(_pub_x,  _form_y, _pub_x  + _btn_w, _form_y + _field_h, false);
-        draw_set_color(create_private  ? make_color_rgb(110,40,40) : make_color_rgb(30,30,30));
-        draw_rectangle(_priv_x, _form_y, _priv_x + _btn_w, _form_y + _field_h, false);
-        draw_set_color(!create_private ? c_lime : c_dkgray);
-        draw_rectangle(_pub_x,  _form_y, _pub_x  + _btn_w, _form_y + _field_h, true);
-        draw_set_color(create_private  ? c_red  : c_dkgray);
-        draw_rectangle(_priv_x, _form_y, _priv_x + _btn_w, _form_y + _field_h, true);
-        draw_set_halign(fa_center);
-        draw_set_color(!create_private ? c_white : c_gray);
-        draw_text(_pub_x  + _btn_w / 2, _form_y + 6, "PUBLIC");
-        draw_set_color(create_private  ? c_white : c_gray);
-        draw_text(_priv_x + _btn_w / 2, _form_y + 6, "PRIVATE");
+        draw_text(_cx, _cy + 4,  "Press ENTER to start hosting.");
         draw_set_color(c_dkgray);
-        draw_set_halign(fa_left);
-        draw_text(_priv_x + _btn_w + 10, _form_y + 6, "(P)");
-        _form_y += 50;
-
-        // Password field
-        if (create_private) {
-            var _pfoc = (lan_focus == "password");
-            draw_set_color(c_ltgray);
-            draw_text(_label_x, _form_y + 6, "Password");
-            draw_set_color(_pfoc ? make_color_rgb(30,50,90) : make_color_rgb(20,20,30));
-            draw_rectangle(_field_x, _form_y, _field_x + _field_w, _form_y + _field_h, false);
-            draw_set_color(_pfoc ? c_aqua : c_dkgray);
-            draw_rectangle(_field_x, _form_y, _field_x + _field_w, _form_y + _field_h, true);
-            var _stars = string_repeat("*", string_length(create_pw));
-            var _cur_p = (_pfoc && ((current_time div 500) mod 2 == 0)) ? "|" : "";
-            draw_set_color(c_white);
-            draw_text(_field_x + 6, _form_y + 6, _stars + _cur_p);
-            _form_y += 50;
-        }
-
-        draw_set_halign(fa_center);
-        draw_set_color(c_ltgray);
-        draw_text(_cx, _form_y, "ENTER — Host Lobby");
-        draw_set_color(c_dkgray);
-        draw_text(_cx, _form_y + 22,
-            "Host a game and others on your network can join automatically.");
+        draw_text(_cx, _cy + 30, "Other players on your network will see");
+        draw_text(_cx, _cy + 50, "your game appear in the JOIN tab automatically.");
     }
 
     // Bottom hints

@@ -182,17 +182,10 @@ function send_online_create_request() {
 }
 
 /// @desc Launch server.exe locally — used for LAN hosting only.
+/// No lobby name or password — always public, name is fixed.
 function launch_server_and_host() {
-    var _pw_arg = "";
-    if (create_private && create_pw != "")
-        _pw_arg = hash_password(create_pw);
-
-    var _safe_name = string_replace_all(create_name, "\"", "");
-    if (string_trim(_safe_name) == "") _safe_name = "My Lobby";
-
-    // Wrap name in quotes for the shell command
-    var _args = "\"" + _safe_name + "\"";
-    if (_pw_arg != "") _args += " " + _pw_arg;
+    // Fixed name for LAN — no form needed
+    var _args = "\"Local Game\"";
 
     var _server_dir = filename_dir(SERVER_EXE) + "\\";
     execute_shell_simple(SERVER_EXE, _args, "open", 1, _server_dir);

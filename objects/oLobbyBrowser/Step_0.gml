@@ -130,30 +130,10 @@ if (current_screen == SCREEN_LAN) {
 
     } else {
         // ── HOST TAB ──────────────────────────────────────────────────────
-        if (lan_focus == "name") {
-            if (string_length(create_name) < 24)
-                create_name = text_input_step(create_name);
-        } else if (lan_focus == "password") {
-            if (string_length(create_pw) < 32)
-                create_pw = text_input_step(create_pw);
-        }
-
-        if (keyboard_check_pressed(ord("P"))) {
-            create_private = !create_private;
-            if (!create_private) { create_pw = ""; lan_focus = "name"; }
-        }
-
+        // No name or password needed for LAN — just press ENTER to host.
         if (keyboard_check_pressed(vk_return)) {
-            var _name_ok = (string_length(string_trim(create_name)) > 0);
-            var _pw_ok   = (!create_private || string_length(create_pw) > 0);
-            if (!_name_ok) {
-                status_msg = "Please enter a lobby name.";
-            } else if (!_pw_ok) {
-                status_msg = "Please enter a password.";
-            } else {
-                close_disc_socket();  // stop listening — we're now the host
-                launch_server_and_host();
-            }
+            close_disc_socket();
+            launch_server_and_host();
         }
     }
 
@@ -194,22 +174,20 @@ if (current_screen == SCREEN_CREATE) {
     }
 
     if (keyboard_check_pressed(vk_return)) {
-    var _name_ok = (string_length(string_trim(create_name)) > 0);
-    var _pw_ok   = (!create_private || string_length(create_pw) > 0);
-    if (!_name_ok) {
-        status_msg = "Please enter a lobby name.";
-    } else if (!_pw_ok) {
-        status_msg = "Please enter a password for the private lobby.";
-    } else {
-        if (is_lan_mode) {
-            show_message("DEBUG: LAN mode — launching local server");
-            launch_server_and_host();
+        var _name_ok = (string_length(string_trim(create_name)) > 0);
+        var _pw_ok   = (!create_private || string_length(create_pw) > 0);
+        if (!_name_ok) {
+            status_msg = "Please enter a lobby name.";
+        } else if (!_pw_ok) {
+            status_msg = "Please enter a password for the private lobby.";
         } else {
-            show_message("DEBUG: ONLINE mode — contacting manager at " + VPS_IP + ":" + string(MANAGER_PORT_NUM));
-            send_online_create_request();
+            if (is_lan_mode) {
+                launch_server_and_host();   // LAN — local server.exe
+            } else {
+                send_online_create_request(); // Online — ask Droplet manager
+            }
         }
     }
-}
 
     if (keyboard_check_pressed(vk_escape)) {
         current_screen = SCREEN_BROWSE;
