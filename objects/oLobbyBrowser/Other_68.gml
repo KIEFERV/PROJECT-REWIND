@@ -120,8 +120,7 @@ if (_ptype == 51 && create_pending) {
 //  type 26 — LIST_RESPONSE from DB server
 //  [u8:26][u8:count]
 //  per lobby: [u32:id as 2xu16][lpstr:name][lpstr:host_ip][u16:port]
-//             [u8:current][u8:max][u8:has_password][u8:is_active]
-//  host_ip and port are consumed but not stored — never shown to the player.
+//             [u8:current][u8:max][u8:has_password][u8:is_active][u8:is_lan]
 // ════════════════════════════════════════════════════════════════════════════
 if (_ptype == 26) {
     cleanup_lobby_list();
@@ -137,18 +136,24 @@ if (_ptype == 26) {
         for (var _c = 0; _c < _nlen; _c++)
             _name += chr(buffer_read(_buf, buffer_u8));
 
-        // host_ip — consumed, discarded
+        // host_ip — read and store (needed for LAN join response validation)
         var _iplen = buffer_read(_buf, buffer_u8);
+        var _host_ip = "";
         for (var _c = 0; _c < _iplen; _c++)
-            buffer_read(_buf, buffer_u8);
+            _host_ip += chr(buffer_read(_buf, buffer_u8));
 
-        // host_port — consumed, discarded
-        buffer_read(_buf, buffer_u16);
-
+        var _port      = buffer_read(_buf, buffer_u16);
         var _current   = buffer_read(_buf, buffer_u8);
         var _max       = buffer_read(_buf, buffer_u8);
         var _has_pw    = buffer_read(_buf, buffer_u8);
         var _is_active = buffer_read(_buf, buffer_u8);
+        var _is_lan    = buffer_read(_buf, buffer_u8);
+
+        show_debug_message("Lobby entry: " + _name + " is_lan=" + string(_is_lan)
+            + " is_lan_mode=" + string(is_lan_mode) + " match=" + string(_is_lan == is_lan_mode));
+
+        // Filter: only show lobbies matching current mode
+        if (_is_lan != is_lan_mode) continue;
 
         var _entry = ds_map_create();
         ds_map_add(_entry, "id",           _id);
@@ -162,12 +167,17 @@ if (_ptype == 26) {
 
     selected_index = clamp(selected_index, 0, max(0, ds_list_size(lobby_list) - 1));
 
-    if (ds_list_size(lobby_list) == 0)
-        status_msg = "No lobbies found.  C = create one   R = refresh";
-    else
-        status_msg = "Up/Down select   ENTER join   C create   R refresh";
+    if (ds_list_size(lobby_list) == 0) {
+        if (is_lan_mode)
+            status_msg = "No LAN lobbies found.  TAB = host   R = refresh";
+        else
+            status_msg = "No lobbies found.  C = create one   R = refresh";
+    } else {
+        status_msg = "Up/Down select   ENTER join   R refresh";
+        if (!is_lan_mode) status_msg += "   C create";
+    }
 
-    show_debug_message("Lobby list: " + string(_count) + " entries.");
+    show_debug_message("Lobby list: " + string(ds_list_size(lobby_list)) + " matching entries.");
     exit;
 }
 

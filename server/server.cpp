@@ -89,6 +89,7 @@
   #include <netinet/in.h>
   #include <arpa/inet.h>
   #include <unistd.h>
+  #include <fcntl.h>
   #include <curl/curl.h>
   #include <errno.h>
   #define CLOSE_SOCK(s) close(s)
@@ -183,6 +184,7 @@ TimePoint lastTimerBroadcast;
 int64_t  myLobbyId = -1;
 int64_t  myMatchId = -1;
 uint16_t myGamePort = 7777;  // set at startup, used by Supabase registration
+bool     isLan      = false; // true when launched for LAN hosting
 
 // Server identity (set from argv)
 std::string lobbyName;
@@ -391,7 +393,8 @@ void supabase_register_lobby() {
         "\"max_players\":"   + std::to_string(MAX_PLAYERS) + ","
         "\"current_players\":0,"
         "\"password_hash\":"  + (pwHash.empty() ? "null" : "\"" + json_str(pwHash) + "\"") +
-        ",\"is_active\":false}";
+        + (isLan ? ",\"is_lan\":true}" : ",\"is_lan\":false}");
+        // ^^ is_lan flag for LAN vs online lobbies
 
     std::string resp = supabase_request("POST", "lobbies", body, "return=representation");
     myLobbyId = json_extract_int64(resp, "id");
@@ -497,7 +500,7 @@ void send_lobby_list(int sock, const sockaddr_in& dest) {
     // Fetch all lobbies from Supabase
     std::string resp = supabase_request("GET",
         "lobbies?select=id,lobby_name,host_ip,host_port,current_players,"
-        "max_players,password_hash,is_active&order=id");
+        "max_players,password_hash,is_active,is_lan&order=id");
 
     // Very simple JSON array parser — extracts field values sequentially
     // Works correctly with the flat JSON Supabase returns for this schema
@@ -505,7 +508,7 @@ void send_lobby_list(int sock, const sockaddr_in& dest) {
         int64_t     id;
         std::string name, ip;
         uint16_t    port;
-        uint8_t     cur, max, hasPw, active;
+        uint8_t     cur, max, hasPw, active, lan;
     };
     std::vector<LobbyRow> rows;
 
@@ -524,6 +527,7 @@ void send_lobby_list(int sock, const sockaddr_in& dest) {
         r.port   = (uint16_t)json_extract_int64(obj, "host_port");
         r.hasPw  = (obj.find("\"password_hash\":null") == std::string::npos) ? 1 : 0;
         r.active = (obj.find("\"is_active\":true") != std::string::npos) ? 1 : 0;
+        r.lan    = (obj.find("\"is_lan\":true")    != std::string::npos) ? 1 : 0;
 
         // Extract string fields
         auto extract_str = [&](const std::string& key) -> std::string {
@@ -559,6 +563,7 @@ void send_lobby_list(int sock, const sockaddr_in& dest) {
         buf[off++] = r.max;
         buf[off++] = r.hasPw;
         buf[off++] = r.active;
+        buf[off++] = r.lan;
     }
     sendto(sock, buf, off, 0, (const sockaddr*)&dest, sizeof(dest));
     std::cout << "Sent lobby list (" << rows.size() << ") to "
@@ -656,6 +661,7 @@ void reset_lobby() {
 void run_as_manager(const std::string& dropletIp) {
     std::map<uint16_t, pid_t> portInUse;
 
+    // Manager socket — handles create requests on port 9999
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     sockaddr_in addr{};
     addr.sin_family      = AF_INET;
@@ -666,17 +672,31 @@ void run_as_manager(const std::string& dropletIp) {
         return;
     }
 
-    // 1 second timeout so we can reap children regularly
-    struct timeval tv; tv.tv_sec = 1; tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    // Lobby socket — handles list/join requests on port 8888
+    int lobbySock = socket(AF_INET, SOCK_DGRAM, 0);
+    sockaddr_in lobbyAddr{};
+    lobbyAddr.sin_family      = AF_INET;
+    lobbyAddr.sin_port        = htons(LOBBY_PORT);
+    lobbyAddr.sin_addr.s_addr = INADDR_ANY;
+    if (bind(lobbySock, (sockaddr*)&lobbyAddr, sizeof(lobbyAddr)) < 0) {
+        std::cerr << "Manager: bind failed on lobby port " << LOBBY_PORT
+                  << " errno=" << errno << " (" << strerror(errno) << ")\n";
+        return;
+    }
+    std::cout << "Manager: lobby socket bound to port " << LOBBY_PORT << "\n";
+
+    // Set both sockets non-blocking for drain loops
+    fcntl(sock,      F_SETFL, O_NONBLOCK);
+    fcntl(lobbySock, F_SETFL, O_NONBLOCK);
 
     std::cout << "=== Lobby Manager ===\n"
-              << "  Listening on UDP port " << MANAGER_PORT << "\n"
-              << "  Public IP : " << dropletIp << "\n"
-              << "  Port pool : " << PORT_MIN << "-" << PORT_MAX << "\n"
+              << "  Manager port : " << MANAGER_PORT << "\n"
+              << "  Lobby port   : " << LOBBY_PORT << "\n"
+              << "  Public IP    : " << dropletIp << "\n"
+              << "  Port pool    : " << PORT_MIN << "-" << PORT_MAX << "\n"
               << "=====================\n";
 
-    char buf[256];
+    char buf[1500];
     sockaddr_in src{};
     socklen_t srcLen = sizeof(src);
 
@@ -694,6 +714,46 @@ void run_as_manager(const std::string& dropletIp) {
                 }
             }
         }
+
+        // Use select() to monitor both sockets simultaneously
+        fd_set fds;
+        FD_ZERO(&fds);
+        FD_SET(sock,      &fds);
+        FD_SET(lobbySock, &fds);
+        int maxfd = std::max(sock, lobbySock) + 1;
+        struct timeval stv; stv.tv_sec = 1; stv.tv_usec = 0;
+        int ready = select(maxfd, &fds, nullptr, nullptr, &stv);
+        if (ready <= 0) continue;
+
+        // ── Drain lobby socket first (list/join requests) ────────────
+        if (FD_ISSET(lobbySock, &fds)) {
+            char lbuf[512];
+            sockaddr_in lsrc{};
+            socklen_t lsrcLen = sizeof(lsrc);
+            while (true) {
+                int lbytes = recvfrom(lobbySock, lbuf, sizeof(lbuf) - 1, 0,
+                                      (sockaddr*)&lsrc, &lsrcLen);
+                if (lbytes <= 0) break;
+                uint8_t ltype = (uint8_t)lbuf[0];
+                std::cout << "Manager lobby recv: type=" << (int)ltype
+                          << " from " << inet_ntoa(lsrc.sin_addr) << "\n";
+                if (ltype == PKT_LIST_REQUEST) {
+                    send_lobby_list(lobbySock, lsrc);
+                } else if (ltype == PKT_JOIN_REQUEST_DB && lbytes >= 6) {
+                    uint16_t id_lo, id_hi;
+                    memcpy(&id_lo, lbuf + 1, 2);
+                    memcpy(&id_hi, lbuf + 3, 2);
+                    int64_t lobbyId = (int64_t)id_lo | ((int64_t)id_hi << 16);
+                    uint8_t hasPw   = (uint8_t)lbuf[5];
+                    std::string cpw;
+                    if (hasPw) lp_read(lbuf, 6, lbytes, cpw);
+                    handle_join_request(lobbySock, lsrc, lobbyId, hasPw != 0, cpw);
+                }
+            }
+        }
+
+        // ── Drain manager socket (create requests) ───────────────────
+        if (!FD_ISSET(sock, &fds)) continue;
 
         int bytes = recvfrom(sock, buf, sizeof(buf) - 1, 0,
                              (sockaddr*)&src, &srcLen);
@@ -781,6 +841,7 @@ void run_as_manager(const std::string& dropletIp) {
     }
 
     close(sock);
+    close(lobbySock);
 }
 #endif  // !_WIN32
 
@@ -835,7 +896,9 @@ int main(int argc, char* argv[]) {
     uint16_t portOverride = 0;
     for (int i = 2; i < argc; i++) {
         std::string a = argv[i];
-        if (a.find('.') != std::string::npos) {
+        if (a == "--lan") {
+            isLan = true;
+        } else if (a.find('.') != std::string::npos) {
             publicIp = a;
         } else if (!a.empty() && a.find_first_not_of("0123456789") == std::string::npos) {
             portOverride = (uint16_t)std::stoi(a);
@@ -876,9 +939,20 @@ int main(int argc, char* argv[]) {
 
     uint16_t gamePort  = (portOverride > 0) ? portOverride : GAME_PORT;
     myGamePort = gamePort;
-    uint16_t lobbyPort = (portOverride > 0) ? (uint16_t)(portOverride + 1111) : LOBBY_PORT;
-    int gameSock  = make_udp_sock(gamePort,  1);
-    int lobbySock = make_udp_sock(lobbyPort, 1);
+    // Manager-spawned instances (portOverride > 0) don't bind the lobby port —
+    // the manager handles all list/join requests on port 8888.
+    // LAN host (no port override) binds lobby port normally.
+    uint16_t lobbyPort = (portOverride > 0) ? 0 : LOBBY_PORT;
+    int gameSock  = make_udp_sock(gamePort, 1);
+    // For spawned instances, create a plain unbound socket — won't receive anything
+    // but keeps the drain loop code from crashing on an invalid fd.
+#ifdef _WIN32
+    int lobbySock = (lobbyPort > 0) ? make_udp_sock(lobbyPort, 1) : (int)socket(AF_INET, SOCK_DGRAM, 0);
+#else
+    int lobbySock = (lobbyPort > 0) ? make_udp_sock(lobbyPort, 1) : socket(AF_INET, SOCK_DGRAM, 0);
+    // Set unbound lobby socket non-blocking so drain loop returns immediately
+    if (lobbyPort == 0) fcntl(lobbySock, F_SETFL, O_NONBLOCK);
+#endif
 
     // No broadcast socket needed — discovery is request/reply based
 

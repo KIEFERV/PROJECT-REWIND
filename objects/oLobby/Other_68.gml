@@ -30,7 +30,7 @@ if (ptype == 3) {
     // If the host left, return everyone to the lobby browser
     if (left_pid == 1 && !is_host) {
         show_debug_message("Host left — returning to lobby browser.");
-        room_goto(rLobbyBrowser);
+        room_goto(rServerBrowser);
     }
     exit;
 }
