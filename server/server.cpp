@@ -944,8 +944,15 @@ int main(int argc, char* argv[]) {
     // LAN host (no port override) binds lobby port normally.
     uint16_t lobbyPort = (portOverride > 0) ? 0 : LOBBY_PORT;
     int gameSock  = make_udp_sock(gamePort, 1);
-    int lobbySock = (lobbyPort > 0) ? make_udp_sock(lobbyPort, 1)
-                                    : (int)socket(AF_INET, SOCK_DGRAM, 0);
+    // For spawned instances, create a plain unbound socket — won't receive anything
+    // but keeps the drain loop code from crashing on an invalid fd.
+#ifdef _WIN32
+    int lobbySock = (lobbyPort > 0) ? make_udp_sock(lobbyPort, 1) : (int)socket(AF_INET, SOCK_DGRAM, 0);
+#else
+    int lobbySock = (lobbyPort > 0) ? make_udp_sock(lobbyPort, 1) : socket(AF_INET, SOCK_DGRAM, 0);
+    // Set unbound lobby socket non-blocking so drain loop returns immediately
+    if (lobbyPort == 0) fcntl(lobbySock, F_SETFL, O_NONBLOCK);
+#endif
 
     // No broadcast socket needed — discovery is request/reply based
 
