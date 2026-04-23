@@ -678,9 +678,11 @@ void run_as_manager(const std::string& dropletIp) {
     lobbyAddr.sin_port        = htons(LOBBY_PORT);
     lobbyAddr.sin_addr.s_addr = INADDR_ANY;
     if (bind(lobbySock, (sockaddr*)&lobbyAddr, sizeof(lobbyAddr)) < 0) {
-        std::cerr << "Manager: bind failed on lobby port " << LOBBY_PORT << "\n";
+        std::cerr << "Manager: bind failed on lobby port " << LOBBY_PORT
+                  << " errno=" << errno << " (" << strerror(errno) << ")\n";
         return;
     }
+    std::cout << "Manager: lobby socket bound to port " << LOBBY_PORT << "\n";
 
     // 1 second timeout on manager socket; lobby socket uses 1ms
     struct timeval tv; tv.tv_sec = 1; tv.tv_usec = 0;
