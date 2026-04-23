@@ -9,7 +9,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 //  CONFIGURATION — edit before running
 // ═══════════════════════════════════════════════════════════════════════════
-#macro VPS_IP           "YOUR_DROPLET_IP"
+#macro VPS_IP           "206.189.192.97"
 #macro LOBBY_PORT_NUM   8888
 #macro GAME_PORT_NUM    7777
 #macro DISC_PORT_NUM    7779
@@ -29,7 +29,9 @@ active_server_ip = VPS_IP;
 is_lan_mode      = false;
 
 // ─── Sockets ──────────────────────────────────────────────────────────────
-lobby_socket   = network_create_socket(network_socket_udp);
+// lobby_socket is bound to LOBBY_PORT_NUM (8888) so it receives both
+// lobby list responses AND LAN discovery broadcasts from server.exe.
+lobby_socket   = network_create_socket_ext(network_socket_udp, LOBBY_PORT_NUM);
 game_socket    = -1;
 disc_socket    = -1;
 current_screen = SCREEN_MODE;
@@ -260,4 +262,4 @@ function text_input_step(_str) {
     return _str;
 }
 
-show_debug_message("LobbyBrowser ready. VPS=" + VPS_IP);
+show_debug_message("LobbyBrowser ready. VPS=" + VPS_IP + " lobby_socket=" + string(lobby_socket));

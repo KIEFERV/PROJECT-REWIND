@@ -934,8 +934,11 @@ int main(int argc, char* argv[]) {
             bcastAddr.sin_family      = AF_INET;
             bcastAddr.sin_port        = htons(lobbyPort);  // lobby port so clients receive on lobby_socket
             bcastAddr.sin_addr.s_addr = inet_addr("255.255.255.255");
-            sendto(discSock, disc, doff, 0,
+            int sent = sendto(discSock, disc, doff, 0,
                    (sockaddr*)&bcastAddr, sizeof(bcastAddr));
+            std::cout << "Discovery broadcast sent to 255.255.255.255:"
+                      << lobbyPort << " bytes=" << doff
+                      << " result=" << sent << "\n";
         }
 
         // ── Periodic player count sync to Supabase (every 5s) ────────────
