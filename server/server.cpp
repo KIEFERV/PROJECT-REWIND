@@ -108,8 +108,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 //  CONFIGURATION — set these to your Supabase project values
 // ═══════════════════════════════════════════════════════════════════════════
-#define SUPABASE_URL  "https://zqnvimeyzogmtgydrkuz.supabase.co"
-#define SUPABASE_KEY  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxbnZpbWV5em9nbXRneWRya3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MjcwNzEsImV4cCI6MjA5MjMwMzA3MX0.vRLJw3_Ve6Az-0K2PJphwg8cE9juG4y2p7VYMPbR5io"
+#define SUPABASE_URL  "https://your-project-id.supabase.co"
+#define SUPABASE_KEY  "your-anon-public-key-here"
 
 // ── Fixed server config ───────────────────────────────────────────────────
 static const uint16_t GAME_PORT   = 7777;
@@ -916,8 +916,9 @@ int main(int argc, char* argv[]) {
         auto now = Clock::now();
 
         // ── LAN discovery broadcast (every 1 second) ──────────────────────
-        // Sends a type-40 packet to 255.255.255.255:7779 so any client on
-        // the same network can find this server without typing an IP.
+        // Sends a type-40 packet to 255.255.255.255 on the LOBBY_PORT (8888).
+        // Clients receive it on their existing lobby_socket — no separate
+        // discovery socket needed, avoiding GML socket binding issues.
         if (std::chrono::duration_cast<std::chrono::seconds>(
                 now - lastDiscoveryBroadcast).count() >= 1) {
             lastDiscoveryBroadcast = now;
@@ -931,8 +932,8 @@ int main(int argc, char* argv[]) {
 
             sockaddr_in bcastAddr{};
             bcastAddr.sin_family      = AF_INET;
-            bcastAddr.sin_port        = htons(DISC_PORT);
-            bcastAddr.sin_addr.s_addr = inet_addr("255.255.255.255");  // 255.255.255.255
+            bcastAddr.sin_port        = htons(lobbyPort);  // lobby port so clients receive on lobby_socket
+            bcastAddr.sin_addr.s_addr = inet_addr("255.255.255.255");
             sendto(discSock, disc, doff, 0,
                    (sockaddr*)&bcastAddr, sizeof(bcastAddr));
         }

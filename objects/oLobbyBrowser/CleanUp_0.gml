@@ -10,7 +10,7 @@ close_disc_socket();
 if (ds_exists(lan_hosts,      ds_type_map)) ds_map_destroy(lan_hosts);
 if (ds_exists(lan_host_times, ds_type_map)) ds_map_destroy(lan_host_times);
 
-// Destroy sockets if not already done
+// Destroy sockets
 if (lobby_socket >= 0) network_destroy(lobby_socket);
 if (game_socket  >= 0) network_destroy(game_socket);
-
+// disc_socket no longer used — discovery runs on lobby_socket

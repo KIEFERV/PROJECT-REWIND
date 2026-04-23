@@ -9,7 +9,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 //  CONFIGURATION — edit before running
 // ═══════════════════════════════════════════════════════════════════════════
-#macro VPS_IP           "206.189.192.97"
+#macro VPS_IP           "YOUR_DROPLET_IP"
 #macro LOBBY_PORT_NUM   8888
 #macro GAME_PORT_NUM    7777
 #macro DISC_PORT_NUM    7779
@@ -205,19 +205,17 @@ function launch_server_and_host() {
     status_msg        = "Starting server...";
 }
 
-/// @desc Open LAN discovery socket on DISC_PORT_NUM
+/// @desc Open LAN discovery — no separate socket needed.
+/// server.exe now broadcasts on the lobby port (8888) so the
+/// existing lobby_socket receives discovery packets automatically.
 function open_disc_socket() {
-    if (disc_socket >= 0) network_destroy(disc_socket);
-    disc_socket = network_create_socket_ext(network_socket_udp, DISC_PORT_NUM);
-    show_debug_message("Discovery socket opened on port " + string(DISC_PORT_NUM));
+    // lobby_socket already handles port 8888 — nothing extra needed.
+    show_debug_message("LAN discovery ready on lobby_socket (port " + string(LOBBY_PORT_NUM) + ")");
 }
 
-/// @desc Close LAN discovery socket and clear host list
+/// @desc Close LAN discovery and clear host list
 function close_disc_socket() {
-    if (disc_socket >= 0) {
-        network_destroy(disc_socket);
-        disc_socket = -1;
-    }
+    // disc_socket is no longer used — just clear the host list
     var _key = ds_map_find_first(lan_hosts);
     while (!is_undefined(_key)) {
         var _entry = lan_hosts[? _key];
