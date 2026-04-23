@@ -499,9 +499,7 @@ void send_lobby_list(int sock, const sockaddr_in& dest) {
     // Fetch all lobbies from Supabase
     std::string resp = supabase_request("GET",
         "lobbies?select=id,lobby_name,host_ip,host_port,current_players,"
-        "max_players,password_hash,is_active,is_lan"
-        "&is_lan=eq." + std::string(isLan ? "true" : "false")
-        + "&order=id");
+        "max_players,password_hash,is_active,is_lan&order=id");
 
     // Very simple JSON array parser — extracts field values sequentially
     // Works correctly with the flat JSON Supabase returns for this schema
@@ -509,7 +507,7 @@ void send_lobby_list(int sock, const sockaddr_in& dest) {
         int64_t     id;
         std::string name, ip;
         uint16_t    port;
-        uint8_t     cur, max, hasPw, active;
+        uint8_t     cur, max, hasPw, active, lan;
     };
     std::vector<LobbyRow> rows;
 
@@ -528,6 +526,7 @@ void send_lobby_list(int sock, const sockaddr_in& dest) {
         r.port   = (uint16_t)json_extract_int64(obj, "host_port");
         r.hasPw  = (obj.find("\"password_hash\":null") == std::string::npos) ? 1 : 0;
         r.active = (obj.find("\"is_active\":true") != std::string::npos) ? 1 : 0;
+        r.lan    = (obj.find("\"is_lan\":true")    != std::string::npos) ? 1 : 0;
 
         // Extract string fields
         auto extract_str = [&](const std::string& key) -> std::string {
@@ -563,6 +562,7 @@ void send_lobby_list(int sock, const sockaddr_in& dest) {
         buf[off++] = r.max;
         buf[off++] = r.hasPw;
         buf[off++] = r.active;
+        buf[off++] = r.lan;
     }
     sendto(sock, buf, off, 0, (const sockaddr*)&dest, sizeof(dest));
     std::cout << "Sent lobby list (" << rows.size() << ") to "
