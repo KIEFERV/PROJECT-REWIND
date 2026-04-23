@@ -1,40 +1,3 @@
-// ════════════════════════════════════════════════════════════════════════════
-//  SCREEN: SETUP — first-run firewall permission
-// ════════════════════════════════════════════════════════════════════════════
-if (current_screen == SCREEN_SETUP) {
-    setup_timer++;
-
-    // Phase 0 — launch server.exe to trigger Windows firewall dialog
-    if (setup_phase == 0 && setup_timer == game_get_speed(gamespeed_fps) / 2) {
-        run_firewall_setup();
-        setup_phase = 1;
-        status_msg  = "Please allow network access if prompted by Windows.";
-    }
-
-    // Phase 1 — wait for player to interact with firewall dialog
-    if (setup_phase == 1 && setup_timer >= SETUP_DURATION) {
-        // Kill the setup server.exe
-        execute_shell_simple("taskkill", "/F /IM server.exe", "", 0, "");
-        setup_phase = 2;
-        complete_firewall_setup();
-        current_screen = SCREEN_MODE;
-        status_msg     = "";
-    }
-
-    // Player can skip by pressing any key once server has had time to start
-    if (setup_phase == 1 && setup_timer >= game_get_speed(gamespeed_fps) * 2) {
-        if (keyboard_check_pressed(vk_anykey) || mouse_check_button_pressed(mb_any)) {
-            execute_shell_simple("taskkill", "/F /IM server.exe", "", 0, "");
-            setup_phase    = 2;
-            complete_firewall_setup();
-            current_screen = SCREEN_MODE;
-            status_msg     = "";
-        }
-    }
-
-    exit;
-}
-
 /// Step_0 — oLobbyBrowser
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -86,17 +49,11 @@ if (current_screen == SCREEN_MODE) {
 
     // L — LAN
     if (keyboard_check_pressed(ord("L"))) {
-        is_lan_mode      = true;
-        active_server_ip = "127.0.0.1";
-        current_screen   = SCREEN_LAN;
-        status_msg       = "Searching for hosts...";
-        lan_join_mode    = true;
-        lan_selected     = 0;
-        create_name      = "";
-        create_pw        = "";
-        create_private   = false;
-        lan_focus        = "name";
-        open_disc_socket();
+        is_lan_mode    = true;
+        current_screen = SCREEN_LAN;
+        lan_join_mode  = true;
+        lan_ip_input   = "";
+        status_msg     = "";
     }
 
     exit;
@@ -110,89 +67,59 @@ if (current_screen == SCREEN_LAN) {
     // TAB switches between Join and Host tabs
     if (keyboard_check_pressed(vk_tab)) {
         lan_join_mode = !lan_join_mode;
-        lan_focus     = "name";
+        lan_ip_input  = "";
         status_msg    = "";
 
         // Launch server immediately when switching to HOST tab
-        // so joiners can see the broadcast right away
         if (!lan_join_mode && !launching) {
-            close_disc_socket();
             launch_server_and_host();
         }
-        // If switching back to JOIN tab while server is launching, let it run
     }
 
     if (lan_join_mode) {
-        // ── JOIN TAB ──────────────────────────────────────────────────────
-        // Send a discovery ping every second — server replies with type-40
-        if (!variable_instance_exists(id, "disc_ping_timer")) disc_ping_timer = 0;
-        disc_ping_timer++;
-        if (disc_ping_timer >= game_get_speed(gamespeed_fps)) {
-            disc_ping_timer = 0;
-            send_discovery_ping();
-            show_debug_message("Sent discovery ping to 255.255.255.255:" + string(GAME_PORT_NUM));
+        // ── JOIN TAB — type host IP and press ENTER ───────────────────────
+        // Accept digits and dots only
+        for (var _k = ord("0"); _k <= ord("9"); _k++) {
+            if (keyboard_check_pressed(_k) && string_length(lan_ip_input) < 15)
+                lan_ip_input += chr(_k);
         }
+        if (keyboard_check_pressed(vk_numpad0)) lan_ip_input += "0";
+        if (keyboard_check_pressed(vk_numpad1)) lan_ip_input += "1";
+        if (keyboard_check_pressed(vk_numpad2)) lan_ip_input += "2";
+        if (keyboard_check_pressed(vk_numpad3)) lan_ip_input += "3";
+        if (keyboard_check_pressed(vk_numpad4)) lan_ip_input += "4";
+        if (keyboard_check_pressed(vk_numpad5)) lan_ip_input += "5";
+        if (keyboard_check_pressed(vk_numpad6)) lan_ip_input += "6";
+        if (keyboard_check_pressed(vk_numpad7)) lan_ip_input += "7";
+        if (keyboard_check_pressed(vk_numpad8)) lan_ip_input += "8";
+        if (keyboard_check_pressed(vk_numpad9)) lan_ip_input += "9";
+        if (keyboard_check_pressed(ord(".")) && string_length(lan_ip_input) < 15)
+            lan_ip_input += ".";
+        if (keyboard_check_pressed(vk_backspace) && string_length(lan_ip_input) > 0)
+            lan_ip_input = string_copy(lan_ip_input, 1, string_length(lan_ip_input) - 1);
 
-        // Expire stale hosts (not seen for LAN_HOST_EXPIRE ms)
-        var _now_ms = current_time;
-        var _key = ds_map_find_first(lan_hosts);
-        while (!is_undefined(_key)) {
-            var _next = ds_map_find_next(lan_hosts, _key);
-            if (_now_ms - lan_host_times[? _key] > LAN_HOST_EXPIRE) {
-                var _entry = lan_hosts[? _key];
-                if (ds_exists(_entry, ds_type_map)) ds_map_destroy(_entry);
-                ds_map_delete(lan_hosts, _key);
-                ds_map_delete(lan_host_times, _key);
-            }
-            _key = _next;
-        }
-
-        // Build a sorted key list for indexing
-        var _keys = ds_map_keys_to_array(lan_hosts);  // GML 2024+
-        // Fallback for older GML versions — build manually
-        if (is_undefined(_keys)) {
-            _keys = [];
-            var _k = ds_map_find_first(lan_hosts);
-            while (!is_undefined(_k)) {
-                array_push(_keys, _k);
-                _k = ds_map_find_next(lan_hosts, _k);
+        // ENTER — connect to typed IP
+        if (keyboard_check_pressed(vk_return)) {
+            if (string_length(lan_ip_input) >= 7) {  // minimum valid IP length
+                global.ip_address        = lan_ip_input;
+                global.port              = GAME_PORT_NUM;
+                global.is_creating_lobby = false;
+                if (lobby_socket >= 0) { network_destroy(lobby_socket); lobby_socket = -1; }
+                room_goto(rLobby);
+            } else {
+                status_msg = "Enter a valid IP address.";
             }
         }
-        var _host_count = array_length(_keys);
-        lan_selected = clamp(lan_selected, 0, max(0, _host_count - 1));
-
-        if (keyboard_check_pressed(vk_up))
-            lan_selected = max(0, lan_selected - 1);
-        if (keyboard_check_pressed(vk_down))
-            lan_selected = min(max(0, _host_count - 1), lan_selected + 1);
-
-        // ENTER — join selected host
-        if (keyboard_check_pressed(vk_return) && _host_count > 0) {
-            var _sel_key   = _keys[lan_selected];
-            var _sel_entry = lan_hosts[? _sel_key];
-            var _host_ip   = _sel_entry[? "ip"];
-            active_server_ip = _host_ip;
-            lan_direct_connect(_host_ip);
-        }
-
-        if (_host_count == 0)
-            status_msg = "Searching for hosts on your network...";
-        else
-            status_msg = "Up/Down select   ENTER join";
 
     } else {
-        // ── HOST TAB ──────────────────────────────────────────────────────
-        // Server launches automatically when this tab is selected.
-        // Nothing to do here — just show the draw event's hosting screen.
+        // ── HOST TAB — server is running, show local IP ───────────────────
+        // Nothing to do here — draw event shows the IP
     }
 
     // ESC — back to mode select
     if (keyboard_check_pressed(vk_escape)) {
-        close_disc_socket();
         current_screen = SCREEN_MODE;
-        create_name    = "";
-        create_pw      = "";
-        create_private = false;
+        lan_ip_input   = "";
         status_msg     = "";
     }
 

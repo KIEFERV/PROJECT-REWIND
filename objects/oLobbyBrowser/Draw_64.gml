@@ -10,38 +10,6 @@ draw_set_halign(fa_center);
 draw_set_valign(fa_top);
 
 // ════════════════════════════════════════════════════════════════════════════
-//  SCREEN: SETUP
-// ════════════════════════════════════════════════════════════════════════════
-if (current_screen == SCREEN_SETUP) {
-    draw_set_color(c_black);
-    draw_set_alpha(1);
-    draw_rectangle(0, 0, _gw, _gh, false);
-
-    draw_set_halign(fa_center);
-    draw_set_color(c_white);
-    draw_text(_cx, _cy - 60, "NETWORK SETUP");
-
-    draw_set_color(c_ltgray);
-    draw_text(_cx, _cy - 20, status_msg);
-
-    if (setup_phase == 0) {
-        draw_set_color(c_dkgray);
-        draw_text(_cx, _cy + 20, "Starting...");
-    } else if (setup_phase == 1) {
-        draw_set_color(c_yellow);
-        draw_text(_cx, _cy + 20, "If a Windows Security Alert appears,");
-        draw_text(_cx, _cy + 44, "click Allow Access to enable multiplayer.");
-        draw_set_color(c_dkgray);
-        draw_text(_cx, _cy + 80, "Press any key to continue once done.");
-    }
-
-    var _dots = string_repeat(".", (current_time div 400) mod 4);
-    draw_set_color(c_dkgray);
-    draw_text(_cx, _cy + 110, _dots);
-    exit;
-}
-
-// ════════════════════════════════════════════════════════════════════════════
 //  LAUNCH OVERLAY
 // ════════════════════════════════════════════════════════════════════════════
 if (launching) {
@@ -136,61 +104,30 @@ if (current_screen == SCREEN_LAN) {
 
     if (lan_join_mode) {
         // ── JOIN TAB CONTENT ──────────────────────────────────────────────
+        draw_set_halign(fa_center);
         draw_set_color(c_ltgray);
+        draw_text(_cx, _form_y, "Enter the host's IP address:");
+
+        // IP input field
+        var _field_x2 = _cx - 120;
+        var _field_w2 = 240;
+        var _field_y  = _form_y + 30;
+        draw_set_color(make_color_rgb(20, 30, 50));
+        draw_rectangle(_field_x2, _field_y, _field_x2 + _field_w2, _field_y + 34, false);
+        draw_set_color(c_aqua);
+        draw_rectangle(_field_x2, _field_y, _field_x2 + _field_w2, _field_y + 34, true);
+        var _cursor = ((current_time div 500) mod 2 == 0) ? "|" : "";
+        draw_set_color(c_white);
         draw_set_halign(fa_center);
-        draw_text(_cx, _tab_y + _tab_h + 14, status_msg);
+        draw_text(_cx, _field_y + 8, lan_ip_input + _cursor);
 
-        // Build host list for display
-        var _keys = [];
-        var _k = ds_map_find_first(lan_hosts);
-        while (!is_undefined(_k)) {
-            array_push(_keys, _k);
-            _k = ds_map_find_next(lan_hosts, _k);
-        }
-        var _host_count = array_length(_keys);
-
-        if (_host_count == 0) {
-            draw_set_color(c_gray);
-            draw_text(_cx, _cy, "(No hosts found on this network)");
-            draw_set_color(c_dkgray);
-            draw_text(_cx, _cy + 28, "Make sure the host has started a LAN lobby");
-        } else {
-            // Column headers
-            var _col_name    = 60;
-            var _col_players = _gw - 140;
-            var _row_top2    = _tab_y + _tab_h + 36;
-            var _row_h2      = 28;
-
-            draw_set_halign(fa_left);
-            draw_set_color(c_yellow);
-            draw_text(_col_name,    _row_top2, "HOST");
-            draw_text(_col_players, _row_top2, "PLAYERS");
-            draw_set_color(c_dkgray);
-            draw_line(50, _row_top2 + 18, _gw - 50, _row_top2 + 18);
-
-            for (var _i = 0; _i < _host_count; _i++) {
-                var _ry    = _row_top2 + 24 + _i * _row_h2;
-                var _e     = lan_hosts[? _keys[_i]];
-                var _sel   = (_i == lan_selected);
-
-                if (_sel) {
-                    draw_set_color(make_color_rgb(35, 70, 130));
-                    draw_rectangle(48, _ry - 3, _gw - 48, _ry + _row_h2 - 4, false);
-                }
-
-                draw_set_color(_sel ? c_white : c_silver);
-                draw_set_halign(fa_left);
-                var _dname = _e[? "name"];
-                if (_e[? "has_pw"]) _dname = "[P] " + _dname;
-                draw_text(_col_name, _ry, _dname);
-                draw_text(_col_players, _ry,
-                    string(_e[? "current"]) + " / " + string(_e[? "max"]));
-            }
-        }
-
-        draw_set_halign(fa_center);
         draw_set_color(c_dkgray);
-        draw_text(_cx, _gh - 36, "Up/Down select   ENTER join   TAB switch to host");
+        draw_text(_cx, _field_y + 50, "ENTER to connect   ESC back");
+
+        if (status_msg != "") {
+            draw_set_color(c_red);
+            draw_text(_cx, _field_y + 80, status_msg);
+        }
 
     } else {
         // ── HOST TAB CONTENT ──────────────────────────────────────────────
@@ -202,19 +139,27 @@ if (current_screen == SCREEN_LAN) {
             draw_text(_cx, _cy + 18, string_repeat(".", (current_time div 250) mod 4));
         } else {
             draw_set_color(c_lime);
-            draw_text(_cx, _cy - 20, "Hosting");
+            draw_text(_cx, _cy - 40, "Hosting");
+
+            // Display local IP prominently for the host to share
+            var _local_ip = network_get_ip_address();
+            draw_set_color(c_white);
+            draw_text(_cx, _cy - 10, "Your IP:");
+            draw_set_color(c_yellow);
+            draw_set_font(fnt_large); // use your game's large font if available
+            draw_text(_cx, _cy + 16, _local_ip);
+            draw_set_font(-1);        // reset to default font
             draw_set_color(c_ltgray);
-            draw_text(_cx, _cy + 10, "Waiting for players to join...");
+            draw_text(_cx, _cy + 52, "Share this with players on your network.");
             draw_set_color(c_dkgray);
-            draw_text(_cx, _cy + 36, "Players on your network will see");
-            draw_text(_cx, _cy + 54, "your game in the JOIN tab automatically.");
+            draw_text(_cx, _cy + 74, "They enter it on the JOIN tab.");
         }
     }
 
-    // Bottom hints
+    // Bottom hint
     draw_set_halign(fa_center);
     draw_set_color(c_dkgray);
-    draw_text(_cx, _gh - 36, "TAB — switch between Join / Host   ESC — back");
+    draw_text(_cx, _gh - 36, "TAB — Join / Host   ESC — back");
 
     exit;
 }

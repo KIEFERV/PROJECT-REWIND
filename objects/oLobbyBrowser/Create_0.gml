@@ -20,7 +20,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
 //  SCREEN IDs
 // ═══════════════════════════════════════════════════════════════════════════
-#macro SCREEN_SETUP   4   // first-run firewall setup
 #macro SCREEN_MODE    0
 #macro SCREEN_BROWSE  1
 #macro SCREEN_CREATE  2
@@ -50,12 +49,9 @@ status_msg     = "";
 refresh_timer  = 0;
 REFRESH_TICKS  = 3 * game_get_speed(gamespeed_fps);
 
-// ─── LAN discovery ────────────────────────────────────────────────────────
-lan_hosts       = ds_map_create();
-lan_host_times  = ds_map_create();
-LAN_HOST_EXPIRE = 3000;
-lan_selected    = 0;
-disc_ping_timer = 0;
+// ─── LAN screen ───────────────────────────────────────────────────────────
+lan_join_mode = true;
+lan_ip_input  = "";    // joiner types the host's IP here
 
 // ─── Join flow ────────────────────────────────────────────────────────────
 join_pending       = false;
@@ -90,28 +86,6 @@ create_pending   = false;
 create_timeout   = 0;
 CREATE_TIMEOUT   = 5 * game_get_speed(gamespeed_fps);
 
-// ─── First-run firewall setup ─────────────────────────────────────────────
-// Check if firewall setup has been done before (stored in ini file)
-ini_open("project_rewind_settings.ini");
-var _setup_done = ini_read_real("Network", "firewall_setup_done", 0);
-ini_close();
-
-if (_setup_done == 0) {
-    // First launch — show setup screen
-    current_screen  = SCREEN_SETUP;
-    setup_timer     = 0;
-    // 4 seconds: 2s for server to start + 2s for player to see firewall dialog
-    SETUP_DURATION  = 4 * game_get_speed(gamespeed_fps);
-    setup_phase     = 0;  // 0=launching, 1=waiting, 2=done
-    status_msg      = "Setting up network permissions...";
-    show_debug_message("First launch — running firewall setup");
-} else {
-    setup_timer    = 0;
-    SETUP_DURATION = 0;
-    setup_phase    = 2;
-    show_debug_message("Firewall setup already done — skipping");
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
 //  FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -135,14 +109,6 @@ function run_firewall_setup() {
     var _server_dir = filename_dir(SERVER_EXE) + "\\";
     execute_shell_simple(SERVER_EXE, _args, "open", 1, _server_dir);
     show_debug_message("Firewall setup: launched server.exe to trigger Windows dialog");
-}
-
-/// @desc Mark firewall setup as complete and save to ini
-function complete_firewall_setup() {
-    ini_open("project_rewind_settings.ini");
-    ini_write_real("Network", "firewall_setup_done", 1);
-    ini_close();
-    show_debug_message("Firewall setup complete — saved to ini");
 }
 
 /// @desc Request lobby list from Droplet
@@ -238,45 +204,11 @@ function launch_server_and_host() {
     status_msg        = "Starting server...";
 }
 
-/// @desc Start LAN discovery
-function open_disc_socket() {
-    disc_ping_timer = 0;
-    show_debug_message("LAN discovery started");
-}
-
-/// @desc Send type-41 discovery pings to common subnet broadcasts
-function send_discovery_ping() {
-    var _b = buffer_create(1, buffer_fixed, 1);
-    buffer_write(_b, buffer_u8, 41);
-
-    network_send_udp_raw(lobby_socket, "192.168.0.255",   GAME_PORT_NUM, _b, 1);
-    network_send_udp_raw(lobby_socket, "192.168.1.255",   GAME_PORT_NUM, _b, 1);
-    network_send_udp_raw(lobby_socket, "192.168.2.255",   GAME_PORT_NUM, _b, 1);
-    network_send_udp_raw(lobby_socket, "192.168.68.255",  GAME_PORT_NUM, _b, 1);
-    network_send_udp_raw(lobby_socket, "192.168.100.255", GAME_PORT_NUM, _b, 1);
-    network_send_udp_raw(lobby_socket, "10.0.0.255",      GAME_PORT_NUM, _b, 1);
-
-    buffer_delete(_b);
-}
-
-/// @desc Close LAN discovery and clear host list
-function close_disc_socket() {
-    var _key = ds_map_find_first(lan_hosts);
-    while (!is_undefined(_key)) {
-        var _entry = lan_hosts[? _key];
-        if (ds_exists(_entry, ds_type_map)) ds_map_destroy(_entry);
-        _key = ds_map_find_next(lan_hosts, _key);
-    }
-    ds_map_clear(lan_hosts);
-    ds_map_clear(lan_host_times);
-}
-
-/// @desc Connect directly to a LAN host
+/// @desc Connect directly to a LAN host by IP
 function lan_direct_connect(_host_ip) {
     global.ip_address        = _host_ip;
     global.port              = GAME_PORT_NUM;
     global.is_creating_lobby = false;
-    close_disc_socket();
     if (lobby_socket >= 0) { network_destroy(lobby_socket); lobby_socket = -1; }
     room_goto(rLobby);
 }
