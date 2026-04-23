@@ -93,7 +93,7 @@ if (current_screen == SCREEN_LAN) {
         if (keyboard_check_pressed(vk_numpad7)) lan_ip_input += "7";
         if (keyboard_check_pressed(vk_numpad8)) lan_ip_input += "8";
         if (keyboard_check_pressed(vk_numpad9)) lan_ip_input += "9";
-        if (keyboard_check_pressed(ord(".")) && string_length(lan_ip_input) < 15)
+        if ((keyboard_check_pressed(ord(".")) || keyboard_check_pressed(110) || keyboard_check_pressed(190)) && string_length(lan_ip_input) < 15)
             lan_ip_input += ".";
         if (keyboard_check_pressed(vk_backspace) && string_length(lan_ip_input) > 0)
             lan_ip_input = string_copy(lan_ip_input, 1, string_length(lan_ip_input) - 1);
