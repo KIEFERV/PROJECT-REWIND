@@ -149,6 +149,9 @@ if (_ptype == 26) {
         var _is_active = buffer_read(_buf, buffer_u8);
         var _is_lan    = buffer_read(_buf, buffer_u8);
 
+        show_debug_message("Lobby entry: " + _name + " is_lan=" + string(_is_lan)
+            + " is_lan_mode=" + string(is_lan_mode) + " match=" + string(_is_lan == is_lan_mode));
+
         // Filter: only show lobbies matching current mode
         if (_is_lan != is_lan_mode) continue;
 
