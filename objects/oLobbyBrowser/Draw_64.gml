@@ -162,21 +162,27 @@ if (current_screen == SCREEN_LAN) {
 
     } else {
         // ── HOST TAB CONTENT ──────────────────────────────────────────────
-        // LAN lobbies are always public and need no name — just press ENTER
         draw_set_halign(fa_center);
-        draw_set_color(c_white);
-        draw_text(_cx, _cy - 30, "Host a LAN Game");
-        draw_set_color(c_ltgray);
-        draw_text(_cx, _cy + 4,  "Press ENTER to start hosting.");
-        draw_set_color(c_dkgray);
-        draw_text(_cx, _cy + 30, "Other players on your network will see");
-        draw_text(_cx, _cy + 50, "your game appear in the JOIN tab automatically.");
+        if (launching) {
+            draw_set_color(c_yellow);
+            draw_text(_cx, _cy - 10, "Starting server...");
+            draw_set_color(c_dkgray);
+            draw_text(_cx, _cy + 18, string_repeat(".", (current_time div 250) mod 4));
+        } else {
+            draw_set_color(c_lime);
+            draw_text(_cx, _cy - 20, "Hosting");
+            draw_set_color(c_ltgray);
+            draw_text(_cx, _cy + 10, "Waiting for players to join...");
+            draw_set_color(c_dkgray);
+            draw_text(_cx, _cy + 36, "Players on your network will see");
+            draw_text(_cx, _cy + 54, "your game in the JOIN tab automatically.");
+        }
     }
 
     // Bottom hints
     draw_set_halign(fa_center);
     draw_set_color(c_dkgray);
-    draw_text(_cx, _gh - 36, "TAB switch tabs   ESC back");
+    draw_text(_cx, _gh - 36, "TAB — switch between Join / Host   ESC — back");
 
     exit;
 }

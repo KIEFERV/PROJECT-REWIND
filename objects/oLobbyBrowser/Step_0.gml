@@ -75,6 +75,14 @@ if (current_screen == SCREEN_LAN) {
         lan_join_mode = !lan_join_mode;
         lan_focus     = "name";
         status_msg    = "";
+
+        // Launch server immediately when switching to HOST tab
+        // so joiners can see the broadcast right away
+        if (!lan_join_mode && !launching) {
+            close_disc_socket();
+            launch_server_and_host();
+        }
+        // If switching back to JOIN tab while server is launching, let it run
     }
 
     if (lan_join_mode) {
@@ -130,11 +138,8 @@ if (current_screen == SCREEN_LAN) {
 
     } else {
         // ── HOST TAB ──────────────────────────────────────────────────────
-        // No name or password needed for LAN — just press ENTER to host.
-        if (keyboard_check_pressed(vk_return)) {
-            close_disc_socket();
-            launch_server_and_host();
-        }
+        // Server launches automatically when this tab is selected.
+        // Nothing to do here — just show the draw event's hosting screen.
     }
 
     // ESC — back to mode select
