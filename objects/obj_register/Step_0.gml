@@ -65,18 +65,26 @@ if (keyboard_check_pressed(vk_enter)) {
     else {
         status_text = "Registering...";
 
+        // Supabase signUp — stores username and role in user_metadata
         var body = json_stringify({
-            email: email_text,
-            username: username_text,
-            password: password_text
+            email:    email_text,
+            password: password_text,
+            data: {
+                username: username_text,
+                role:     "player"
+            }
         });
 
+        var headers = ds_map_create();
+        ds_map_add(headers, "Content-Type", "application/json");
+        ds_map_add(headers, "apikey",       SUPABASE_ANON_KEY);
         register_request_id = http_request(
-            base_url + "/api/register",
+            SUPABASE_URL_AUTH + "/auth/v1/signup",
             "POST",
-            "Content-Type: application/json\r\n",
+            headers,
             body
         );
+        ds_map_destroy(headers);
     }
 }
 

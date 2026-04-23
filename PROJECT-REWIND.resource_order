@@ -28,6 +28,7 @@
     {"name":"rm_create_lobby","order":1,"path":"rooms/rm_create_lobby/rm_create_lobby.yy",},
     {"name":"rm_game","order":2,"path":"rooms/rm_game/rm_game.yy",},
     {"name":"rm_leaderboard","order":3,"path":"rooms/rm_leaderboard/rm_leaderboard.yy",},
+    {"name":"rm_loadout","order":7,"path":"rooms/rm_loadout/rm_loadout.yy",},
     {"name":"rm_login","order":4,"path":"rooms/rm_login/rm_login.yy",},
     {"name":"rm_menu","order":5,"path":"rooms/rm_menu/rm_menu.yy",},
     {"name":"rm_register","order":6,"path":"rooms/rm_register/rm_register.yy",},

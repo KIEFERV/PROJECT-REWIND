@@ -120,7 +120,7 @@ draw_text(info_x + 20, info_y + 248, status_text);
 
 // Footer help
 draw_set_color(make_color_rgb(208, 212, 237));
-draw_text(info_x + 20, panel_y + panel_h - 35, "ENTER Play | L Login | R Register | C Create | B Browse | T Leaderboard");
+draw_text(info_x + 20, panel_y + panel_h - 35, "ENTER Practice | P Play Online | L Login | R Register | T Leaderboard");
 
 // Button drawer
 function draw_hub_button(_x, _y, _w, _h, _label, _hovered, _danger, _primary, _disabled) {
