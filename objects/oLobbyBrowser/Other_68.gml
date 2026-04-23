@@ -6,6 +6,11 @@ var _buf = async_load[? "buffer"];
 buffer_seek(_buf, buffer_seek_start, 0);
 var _ptype = buffer_read(_buf, buffer_u8);
 
+// Debug — log all incoming packets to confirm socket is receiving
+show_debug_message("LobbyBrowser async: ptype=" + string(_ptype)
+    + " screen=" + string(current_screen)
+    + " lan_join=" + string(lan_join_mode));
+
 // ════════════════════════════════════════════════════════════════════════════
 //  type 40 — LAN DISCOVERY broadcast from a host on the local network
 //  [u8:40][lpstr:lobby_name][u8:current_players][u8:max_players][u8:has_pw]
