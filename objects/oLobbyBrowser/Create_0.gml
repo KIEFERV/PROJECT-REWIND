@@ -14,9 +14,10 @@
 #macro VPS_IP        "206.189.192.97"
 
 // Ports
-#macro LOBBY_PORT_NUM  8888
-#macro GAME_PORT_NUM   7777
-#macro DISC_PORT_NUM   7779   // LAN discovery broadcast port
+#macro LOBBY_PORT_NUM   8888
+#macro GAME_PORT_NUM    7777
+#macro DISC_PORT_NUM    7779   // LAN discovery broadcast port
+#macro MANAGER_PORT_NUM 9999   // lobby manager — spawns online game servers
 
 // Full path to server.exe (used when hosting locally — LAN or online from this PC)
 #macro SERVER_EXE    "C:\\Users\\Kiefer\\GameMakerProjects\\PROJECT-REWIND\\server\\server.exe"
@@ -91,6 +92,12 @@ launch_poll_timer = 0;
 LAUNCH_POLL_TICKS = game_get_speed(gamespeed_fps) / 4;
 launch_timeout    = 0;
 LAUNCH_TIMEOUT    = 10 * game_get_speed(gamespeed_fps);
+
+// Assigned game port returned by manager for online hosting
+online_game_port  = 0;
+create_pending    = false;   // waiting for manager CREATE_ACK
+create_timeout    = 0;
+CREATE_TIMEOUT    = 5 * game_get_speed(gamespeed_fps);
 
 // ─── djb2 hash ────────────────────────────────────────────────────────────
 function hash_password(_pw) {

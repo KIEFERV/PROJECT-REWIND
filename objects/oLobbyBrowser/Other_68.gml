@@ -69,6 +69,44 @@ if (_ptype == 255 && launching) {
     exit;
 }
 
+
+// ════════════════════════════════════════════════════════════════════════════
+//  type 51 — CREATE_LOBBY_ACK from Droplet manager
+//  [u8:51][u8:result][u16:game_port if result=0]
+//  result 0 = ok — server spawned on game_port
+//  result 1 = no ports available
+// ════════════════════════════════════════════════════════════════════════════
+if (_ptype == 51 && create_pending) {
+    create_pending = false;
+    var _result = buffer_read(_buf, buffer_u8);
+
+    if (_result == 0) {
+        // Manager assigned us a port — read it
+        var _port = buffer_read(_buf, buffer_u16);
+        show_debug_message("CREATE_ACK: server spawned on port " + string(_port));
+
+        online_game_port         = _port;
+        global.is_creating_lobby = true;
+        global.ip_address        = VPS_IP;
+        global.port              = _port;
+
+        // Poll the new server instance until it responds
+        if (game_socket >= 0) network_destroy(game_socket);
+        game_socket = network_create_socket(network_socket_udp);
+
+        launching         = true;
+        launch_poll_timer = 0;
+        launch_timeout    = LAUNCH_TIMEOUT;
+        status_msg        = "Waiting for server to start...";
+
+    } else {
+        status_msg     = "Server is full — no lobbies available. Try again later.";
+        current_screen = SCREEN_BROWSE;
+        show_debug_message("CREATE_ACK: no ports available");
+    }
+    exit;
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 //  type 26 — LIST_RESPONSE from DB server
 //  [u8:26][u8:count]

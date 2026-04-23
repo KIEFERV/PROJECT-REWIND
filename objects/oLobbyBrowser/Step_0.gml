@@ -21,6 +21,19 @@ if (launching) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+//  ONLINE CREATE PENDING — waiting for manager CREATE_ACK (type 51)
+// ════════════════════════════════════════════════════════════════════════════
+if (create_pending) {
+    create_timeout--;
+    if (create_timeout <= 0) {
+        create_pending = false;
+        status_msg     = "No response from server. Try again.";
+        current_screen = SCREEN_CREATE;
+    }
+    exit;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 //  SCREEN: MODE SELECT  (Online vs LAN)
 // ════════════════════════════════════════════════════════════════════════════
 if (current_screen == SCREEN_MODE) {
@@ -189,7 +202,11 @@ if (current_screen == SCREEN_CREATE) {
         } else if (!_pw_ok) {
             status_msg = "Please enter a password for the private lobby.";
         } else {
-            launch_server_and_host();
+            if (is_lan_mode) {
+                launch_server_and_host();   // LAN — local server.exe
+            } else {
+                send_online_create_request(); // Online — ask Droplet manager
+            }
         }
     }
 
