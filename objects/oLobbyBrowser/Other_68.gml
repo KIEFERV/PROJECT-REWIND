@@ -64,13 +64,15 @@ if (_ptype == 255 && launching) {
 
     launching = false;
 
-    // Destroy the temporary poll socket — oLobby creates its own
     network_destroy(game_socket);
     game_socket = -1;
 
-    // Destroy DB socket
     network_destroy(lobby_socket);
     lobby_socket = -1;
+
+    // is_creating_lobby was set true when CREATE_ACK arrived.
+    // Clear it now — is_host will be set authoritatively from the pid response.
+    global.is_creating_lobby = false;
 
     room_goto(rLobby);
     exit;

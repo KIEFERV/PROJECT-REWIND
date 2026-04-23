@@ -119,7 +119,7 @@ if (mouse_check_button_pressed(mb_left))
         buffer_write(buf, buffer_f32, x);
         buffer_write(buf, buffer_f32, y);
         buffer_write(buf, buffer_u8,  round((facing / 360.0) * 255));
-        network_send_udp_raw(socket, global.ip_address, global.port,
+        network_send_udp_raw(global.socket, global.ip_address, global.port,
                              buf, buffer_tell(buf));
         buffer_delete(buf);
     }
@@ -167,7 +167,7 @@ if (net_send_timer >= game_get_speed(gamespeed_fps) / 20) {
     buffer_write(buf, buffer_u8,  hitpoints);
     buffer_write(buf, buffer_u8,  image_index);
     buffer_write(buf, buffer_u8,  round((facing / 360.0) * 255));
-    network_send_udp_raw(socket, global.ip_address, global.port,
+    network_send_udp_raw(global.socket, global.ip_address, global.port,
                          buf, buffer_tell(buf));
     buffer_delete(buf);
 }
