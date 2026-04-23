@@ -3,7 +3,6 @@
 // ════════════════════════════════════════════════════════════════════════════
 //  SERVER LAUNCH POLLING
 // ════════════════════════════════════════════════════════════════════════════
-show_debug_message("Step: screen=" + string(current_screen) + " L=" + string(keyboard_check_pressed(ord("L"))));
 if (launching) {
     launch_timeout--;
     if (launch_timeout <= 0) {
@@ -51,11 +50,12 @@ if (current_screen == SCREEN_MODE) {
     // L — LAN
     if (keyboard_check_pressed(ord("L"))) {
         is_lan_mode      = true;
-        active_server_ip = VPS_IP;   // lobby list comes from Droplet
+        active_server_ip = VPS_IP;
         current_screen   = SCREEN_LAN;
         lan_join_mode    = true;
         selected_index   = 0;
         cleanup_lobby_list();
+        show_debug_message("LAN: sending list request to " + active_server_ip + ":" + string(LOBBY_PORT_NUM));
         request_lobby_list();
         status_msg = "Fetching LAN lobbies...";
     }
@@ -65,11 +65,18 @@ if (current_screen == SCREEN_MODE) {
 
 // ════════════════════════════════════════════════════════════════════════════
 //  SCREEN: LAN
-//  Uses the same lobby browser as online, but filtered to LAN lobbies.
-//  Host launches server.exe locally with --lan flag which registers in
-//  Supabase with the local IP. Joiner browses and joins like online.
 // ════════════════════════════════════════════════════════════════════════════
 if (current_screen == SCREEN_LAN) {
+
+    // Ensure active_server_ip is always pointing to the Droplet for LAN browsing
+    if (active_server_ip != VPS_IP) {
+        active_server_ip = VPS_IP;
+        is_lan_mode      = true;
+        cleanup_lobby_list();
+        request_lobby_list();
+        status_msg = "Fetching LAN lobbies...";
+        show_debug_message("LAN: fixed active_server_ip, sent list request to " + VPS_IP);
+    }
 
     // TAB switches between Join and Host tabs
     if (keyboard_check_pressed(vk_tab)) {
