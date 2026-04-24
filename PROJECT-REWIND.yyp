@@ -35,9 +35,15 @@
     {"$GMFolder":"","%Name":"rm_rooms","folderPath":"folders/Rooms/rm_rooms.yy","name":"rm_rooms","resourceType":"GMFolder","resourceVersion":"2.0",},
     {"$GMFolder":"","%Name":"Scripts","folderPath":"folders/Scripts.yy","name":"Scripts","resourceType":"GMFolder","resourceVersion":"2.0",},
     {"$GMFolder":"","%Name":"Libraries","folderPath":"folders/Scripts/Libraries.yy","name":"Libraries","resourceType":"GMFolder","resourceVersion":"2.0",},
+<<<<<<< Updated upstream
     {"$GMFolder":"","%Name":"Occlusion","folderPath":"folders/Scripts/Occlusion.yy","name":"Occlusion","resourceType":"GMFolder","resourceVersion":"2.0",},
     {"$GMFolder":"","%Name":"Rewind Scripts","folderPath":"folders/Scripts/Rewind Scripts.yy","name":"Rewind Scripts","resourceType":"GMFolder","resourceVersion":"2.0",},
     {"$GMFolder":"","%Name":"scr_scripts","folderPath":"folders/Scripts/Libraries/scr_scripts.yy","name":"scr_scripts","resourceType":"GMFolder","resourceVersion":"2.0",},
+=======
+    {"$GMFolder":"","%Name":"scr_scripts","folderPath":"folders/Scripts/Libraries/scr_scripts.yy","name":"scr_scripts","resourceType":"GMFolder","resourceVersion":"2.0",},
+    {"$GMFolder":"","%Name":"Occlusion","folderPath":"folders/Scripts/Occlusion.yy","name":"Occlusion","resourceType":"GMFolder","resourceVersion":"2.0",},
+    {"$GMFolder":"","%Name":"Rewind Scripts","folderPath":"folders/Scripts/Rewind Scripts.yy","name":"Rewind Scripts","resourceType":"GMFolder","resourceVersion":"2.0",},
+>>>>>>> Stashed changes
     {"$GMFolder":"","%Name":"Sequences","folderPath":"folders/Sequences.yy","name":"Sequences","resourceType":"GMFolder","resourceVersion":"2.0",},
     {"$GMFolder":"","%Name":"Shaders","folderPath":"folders/Shaders.yy","name":"Shaders","resourceType":"GMFolder","resourceVersion":"2.0",},
     {"$GMFolder":"","%Name":"Sounds","folderPath":"folders/Sounds.yy","name":"Sounds","resourceType":"GMFolder","resourceVersion":"2.0",},

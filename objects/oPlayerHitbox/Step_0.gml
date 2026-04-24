@@ -248,8 +248,13 @@ if (keyboard_check_pressed(vk_space) && can_place_cover && cover_cooldown <= 0) 
     var cover_x = x + lengthdir_x(40, image_angle);
     var cover_y = y + lengthdir_y(40, image_angle);
 
+<<<<<<< Updated upstream
     if (!place_meeting(cover_x, cover_y, obj_cover)) {
         instance_create_layer(cover_x, cover_y, "Instances", obj_cover_powerup);
+=======
+    if (!place_meeting(cover_x, cover_y, obj_cover_powerup)) {
+        instance_create_layer(cover_x, cover_y, "layer_instances", obj_cover_powerup);
+>>>>>>> Stashed changes
         cover_cooldown = room_speed div 2;
     }
 }
