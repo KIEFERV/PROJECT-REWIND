@@ -1,18 +1,17 @@
 {
   "$GMObject":"",
-  "%Name":"oBullet",
+  "%Name":"obj_gravity_field",
   "eventList":[
     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":3,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
-    {"$GMEvent":"v1","%Name":"","collisionObjectId":{"name":"oPlayerHitbox","path":"objects/oPlayerHitbox/oPlayerHitbox.yy",},"eventNum":0,"eventType":4,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":8,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
   ],
   "managed":true,
-  "name":"oBullet",
+  "name":"obj_gravity_field",
   "overriddenProperties":[],
   "parent":{
-    "name":"Objects",
-    "path":"folders/Objects.yy",
+    "name":"obj_powerup",
+    "path":"folders/Objects/obj_files/obj_powerup.yy",
   },
   "parentObjectId":null,
   "persistent":false,
@@ -32,10 +31,7 @@
   "resourceType":"GMObject",
   "resourceVersion":"2.0",
   "solid":false,
-  "spriteId":{
-    "name":"sBullet",
-    "path":"sprites/sBullet/sBullet.yy",
-  },
+  "spriteId":null,
   "spriteMaskId":null,
   "visible":true,
 }

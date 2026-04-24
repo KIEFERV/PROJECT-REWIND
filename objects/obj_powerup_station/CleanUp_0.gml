@@ -1,9 +1,3 @@
-event_inherited();
-
-
-ds_map_destroy(other_players);
-network_destroy(socket);
-
 if (variable_instance_exists(id, "powerups")) {
     if (ds_exists(powerups, ds_type_map)) {
         ds_map_destroy(powerups);

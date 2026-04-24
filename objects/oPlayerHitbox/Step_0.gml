@@ -1,4 +1,9 @@
 ///@description Player Logic
+scr_powerup_update(self);
+
+// connect power-up stats to existing player variables
+moveSpd = move_speed;
+fireRate = fire_delay;
 
 #region Keybinds
 //set movement keybinds
@@ -147,6 +152,20 @@ if (mouse_check_button_pressed(mb_left))
 		buffer_write(buf, buffer_f32, y);        // spawn y
 		buffer_write(buf, buffer_u8,  round((facing / 360.0) * 255)); // direction packed
 		
+	var b = instance_create_layer(x, y, "layer_instances", oBullet);	
+		 b.direction = point_direction(x, y, mouse_x, mouse_y);
+		b.speed = 10;
+		b.owner = id;
+
+		b.can_ricochet = can_ricochet;
+		b.ricochet_count = can_ricochet ? 2 : 0;
+
+		b.is_gravity_shot = can_gravity_shot;
+		b.gravity_radius = can_gravity_shot ? 140 : 0;
+		b.gravity_duration = can_gravity_shot ? room_speed * 2 : 0;
+		b.gravity_pull = can_gravity_shot ? 1.1 : 0;
+
+		shoot_timer = fireRate;
 		//show_debug_message("Sending bullet: x=" + string(x) + " y=" + string(y) + " dir=" + string(facing) + " bytes=" + string(buffer_tell(buf)));
 		
 		network_send_udp_raw(socket, "127.0.0.1", 7777, buf, buffer_tell(buf));
@@ -224,6 +243,28 @@ if (time_phase == "past") {
 }
 
 #endregion
+
+if (keyboard_check_pressed(vk_space) && can_place_cover && cover_cooldown <= 0) {
+    var cover_x = x + lengthdir_x(40, image_angle);
+    var cover_y = y + lengthdir_y(40, image_angle);
+
+    if (!place_meeting(cover_x, cover_y, obj_cover)) {
+        instance_create_layer(cover_x, cover_y, "Instances", obj_cover_powerup);
+        cover_cooldown = room_speed div 2;
+    }
+}
+scr_powerup_update(self);
+
+// connect power-up stats to existing player variables
+moveSpd = move_speed;
+fireRate = fire_delay;
+
+if (!variable_instance_exists(id, "shoot_timer")) shoot_timer = 0;
+if (!variable_instance_exists(id, "cover_cooldown")) cover_cooldown = 0;
+
+if (shoot_timer > 0) shoot_timer--;
+if (cover_cooldown > 0) cover_cooldown--;
+
 
 //inherit the code from parent (oCharacterController)
 event_inherited();

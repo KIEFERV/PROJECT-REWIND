@@ -1,10 +1,11 @@
 life--;
+
 if (life <= 0) {
     instance_destroy();
     exit;
 }
 
-with (obj_player) {
+with (oPlayerHitbox) {
     if (id != other.owner) {
         var dist = point_distance(x, y, other.x, other.y);
 

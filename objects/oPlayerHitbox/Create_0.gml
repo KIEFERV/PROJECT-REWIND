@@ -39,6 +39,10 @@ function spawnBullet(_x, _y, _dir){
 
 #endregion
 
+scr_powerup_init(self);
+
+shoot_timer = 0;
+cover_cooldown = 0;
 
 // Makes the Audio Listener on the player look Properly
 audio_listener_orientation(0, 1, 0, 0, 0, 1);

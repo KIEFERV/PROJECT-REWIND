@@ -1,26 +1,28 @@
 function scr_powerup_update(){
-
 var _player = argument0;
 
-var _keys = ds_map_keys_to_array(_player.powerups);
-var _changed = false;
+if (!variable_instance_exists(_player, "powerups")) {
+    scr_powerup_init(_player);
+    return;
+}
 
-for (var i = 0; i < array_length(_keys); i++) {
-    var _key = _keys[i];
-    var _value = ds_map_find_value(_player.powerups, _key);
+var keys = ds_map_keys_to_array(_player.powerups);
+var changed = false;
 
-    var _sep = string_pos("|", _value);
-    var _expire = real(string_copy(_value, 1, _sep - 1));
+for (var i = 0; i < array_length(keys); i++) {
+    var key = keys[i];
+    var value = ds_map_find_value(_player.powerups, key);
 
-    if (current_time > _expire) {
-        ds_map_delete(_player.powerups, _key);
-        _changed = true;
+    var sep = string_pos("|", value);
+    var expire_time = real(string_copy(value, 1, sep - 1));
+
+    if (current_time >= expire_time) {
+        ds_map_delete(_player.powerups, key);
+        changed = true;
     }
 }
 
-if (_changed) {
+if (changed) {
     scr_powerup_apply_stats(_player);
 }
-
-
 }
