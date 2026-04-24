@@ -36,3 +36,6 @@ repeat (ds_map_size(other_players)) {
 if(debug_menu = true){
 	
 }
+if (show_GUI = true){
+	draw_sprite_ext(sCrosshair, 0, mouse_x, mouse_y, 1, 1, 0, c_white, 1);
+}

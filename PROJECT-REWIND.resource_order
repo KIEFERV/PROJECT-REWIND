@@ -8,7 +8,6 @@
     {"name":"oAudioEmitter","order":1,"path":"objects/oAudioEmitter/oAudioEmitter.yy",},
     {"name":"oCollisionBox","order":6,"path":"objects/oCollisionBox/oCollisionBox.yy",},
     {"name":"oCollisionController","order":1,"path":"objects/oCollisionController/oCollisionController.yy",},
-    {"name":"oCrosshair","order":1,"path":"objects/oCrosshair/oCrosshair.yy",},
     {"name":"oFloorBoost","order":2,"path":"objects/oFloorBoost/oFloorBoost.yy",},
     {"name":"oFloorSlow","order":1,"path":"objects/oFloorSlow/oFloorSlow.yy",},
     {"name":"oGhost","order":1,"path":"objects/oGhost/oGhost.yy",},
