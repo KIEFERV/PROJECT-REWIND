@@ -12,6 +12,5 @@ var expire_time = current_time + (_duration_steps * (1000 / room_speed));
 var value = string(expire_time) + "|" + string(_magnitude);
 
 ds_map_replace(_player.powerups, _power_name, value);
-
 scr_powerup_apply_stats(_player);
 }

@@ -3,25 +3,11 @@ if (!variable_instance_exists(id, "current_power")) exit;
 var col = c_white;
 
 switch (current_power) {
-    case global.POWER_FIRE_RATE:
-        col = make_color_rgb(255, 90, 90);
-    break;
-
-    case global.POWER_MOVE_SPEED:
-        col = make_color_rgb(90, 255, 120);
-    break;
-
-    case global.POWER_RICOCHET:
-        col = make_color_rgb(90, 170, 255);
-    break;
-
-    case global.POWER_COVER:
-        col = make_color_rgb(180, 180, 255);
-    break;
-
-    case global.POWER_GRAVITY_SHOT:
-        col = make_color_rgb(140, 180, 255);
-    break;
+    case global.POWER_FIRE_RATE:    col = make_color_rgb(255, 90, 90); break;
+    case global.POWER_MOVE_SPEED:   col = make_color_rgb(90, 255, 120); break;
+    case global.POWER_RICOCHET:     col = make_color_rgb(90, 170, 255); break;
+    case global.POWER_COVER:        col = make_color_rgb(180, 180, 255); break;
+    case global.POWER_GRAVITY_SHOT: col = make_color_rgb(140, 180, 255); break;
 }
 
 var active = cooldown_timer <= 0;

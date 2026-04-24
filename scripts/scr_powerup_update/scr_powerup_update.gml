@@ -25,4 +25,5 @@ for (var i = 0; i < array_length(keys); i++) {
 if (changed) {
     scr_powerup_apply_stats(_player);
 }
+
 }

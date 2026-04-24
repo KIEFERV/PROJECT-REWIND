@@ -11,8 +11,8 @@
   "name":"oClient",
   "overriddenProperties":[],
   "parent":{
-    "name":"NetworkGroup",
-    "path":"folders/Objects/NetworkGroup.yy",
+    "name":"DatabaseGroup",
+    "path":"folders/Objects/DatabaseGroup.yy",
   },
   "parentObjectId":null,
   "persistent":false,

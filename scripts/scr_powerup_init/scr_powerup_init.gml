@@ -9,7 +9,7 @@ if (variable_instance_exists(_player, "powerups")) {
 
 _player.powerups = ds_map_create();
 
-_player.base_move_speed = 4;
+_player.base_move_speed = 8;
 _player.base_fire_delay = 15;
 
 _player.move_speed = _player.base_move_speed;
