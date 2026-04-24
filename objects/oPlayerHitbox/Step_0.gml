@@ -54,6 +54,10 @@ player_look_dir = point_direction(x, y, mouse_x, mouse_y);
 // Sprinting
 var modifier_sprint;
 
+if (keyboard_check_pressed(vk_escape)) {
+    room_goto(rm_menu);
+}
+
 if (key_sprint && can_sprint && !key_sneak) {
     sprinting = true;
     can_sneak = false;
