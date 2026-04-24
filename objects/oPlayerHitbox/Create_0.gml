@@ -32,6 +32,9 @@ time_phase = "present";
 //Player States
 dead_state = false;
 
+
+
+
 //-----------------------------------------------------------------------
 
 //NETWORKING (TEMP?)
@@ -64,7 +67,6 @@ function spawnBullet(_x, _y, _dir, myID){
 // Makes the Audio Listener on the player look Properly
 audio_listener_orientation(0, 1, 0, 0, 0, 1);
 
-instance_create_layer(x, y, "layer_instances", oCrosshair);
 
 other_players = ds_map_create();
 

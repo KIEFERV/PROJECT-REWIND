@@ -37,5 +37,10 @@ if(debug_menu = true){
 	
 }
 if (show_GUI = true){
-	draw_sprite_ext(sCrosshair, 0, mouse_x, mouse_y, 1, 1, 0, c_white, 1);
+	if (reloading = true){
+		draw_circular_bar(mouse_x, mouse_y, reload_time - reload_timer , reload_time , c_white, 16, 1, 3);
+		
+	}else{
+		draw_sprite_ext(sCrosshair, 0, mouse_x, mouse_y, 1, 1, 0, c_white, 1);
+	}
 }

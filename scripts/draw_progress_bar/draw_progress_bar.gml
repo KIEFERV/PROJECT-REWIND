@@ -66,14 +66,14 @@ function draw_circular_bar(x ,y ,value, max, colour, radius, transparency, width
         
 			draw_set_alpha(1);
         
-			draw_set_blend_mode(bm_subtract)
+			gpu_set_blendmode(bm_subtract)
 			draw_set_colour(c_black)
 			draw_circle(radius-1, radius-1,radius-width,false)
-			draw_set_blend_mode(bm_normal)
+			gpu_set_blendmode(bm_normal)
 
 			surface_reset_target()
      
-			draw_surface(piesurface,s-radius, y-radius)
+			draw_surface(piesurface,x-radius, y-radius)
         
 			surface_free(piesurface)
         
