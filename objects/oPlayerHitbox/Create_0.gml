@@ -1,24 +1,23 @@
 /// @description Player Movement Test
-
+//Debug Options
 debug_menu = true; // Debug menu toggle (!!!CHANGE TO FALSE LATER)
+show_GUI = true;
 
+//Networking
 net_send_timer = 0;
 
+//--Player Stats
+//Movement
 base_move_speed_max = 8; //Base player movement speed
 base_move_accel = 2;
 base_move_decel = 0.8;
-
+facing = 0; // player look direction
 sprinting = false; // Whether or not the player is sprinting
 sneaking = false; // Whether or not the player is sneaking/walking
 can_sprint = true; // Is the player allowed to sprint
 can_sneak = true; // Is the player allowed to walk
-
-//Rewind set vars
-time_phase = "present";
-
-//Player States
-dead_state = false;
-
+//Health Variables
+max_hp = hitpoints;
 //Gun variables
 mag_size = 30;
 ammo_in_mag = mag_size;
@@ -27,10 +26,15 @@ reload_time = 45;
 reload_timer = 0.5;
 reloading = false;
 
-max_hp = 100;
-show_GUI = true;
+//Rewind set vars
+time_phase = "present";
 
-facing = 0; // player look direction
+//Player States
+dead_state = false;
+
+
+
+
 
 //NETWORKING (TEMP?)
 time_remaining = 180;
