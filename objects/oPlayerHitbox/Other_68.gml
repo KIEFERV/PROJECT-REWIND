@@ -83,7 +83,7 @@ if (ptype == 4) {
     var bdir        = (buffer_read(buf, buffer_u8) / 255.0) * 360;
 
     if (shooter_pid != my_pid) {
-        spawnBullet(bx, by, bdir);
+        spawnBullet(bx, by, bdir, noone);
     }
     exit;
 }
