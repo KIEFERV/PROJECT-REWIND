@@ -25,6 +25,7 @@ reload_timer = 0.5;
 reloading = false;
 
 max_hp = 100;
+show_GUI = true;
 
 facing = 0; // player look direction
 
