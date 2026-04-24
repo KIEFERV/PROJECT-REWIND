@@ -33,43 +33,6 @@ repeat (ds_map_size(other_players)) {
     pid = ds_map_find_next(other_players, pid);
 }
 
-// Draw knife swing cone
-if (weapon_type == "melee" && knife_swing_timer > 0) {
-    var _knife_range = 60;
-    var _knife_arc   = 90;
-    var _segments    = 8;
-    var _alpha       = knife_swing_timer / 12; // fade out as timer drops
-
-    draw_set_alpha(_alpha * 0.55);
-    draw_set_color(make_color_rgb(255, 220, 50));
-
-    // Fan of triangles from player origin to arc edge
-    for (var _s = 0; _s < _segments; _s++) {
-        var _ang1 = image_angle - _knife_arc / 2 + (_s / _segments) * _knife_arc;
-        var _ang2 = image_angle - _knife_arc / 2 + ((_s + 1) / _segments) * _knife_arc;
-
-        var _x1 = x + lengthdir_x(_knife_range, _ang1);
-        var _y1 = y + lengthdir_y(_knife_range, _ang1);
-        var _x2 = x + lengthdir_x(_knife_range, _ang2);
-        var _y2 = y + lengthdir_y(_knife_range, _ang2);
-
-        draw_triangle(x, y, _x1, _y1, _x2, _y2, false);
-    }
-
-    // Outline
-    draw_set_alpha(_alpha);
-    draw_set_color(c_yellow);
-    var _edge_l_x = x + lengthdir_x(_knife_range, image_angle - _knife_arc / 2);
-    var _edge_l_y = y + lengthdir_y(_knife_range, image_angle - _knife_arc / 2);
-    var _edge_r_x = x + lengthdir_x(_knife_range, image_angle + _knife_arc / 2);
-    var _edge_r_y = y + lengthdir_y(_knife_range, image_angle + _knife_arc / 2);
-    draw_line(x, y, _edge_l_x, _edge_l_y);
-    draw_line(x, y, _edge_r_x, _edge_r_y);
-
-    draw_set_alpha(1);
-    draw_set_color(c_white);
-}
-
 if(debug_menu = true){
 	
 }
