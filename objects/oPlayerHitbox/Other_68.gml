@@ -45,7 +45,7 @@ if (ptype == 1) {
         buffer_write(_kbuf, buffer_u8,  11);        // type 11 = KILL_REPORT
         buffer_write(_kbuf, buffer_u16, my_pid);    // killer (us)
         buffer_write(_kbuf, buffer_u16, pid);       // victim
-        network_send_udp_raw(socket, global.ip_address, global.port,
+        network_send_udp_raw(global.socket, global.ip_address, global.port,
                              _kbuf, buffer_tell(_kbuf));
         buffer_delete(_kbuf);
         show_debug_message("Kill reported: we killed pid " + string(pid));
@@ -96,7 +96,8 @@ if (ptype == 5) {
 
 // ── Type 6: match over ────────────────────────────────────────────────────────
 if (ptype == 6) {
-    show_debug_message("Match ended.");
-    // room_goto(rPostMatch);  // uncomment and set your post-match room
+    show_debug_message("Match ended — returning to lobby.");
+    global.is_creating_lobby = false;
+    room_goto(rLobby);
     exit;
 }

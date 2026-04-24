@@ -17,8 +17,8 @@
   ],
   "name":"rm_browse_lobbies",
   "parent":{
-    "name":"Rooms",
-    "path":"folders/Rooms.yy",
+    "name":"rm_rooms",
+    "path":"folders/Rooms/rm_rooms.yy",
   },
   "parentRoom":null,
   "physicsSettings":{

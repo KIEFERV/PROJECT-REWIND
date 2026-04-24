@@ -10,6 +10,7 @@ cover_timer      = 0;
 base_move_speed  = 5;
 base_fire_delay  = 12;
 
+
 global.POWER_FIRE_RATE = "fire_rate";
 global.POWER_MOVE_SPEED = "move_speed";
 global.POWER_RICOCHET = "ricochet";
@@ -20,3 +21,8 @@ scr_powerup_init(self);
 shoot_timer = 0;
 cover_cooldown = 0;
 
+if (!variable_global_exists("primary_weapon")) global.primary_weapon = "pistol";
+if (!variable_global_exists("secondary_weapon")) global.secondary_weapon = "shotgun";
+
+primary_weapon = global.primary_weapon;
+secondary_weapon = global.secondary_weapon;

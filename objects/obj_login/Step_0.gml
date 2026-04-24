@@ -99,17 +99,23 @@ if (do_login) {
     } else {
         status_text = "Logging in...";
 
+        // Supabase auth uses email — we treat username field as email
         var body = json_stringify({
-            username: username_text,
+            email:    username_text,
             password: password_text
         });
 
+        // Supabase signInWithPassword endpoint
+        var headers = ds_map_create();
+        ds_map_add(headers, "Content-Type",  "application/json");
+        ds_map_add(headers, "apikey",        SUPABASE_ANON_KEY);
         login_request_id = http_request(
-            base_url + "/api/login",
+            SUPABASE_URL_AUTH + "/auth/v1/token?grant_type=password",
             "POST",
-            "Content-Type: application/json\r\n",
+            headers,
             body
         );
+        ds_map_destroy(headers);
     }
 }
 
