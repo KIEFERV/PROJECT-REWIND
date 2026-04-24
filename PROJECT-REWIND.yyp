@@ -128,6 +128,7 @@
     {"id":{"name":"TestRoom1","path":"rooms/TestRoom1/TestRoom1.yy",},},
     {"id":{"name":"Character_lib","path":"scripts/Character_lib/Character_lib.yy",},},
     {"id":{"name":"Collider_lib","path":"scripts/Collider_lib/Collider_lib.yy",},},
+    {"id":{"name":"draw_progress_bar","path":"scripts/draw_progress_bar/draw_progress_bar.yy",},},
     {"id":{"name":"emitAudio","path":"scripts/emitAudio/emitAudio.yy",},},
     {"id":{"name":"Entity_lib","path":"scripts/Entity_lib/Entity_lib.yy",},},
     {"id":{"name":"MACROS","path":"scripts/MACROS/MACROS.yy",},},
