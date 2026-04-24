@@ -1,7 +1,7 @@
 // Draw your own sprite normally
 draw_sprite_ext(sPlayerModel, image_index, x, y,
                 1, 1,
-                facing,
+                player_look_dir,
                 c_white, 1);
 
 
@@ -23,7 +23,7 @@ repeat (ds_map_size(other_players)) {
                 c_white, 1);
 
         // Draw health bar above them
-		// Do we want to keep this or use it for debug only?
+		// Do we want to keep this or use it for debug only?CAN BE SWAPPED TO draw_healthbar LATER
         draw_set_color(c_red);
         draw_rectangle(ox - 16, oy - 28, ox + 16, oy - 22, false);
         draw_set_color(c_lime);

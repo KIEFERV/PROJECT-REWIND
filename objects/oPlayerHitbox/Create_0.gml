@@ -11,7 +11,7 @@ net_send_timer = 0;
 base_move_speed_max = 8; //Base player movement speed
 base_move_accel = 2;
 base_move_decel = 0.8;
-facing = 0; // player look direction
+player_look_dir = 0; // player look direction
 sprinting = false; // Whether or not the player is sprinting
 sneaking = false; // Whether or not the player is sneaking/walking
 can_sprint = true; // Is the player allowed to sprint
@@ -32,9 +32,7 @@ time_phase = "present";
 //Player States
 dead_state = false;
 
-
-
-
+//-----------------------------------------------------------------------
 
 //NETWORKING (TEMP?)
 time_remaining = 180;
@@ -65,6 +63,8 @@ function spawnBullet(_x, _y, _dir, myID){
 
 // Makes the Audio Listener on the player look Properly
 audio_listener_orientation(0, 1, 0, 0, 0, 1);
+
+instance_create_layer(x, y, "layer_instances", oCrosshair);
 
 other_players = ds_map_create();
 
