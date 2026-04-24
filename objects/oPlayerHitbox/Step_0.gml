@@ -332,5 +332,3 @@ if (time_phase == "past") {
 
 //inherit the code from parent (oCharacterController)
 event_inherited();
-    }
-}
