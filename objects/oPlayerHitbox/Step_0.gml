@@ -12,8 +12,16 @@ if (keyboard_check_released(ord("M"))){debug_menu = !debug_menu;}
 
 #region Player States
 
+//Player Death
+if (hitpoints <= 0){
+	dead_state = true;
+}else{
+	dead_state = false;
+}
+	
+
 // Look Direction
-facing = point_direction(x, y, mouse_x, mouse_y);
+player_look_dir = point_direction(x, y, mouse_x, mouse_y);
 
 // Sprinting
 var modifier_sprint;
@@ -104,7 +112,6 @@ move_decel = (base_move_decel
 
 #region Shooting
 
-image_angle = point_direction(x, y, mouse_x, mouse_y);
 
 
 var _prev_slot = active_slot;
@@ -226,6 +233,22 @@ if (weapon_type == "melee") {
                 shoot_timer = fire_delay * 6; // cooldown between bursts
             }
         }
+if (mouse_check_button_pressed(mb_left))
+{
+    if (!reloading && ammo_in_mag > 0)
+    {
+        spawnBullet(x, y, player_look_dir, id);
+        ammo_in_mag -= 1;
+
+        var buf = buffer_create(10, buffer_grow, 1);
+        buffer_seek(buf, buffer_seek_start, 0);
+        buffer_write(buf, buffer_u8,  4);
+        buffer_write(buf, buffer_f32, x);
+        buffer_write(buf, buffer_f32, y);
+        buffer_write(buf, buffer_u8,  round((player_look_dir / 360.0) * 255));
+        network_send_udp_raw(global.socket, global.ip_address, global.port,
+                             buf, buffer_tell(buf));
+        buffer_delete(buf);
     }
 }
 
@@ -284,7 +307,7 @@ if (net_send_timer >= game_get_speed(gamespeed_fps) / 20) {
     buffer_write(buf, buffer_f32, y);
     buffer_write(buf, buffer_u8,  hitpoints);
     buffer_write(buf, buffer_u8,  image_index);
-    buffer_write(buf, buffer_u8,  round((facing / 360.0) * 255));
+    buffer_write(buf, buffer_u8,  round((player_look_dir / 360.0) * 255));
     network_send_udp_raw(global.socket, global.ip_address, global.port,
                          buf, buffer_tell(buf));
     buffer_delete(buf);

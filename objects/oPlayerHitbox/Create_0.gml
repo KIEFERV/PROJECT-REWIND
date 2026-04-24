@@ -1,13 +1,17 @@
 /// @description Player Movement Test
-
+//Debug Options
 debug_menu = true; // Debug menu toggle (!!!CHANGE TO FALSE LATER)
+show_GUI = true;
 
+//Networking
 net_send_timer = 0;
 
+//--Player Stats
+//Movement
 base_move_speed_max = 8; //Base player movement speed
 base_move_accel = 2;
 base_move_decel = 0.8;
-
+player_look_dir = 0; // player look direction
 sprinting = false; // Whether or not the player is sprinting
 sneaking = false; // Whether or not the player is sneaking/walking
 can_sprint = true; // Is the player allowed to sprint
@@ -100,10 +104,25 @@ fire_delay      = _adef[? "fire_delay"];
 shoot_timer     = 0;
 bullet_speed    = _adef[? "bullet_speed"];
 bullet_damage   = _adef[? "damage"];
+//Health Variables
+max_hp = hitpoints;
+//Gun variables
+mag_size = 30;
+ammo_in_mag = mag_size;
+ammo_reserve = 120;
+reload_time = 45;
+reload_timer = 0.5;
+reloading = false;
 
-max_hp = 100;
+
+//Player States
+dead_state = false;
+
+
 
 facing = 0; 
+
+//-----------------------------------------------------------------------
 
 //NETWORKING (TEMP?)
 time_remaining = 180;
@@ -121,9 +140,9 @@ my_pid = global.my_pid;
 #region Functions
 
 // Spawn a bullet
-function spawnBullet(_x, _y, _dir){
+function spawnBullet(_x, _y, _dir, myID){
 	var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
-
+		b.owner_id = myID;
         b.direction = _dir;
         b.speed = 12;
         b.image_angle = b.direction;
@@ -134,6 +153,7 @@ function spawnBullet(_x, _y, _dir){
 
 // Makes the Audio Listener on the player look Properly
 audio_listener_orientation(0, 1, 0, 0, 0, 1);
+
 
 other_players = ds_map_create();
 

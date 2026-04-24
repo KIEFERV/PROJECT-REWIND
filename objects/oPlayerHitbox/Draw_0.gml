@@ -1,7 +1,7 @@
 // Draw your own sprite normally
 draw_sprite_ext(sPlayerModel, image_index, x, y,
                 1, 1,
-                facing,
+                player_look_dir,
                 c_white, 1);
 
 
@@ -23,7 +23,7 @@ repeat (ds_map_size(other_players)) {
                 c_white, 1);
 
         // Draw health bar above them
-		// Do we want to keep this or use it for debug only?
+		// Do we want to keep this or use it for debug only?CAN BE SWAPPED TO draw_healthbar LATER
         draw_set_color(c_red);
         draw_rectangle(ox - 16, oy - 28, ox + 16, oy - 22, false);
         draw_set_color(c_lime);
@@ -70,3 +70,14 @@ if (weapon_type == "melee" && knife_swing_timer > 0) {
     draw_set_color(c_white);
 }
 
+if(debug_menu = true){
+	
+}
+if (show_GUI = true){
+	if (reloading = true){
+		draw_circular_bar(mouse_x, mouse_y, reload_time - reload_timer , reload_time , c_white, 16, 1, 3);
+		
+	}else{
+		draw_sprite_ext(sCrosshair, 0, mouse_x, mouse_y, 1, 1, 0, c_white, 1);
+	}
+}

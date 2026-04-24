@@ -11,6 +11,10 @@ if(debug_menu = true){
 }
 
 
+if (show_GUI = true){
+	draw_healthbar(10, 700, 450, 750, hitpoints, c_maroon, c_red, c_green, 0, true, true);
+}
+
 	
 // Format as MM:SS
 var minutes = floor(time_remaining / 60);
