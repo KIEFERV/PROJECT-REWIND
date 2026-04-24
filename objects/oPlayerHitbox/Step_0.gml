@@ -118,7 +118,7 @@ if (mouse_check_button_pressed(mb_left))
 {
     if (!reloading && ammo_in_mag > 0)
     {
-        spawnBullet(x, y, image_angle);
+        spawnBullet(x, y, image_angle, id);
         ammo_in_mag -= 1;
 
         var buf = buffer_create(10, buffer_grow, 1);

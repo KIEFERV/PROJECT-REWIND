@@ -48,9 +48,9 @@ my_pid = global.my_pid;
 #region Functions
 
 // Spawn a bullet
-function spawnBullet(_x, _y, _dir){
+function spawnBullet(_x, _y, _dir, myID){
 	var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
-		b.owner_id = id;
+		b.owner_id = myID;
         b.direction = _dir;
         b.speed = 12;
         b.image_angle = b.direction;
