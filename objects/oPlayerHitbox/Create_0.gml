@@ -16,6 +16,9 @@ can_sneak = true; // Is the player allowed to walk
 //Rewind set vars
 time_phase = "present";
 
+//Player States
+dead_state = false;
+
 //Gun variables
 mag_size = 30;
 ammo_in_mag = mag_size;
@@ -47,7 +50,7 @@ my_pid = global.my_pid;
 // Spawn a bullet
 function spawnBullet(_x, _y, _dir){
 	var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
-
+		b.owner_id = id;
         b.direction = _dir;
         b.speed = 12;
         b.image_angle = b.direction;

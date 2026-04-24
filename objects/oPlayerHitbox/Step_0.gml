@@ -12,6 +12,14 @@ if (keyboard_check_released(ord("M"))){debug_menu = !debug_menu;}
 
 #region Player States
 
+//Player Death
+if (hitpoints <= 0){
+	dead_state = true;
+}else{
+	dead_state = false;
+}
+	
+
 // Look Direction
 facing = point_direction(x, y, mouse_x, mouse_y);
 
