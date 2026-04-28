@@ -139,6 +139,7 @@
     {"id":{"name":"scr_powerup_update","path":"scripts/scr_powerup_update/scr_powerup_update.yy",},},
     {"id":{"name":"scr_powerup","path":"scripts/scr_powerup/scr_powerup.yy",},},
     {"id":{"name":"scr_spawn_gravity_field","path":"scripts/scr_spawn_gravity_field/scr_spawn_gravity_field.yy",},},
+    {"id":{"name":"scr_supabase_config","path":"scripts/scr_supabase_config/scr_supabase_config.yy",},},
     {"id":{"name":"scrDamageTypes","path":"scripts/scrDamageTypes/scrDamageTypes.yy",},},
     {"id":{"name":"scrTimeTravelFunctions","path":"scripts/scrTimeTravelFunctions/scrTimeTravelFunctions.yy",},},
     {"id":{"name":"SignTest","path":"scripts/SignTest/SignTest.yy",},},

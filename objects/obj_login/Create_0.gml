@@ -1,15 +1,12 @@
 /// Create_0 — obj_login
 /// Uses Supabase Auth REST API directly — no local backend needed.
-
-// Supabase config — same values as server.cpp
-#macro SUPABASE_URL_AUTH "https://zqnvimeyzogmtgydrkuz.supabase.co"
-#macro SUPABASE_ANON_KEY "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxbnZpbWV5em9nbXRneWRya3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MjcwNzEsImV4cCI6MjA5MjMwMzA3MX0.vRLJw3_Ve6Az-0K2PJphwg8cE9juG4y2p7VYMPbR5io"
+/// Supabase config macros are in scr_supabase_config.gml
 
 username_text  = "";
 password_text  = "";
 active_field   = 0;   // 0 = username, 1 = password
 last_char_used = "";
-status_text    = "Enter your username and password.";
+status_text    = "Enter your email and password.";
 login_request_id = -1;
 
 button_w    = 140;
