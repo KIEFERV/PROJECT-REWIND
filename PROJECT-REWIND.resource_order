@@ -16,6 +16,7 @@
     {"name":"oLightBox","order":8,"path":"objects/oLightBox/oLightBox.yy",},
     {"name":"oLobby","order":2,"path":"objects/oLobby/oLobby.yy",},
     {"name":"oLobbyBrowser","order":1,"path":"objects/oLobbyBrowser/oLobbyBrowser.yy",},
+    {"name":"oSpawnPoint","order":1,"path":"objects/oSpawnPoint/oSpawnPoint.yy",},
     {"name":"oWall","order":7,"path":"objects/oWall/oWall.yy",},
     {"name":"oWallIce","order":1,"path":"objects/oWallIce/oWallIce.yy",},
     {"name":"oWallNormal","order":2,"path":"objects/oWallNormal/oWallNormal.yy",},

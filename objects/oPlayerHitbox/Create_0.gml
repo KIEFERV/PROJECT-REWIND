@@ -1,5 +1,7 @@
 /// @description Player Movement Test
 //Debug Options
+// Spawn at the point matching our pid (set after type-2 response arrives)
+// This runs in Other_68 once we know our pid
 debug_menu = true; // Debug menu toggle (!!!CHANGE TO FALSE LATER)
 show_GUI = true;
 
