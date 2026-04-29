@@ -2,15 +2,14 @@ var gui_w = display_get_gui_width();
 var gui_h = display_get_gui_height();
 
 var panel_w = 860;
-var panel_h = 520;
+var panel_h = 600;
 var panel_x = (gui_w - panel_w) / 2;
 var panel_y = (gui_h - panel_h) / 2;
 
 var play_x = panel_x + 520;
-var play_y = panel_y + 430;
-
+var play_y = panel_y + 520;
 var back_x = panel_x + 330;
-var back_y = panel_y + 430;
+var back_y = panel_y + 520;
 
 var mx = device_mouse_x_to_gui(0);
 var my = device_mouse_y_to_gui(0);
@@ -31,7 +30,6 @@ if (keyboard_check_pressed(vk_up)) {
         if (secondary_index < 0) secondary_index = array_length(secondary_list) - 1;
     }
 }
-
 if (keyboard_check_pressed(vk_down)) {
     if (active_column == 0) {
         primary_index++;
@@ -43,7 +41,7 @@ if (keyboard_check_pressed(vk_down)) {
 }
 
 if (keyboard_check_pressed(vk_enter) || (hover_play && mouse_check_button_pressed(mb_left))) {
-    global.primary_weapon = primary_list[primary_index];
+    global.primary_weapon   = primary_list[primary_index];
     global.secondary_weapon = secondary_list[secondary_index];
     room_goto(rMovementTesting);
 }
