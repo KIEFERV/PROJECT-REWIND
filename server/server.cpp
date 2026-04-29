@@ -996,7 +996,15 @@ int main(int argc, char* argv[]) {
     // No broadcast socket needed — discovery is request/reply based
 
     // ── Register lobby in Supabase ────────────────────────────────────────
-    supabase_register_lobby();
+    // Retry up to 5 times with 1s delay — child processes sometimes need
+    // a moment for DNS to become available after fork+exec on Linux.
+    for (int _attempt = 1; _attempt <= 5; _attempt++) {
+        supabase_register_lobby();
+        if (myLobbyId > 0) break;
+        std::cout << "Supabase registration attempt " << _attempt
+                  << " failed, retrying in 1s...\n";
+        sleep(1);
+    }
 
     std::cout << "\n=== Server Ready ===\n"
               << "  Lobby    : " << lobbyName << "\n"
