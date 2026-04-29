@@ -1,6 +1,7 @@
 /// @description Player Movement Test
 
 debug_menu = true; // Debug menu toggle (!!!CHANGE TO FALSE LATER)
+show_GUI   = true; // Show HUD/GUI elements
 
 base_move_speed_max = 8;
 base_move_accel = 2;
