@@ -99,7 +99,6 @@ if (do_login) {
     } else {
         status_text = "Logging in...";
 
-        // Supabase auth uses email — we treat username field as email
         var body = json_stringify({
             email:    username_text,
             password: password_text
