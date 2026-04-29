@@ -1,5 +1,5 @@
 ///@description Player Logic
-
+if (!instance_exists(oPlayerHitbox)) exit;
 #region Keybinds
 //set movement keybinds
 var _input_x = keyboard_check(ord("D")) - keyboard_check(ord("A")),
