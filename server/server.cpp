@@ -71,6 +71,29 @@
  *     kills      INTEGER NOT NULL DEFAULT 0,
  *     deaths     INTEGER NOT NULL DEFAULT 0
  *   );
+ *
+ *   -- Cumulative player stats linked to Supabase Auth
+ *   CREATE TABLE profiles (
+ *     user_id  UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+ *     username TEXT NOT NULL,
+ *     wins     INTEGER NOT NULL DEFAULT 0,
+ *     kills    INTEGER NOT NULL DEFAULT 0,
+ *     deaths   INTEGER NOT NULL DEFAULT 0
+ *   );
+ *
+ *   -- RPC to atomically increment stats (avoids race conditions)
+ *   CREATE OR REPLACE FUNCTION increment_player_stats(
+ *     user_id UUID, kills_inc INT, deaths_inc INT, wins_inc INT
+ *   ) RETURNS void LANGUAGE plpgsql AS $$
+ *   BEGIN
+ *     INSERT INTO profiles(user_id, username, kills, deaths, wins)
+ *     VALUES (user_id, (SELECT raw_user_meta_data->>'username' FROM auth.users WHERE id = user_id), kills_inc, deaths_inc, wins_inc)
+ *     ON CONFLICT (user_id) DO UPDATE SET
+ *       kills  = profiles.kills  + EXCLUDED.kills,
+ *       deaths = profiles.deaths + EXCLUDED.deaths,
+ *       wins   = profiles.wins   + EXCLUDED.wins;
+ *   END;
+ *   $$;
  */
 
 #ifdef _WIN32
@@ -169,6 +192,10 @@ struct Player {
     sockaddr_in addr;
     uint16_t    pid;
     TimePoint   lastSeen;
+    std::string userId;    // Supabase auth user UUID
+    std::string username;  // display name
+    int         kills  = 0;
+    int         deaths = 0;
 };
 
 std::map<std::string, Player> players;
@@ -479,6 +506,18 @@ void supabase_record_kill(uint16_t killerPid, uint16_t victimPid) {
         "{\"deaths\":\"deaths + 1\"}");
 
     std::cout << "Kill recorded: " << killerPid << " -> " << victimPid << "\n";
+}
+
+void supabase_update_profile(const std::string& userId, int kills, int deaths, int won) {
+    if (userId.empty()) return;  // guest player — no profile to update
+    std::string body =
+        "{\"p_user_id\":\"" + json_str(userId) + "\","
+        "\"kills_inc\":"  + std::to_string(kills)  + ","
+        "\"deaths_inc\":" + std::to_string(deaths) + ","
+        "\"wins_inc\":"   + std::to_string(won)    + "}";
+    std::string resp = supabase_request("POST", "rpc/increment_player_stats", body);
+    std::cout << "Profile updated: uid=" << userId
+              << " K=" << kills << " D=" << deaths << " W=" << won << "\n";
 }
 
 void supabase_match_end() {
@@ -957,7 +996,15 @@ int main(int argc, char* argv[]) {
     // No broadcast socket needed — discovery is request/reply based
 
     // ── Register lobby in Supabase ────────────────────────────────────────
-    supabase_register_lobby();
+    // Retry up to 5 times with 1s delay — child processes sometimes need
+    // a moment for DNS to become available after fork+exec on Linux.
+    for (int _attempt = 1; _attempt <= 5; _attempt++) {
+        supabase_register_lobby();
+        if (myLobbyId > 0) break;
+        std::cout << "Supabase registration attempt " << _attempt
+                  << " failed, retrying in 1s...\n";
+        sleep(1);
+    }
 
     std::cout << "\n=== Server Ready ===\n"
               << "  Lobby    : " << lobbyName << "\n"
@@ -1019,8 +1066,27 @@ int main(int argc, char* argv[]) {
                     char ep[1] = { PKT_MATCH_END_BC };
                     broadcast(gameSock, ep, 1, "");
                     supabase_match_end();
-                    // Clear players so they re-register fresh when returning to lobby
-                    // Small delay allows the broadcast to be sent first
+                    // Update cumulative profile stats for each player
+                    // Determine winner: player with most kills
+                    uint16_t topPid = 0; int topKills = -1;
+                    for (auto& pr : players) {
+                        if (pr.second.kills > topKills) {
+                            topKills = pr.second.kills;
+                            topPid   = pr.second.pid;
+                        }
+                    }
+                    for (auto& pr : players) {
+                        int won = (pr.second.pid == topPid) ? 1 : 0;
+                        supabase_update_profile(
+                            pr.second.userId,
+                            pr.second.kills,
+                            pr.second.deaths,
+                            won);
+                        std::cout << "Stats: " << pr.second.username
+                                  << " K=" << pr.second.kills
+                                  << " D=" << pr.second.deaths
+                                  << " W=" << won << "\n";
+                    }
                     matchJustEnded = true;
                     matchEndTime   = Clock::now();
                 }
@@ -1105,10 +1171,31 @@ int main(int argc, char* argv[]) {
                     std::cout << "Lobby full, rejecting: " << key << "\n";
                     continue;
                 }
-                players[key] = { key, src, nextPid++, Clock::now() };
+                // Read optional user_id and username from join packet
+                // Packet: [u8:10][lpstr:user_id][lpstr:username]
+                std::string joinUserId, joinUsername;
+                if (bytes > 1) lp_read(gameBuf, 1, bytes, joinUserId);
+                int unOff = 1 + (joinUserId.empty() ? 1 : 1 + (int)joinUserId.size());
+                if (unOff < bytes) lp_read(gameBuf, unOff, bytes, joinUsername);
+                if (joinUsername.empty()) joinUsername = "Player";
+
+                Player p;
+                p.key      = key;
+                p.addr     = src;
+                p.pid      = nextPid++;
+                p.lastSeen = Clock::now();
+                p.userId   = joinUserId;
+                p.username = joinUsername;
+                p.kills    = 0;
+                p.deaths   = 0;
+                players[key] = p;
+
                 uint16_t pid = players[key].pid;
                 std::cout << (pid == 1 ? "HOST" : "Player")
-                          << " registered: " << key << " pid=" << pid << "\n";
+                          << " registered: " << key
+                          << " pid=" << pid
+                          << " user=" << joinUsername
+                          << " uid=" << joinUserId << "\n";
                 char ja[3]; ja[0] = PKT_ID_ASSIGN;
                 memcpy(ja + 1, &pid, 2);
                 sendto(gameSock, ja, 3, 0, (sockaddr*)&src, srcLen);

@@ -8,9 +8,10 @@ var ptype = buffer_read(buf, buffer_u8);
 
 // Type 2 — server assigned us a pid
 if (ptype == 2) {
-    my_pid       = buffer_read(buf, buffer_u16);
-    player_count = my_pid;
-    is_host      = (my_pid == 1);
+    my_pid        = buffer_read(buf, buffer_u16);
+    player_count  = my_pid;
+    is_host       = (my_pid == 1);
+    global.my_pid = my_pid;  // store so oPlayerHitbox can use it for spawn
 
     if (is_host) {
         status_msg = "You are the host. Press SPACE to start.";
@@ -30,7 +31,7 @@ if (ptype == 3) {
     // If the host left, return everyone to the lobby browser
     if (left_pid == 1 && !is_host) {
         show_debug_message("Host left — returning to lobby browser.");
-        room_goto(rServerBrowser);
+        room_goto(rLobbyBrowser);  // ← replace rLobbyBrowser with your actual room name
     }
     exit;
 }

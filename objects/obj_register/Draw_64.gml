@@ -67,7 +67,7 @@ draw_field(panel_x, panel_w, "Confirm Password", confirm_text, true, panel_y + 2
 
 // Instructions
 draw_set_color(make_color_rgb(208, 212, 237));
-draw_text(panel_x + 30, panel_y + 290, "TAB = switch field | ENTER = register | ESC = back");
+draw_text(panel_x + 30, panel_y + 280, "TAB = switch field | ENTER = register | ESC = back");
 
 // Status
 draw_set_color(c_white);

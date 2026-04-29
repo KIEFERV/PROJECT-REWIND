@@ -70,7 +70,7 @@ function draw_login_field(_panel_x, _panel_w, _label, _value, _masked, _y, _acti
 var user_y = panel_y + 95;
 var pass_y = panel_y + 160;
 
-draw_login_field(panel_x, panel_w, "Username", username_text, false, user_y, active_field == 0);
+draw_login_field(panel_x, panel_w, "Email", username_text, false, user_y, active_field == 0);
 draw_login_field(panel_x, panel_w, "Password", password_text, true, pass_y, active_field == 1);
 
 // button drawer
@@ -114,7 +114,7 @@ draw_menu_button(register_x, register_y, button_w, button_h, "Register", hover_r
 
 // instructions
 draw_set_color(make_color_rgb(208, 212, 237));
-draw_text(panel_x + 30, panel_y + 280, "TAB = switch field | ENTER = login | Click Register to sign up");
+draw_text(panel_x + 30, panel_y + 280, "TAB = switch field | ENTER = login | ESC = back");
 
 // status
 draw_set_color(c_white);
