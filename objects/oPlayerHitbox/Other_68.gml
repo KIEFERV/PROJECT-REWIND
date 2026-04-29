@@ -9,6 +9,7 @@ var ptype = buffer_read(buf, buffer_u8);
 
 // ── Type 2 — server assigned us a pid ────────────────────────────────────
 if (ptype == 2) {
+    show_debug_message("Spawn points found: " + string(instance_number(oSpawnPoint)));
     my_pid        = buffer_read(buf, buffer_u16);
     global.my_pid = my_pid;
     show_debug_message("My player ID is: " + string(my_pid));
