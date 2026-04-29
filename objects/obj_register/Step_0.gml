@@ -5,21 +5,14 @@ if (keyboard_check_pressed(vk_tab)) {
 
 // Backspace
 if (keyboard_check_pressed(vk_backspace)) {
-    if (active_field == 0 && string_length(email_text) > 0) {
+    if (active_field == 0 && string_length(email_text) > 0)
         email_text = string_delete(email_text, string_length(email_text), 1);
-    }
-
-    if (active_field == 1 && string_length(username_text) > 0) {
+    if (active_field == 1 && string_length(username_text) > 0)
         username_text = string_delete(username_text, string_length(username_text), 1);
-    }
-
-    if (active_field == 2 && string_length(password_text) > 0) {
+    if (active_field == 2 && string_length(password_text) > 0)
         password_text = string_delete(password_text, string_length(password_text), 1);
-    }
-
-    if (active_field == 3 && string_length(confirm_text) > 0) {
+    if (active_field == 3 && string_length(confirm_text) > 0)
         confirm_text = string_delete(confirm_text, string_length(confirm_text), 1);
-    }
 }
 
 // Safe typing
@@ -29,21 +22,14 @@ if (c != "" && c != last_char_used) {
     var code = ord(c);
 
     if (code >= 32 && code <= 126) {
-        if (active_field == 0 && string_length(email_text) < 40) {
+        if (active_field == 0 && string_length(email_text) < 40)
             email_text += c;
-        }
-
-        if (active_field == 1 && string_length(username_text) < 24) {
+        if (active_field == 1 && string_length(username_text) < 24)
             username_text += c;
-        }
-
-        if (active_field == 2 && string_length(password_text) < 24) {
+        if (active_field == 2 && string_length(password_text) < 24)
             password_text += c;
-        }
-
-        if (active_field == 3 && string_length(confirm_text) < 24) {
+        if (active_field == 3 && string_length(confirm_text) < 24)
             confirm_text += c;
-        }
     }
 
     last_char_used = c;
@@ -72,6 +58,9 @@ if (keyboard_check_pressed(vk_enter)) {
             data: {
                 username: username_text,
                 role:     "player"
+            },
+            options: {
+                email_redirect_to: ""
             }
         });
 
