@@ -2,4 +2,5 @@
 
 speed       = 12;
 image_angle = direction;
-owner_id    = noone;  // set to spawner's instance id by spawnBullet()
+owner_id = noone;
+damage = 1; // overwritten based on active weapon
