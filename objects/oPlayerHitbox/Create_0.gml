@@ -82,6 +82,7 @@ function spawnBullet(_x, _y, _dir) {
     b.direction   = _dir;
     b.speed       = 12;
     b.image_angle = b.direction;
+    b.owner_id    = id;  // set to this oPlayerHitbox instance so collision skips it
 }
 
 #endregion

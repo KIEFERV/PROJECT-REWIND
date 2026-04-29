@@ -1,3 +1,5 @@
-speed = 12;
+/// oBullet Create_0
+
+speed       = 12;
 image_angle = direction;
-owner_id = noone;
+owner_id    = noone;  // set to spawner's instance id by spawnBullet()
