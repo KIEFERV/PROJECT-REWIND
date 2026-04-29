@@ -82,7 +82,15 @@ function spawnBullet(_x, _y, _dir) {
     b.direction   = _dir;
     b.speed       = 12;
     b.image_angle = b.direction;
-    b.owner_id    = id;  // set to this oPlayerHitbox instance so collision skips it
+    b.owner_id    = id;  // local player owns this — won't damage self
+}
+
+function spawnEnemyBullet(_x, _y, _dir) {
+    var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
+    b.direction   = _dir;
+    b.speed       = 12;
+    b.image_angle = b.direction;
+    b.owner_id    = noone;  // no local owner — can damage local player
 }
 
 #endregion
