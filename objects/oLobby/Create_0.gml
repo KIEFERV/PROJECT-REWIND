@@ -9,6 +9,10 @@ my_pid       = 0;
 status_msg   = "Connecting to server...";
 player_count = 1;
 
+// Map of pid -> username for all players in the lobby
+// Updated when server sends type-13 PKT_PLAYER_LIST
+lobby_players = ds_map_create();
+
 socket = network_create_socket(network_socket_udp);
 
 show_debug_message("=== oLobby Create ===");

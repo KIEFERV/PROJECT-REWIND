@@ -138,6 +138,7 @@
 // ── Fixed server config ───────────────────────────────────────────────────
 static const uint16_t GAME_PORT   = 7777;
 static const uint16_t LOBBY_PORT  = 8888;
+static const uint16_t DISC_PORT   = 7779;  // LAN discovery broadcast port
 static const uint8_t  MAX_PLAYERS = 4;
 static const int      TIMEOUT_S   = 5;
 
@@ -154,6 +155,9 @@ static const int      TIMEOUT_S   = 5;
 #define PKT_JOIN_REQUEST  10
 #define PKT_KILL_REPORT   11
 #define PKT_KEEPALIVE     12
+#define PKT_PLAYER_LIST   13  // server broadcasts all player names to lobby
+#define PKT_DISCOVERY     40  // server reply to a discovery ping
+#define PKT_DISCOVERY_PING 41 // joiner sends this to game port; server replies type-40
 
 // ── Lobby packet types (client <-> server, lobby port) ────────────────────
 #define PKT_LIST_REQUEST    25
@@ -208,6 +212,7 @@ TimePoint lastTimerBroadcast;
 int64_t  myLobbyId = -1;
 int64_t  myMatchId = -1;
 uint16_t myGamePort = 7777;  // set at startup, used by Supabase registration
+bool     isLan      = false; // true when launched for LAN hosting
 
 // Server identity (set from argv)
 std::string lobbyName;
@@ -416,7 +421,8 @@ void supabase_register_lobby() {
         "\"max_players\":"   + std::to_string(MAX_PLAYERS) + ","
         "\"current_players\":0,"
         "\"password_hash\":"  + (pwHash.empty() ? "null" : "\"" + json_str(pwHash) + "\"") +
-        + ",\"is_lan\":false}"; // LAN mode removed
+        + (isLan ? ",\"is_lan\":true}" : ",\"is_lan\":false}");
+        // ^^ is_lan flag for LAN vs online lobbies
 
     std::string resp = supabase_request("POST", "lobbies", body, "return=representation");
     myLobbyId = json_extract_int64(resp, "id");
@@ -534,7 +540,7 @@ void send_lobby_list(int sock, const sockaddr_in& dest) {
     // Fetch all lobbies from Supabase
     std::string resp = supabase_request("GET",
         "lobbies?select=id,lobby_name,host_ip,host_port,current_players,"
-        "max_players,password_hash,is_active,is_lan&is_lan=eq.false&order=id");
+        "max_players,password_hash,is_active,is_lan&order=id");
 
     // Very simple JSON array parser — extracts field values sequentially
     // Works correctly with the flat JSON Supabase returns for this schema
@@ -542,7 +548,7 @@ void send_lobby_list(int sock, const sockaddr_in& dest) {
         int64_t     id;
         std::string name, ip;
         uint16_t    port;
-        uint8_t     cur, max, hasPw, active;
+        uint8_t     cur, max, hasPw, active, lan;
     };
     std::vector<LobbyRow> rows;
 
@@ -561,6 +567,7 @@ void send_lobby_list(int sock, const sockaddr_in& dest) {
         r.port   = (uint16_t)json_extract_int64(obj, "host_port");
         r.hasPw  = (obj.find("\"password_hash\":null") == std::string::npos) ? 1 : 0;
         r.active = (obj.find("\"is_active\":true") != std::string::npos) ? 1 : 0;
+        r.lan    = (obj.find("\"is_lan\":true")    != std::string::npos) ? 1 : 0;
 
         // Extract string fields
         auto extract_str = [&](const std::string& key) -> std::string {
@@ -596,7 +603,7 @@ void send_lobby_list(int sock, const sockaddr_in& dest) {
         buf[off++] = r.max;
         buf[off++] = r.hasPw;
         buf[off++] = r.active;
-        buf[off++] = 0; // is_lan — always 0 (LAN removed), kept for packet compat
+        buf[off++] = r.lan;
     }
     sendto(sock, buf, off, 0, (const sockaddr*)&dest, sizeof(dest));
     std::cout << "Sent lobby list (" << rows.size() << ") to "
@@ -667,6 +674,21 @@ void broadcast_player_left(int sock, uint16_t pid, const std::string& excludeKey
     char msg[3]; msg[0] = PKT_PLAYER_LEFT;
     memcpy(msg + 1, &pid, 2);
     broadcast(sock, msg, 3, excludeKey);
+}
+
+
+// Broadcast current player list to all clients
+// Packet: [u8:13][u8:count] then per player: [u16:pid][lpstr:username]
+void broadcast_player_list(int sock) {
+    char buf[512]; int off = 0;
+    buf[off++] = PKT_PLAYER_LIST;
+    buf[off++] = (uint8_t)players.size();
+    for (auto& pair : players) {
+        uint16_t pid = pair.second.pid;
+        memcpy(buf + off, &pid, 2); off += 2;
+        off += lp_write(buf, off, pair.second.username);
+    }
+    broadcast(sock, buf, off, "");
 }
 
 void reset_lobby() {
@@ -909,14 +931,14 @@ int main(int argc, char* argv[]) {
             << "\nUsage (game server): server <lobby_name> [public_ip] [port] [password_hash]\n"
             << "Usage (manager):     server --manager <public_ip>\n\n"
             << "Examples:\n"
-            << "  server \"My Lobby\"                    (standalone)\n"
+            << "  server \"My Lobby\"                    (LAN — auto-detects IP)\n"
             << "  server --manager 203.0.113.10         (Droplet manager mode)\n";
         return 1;
     }
 
     lobbyName = argv[1];
 
-    // Detect public IP — on Droplet get_lan_ip() returns the public IP
+    // Detect LAN IP — on Droplet this is the public IP, on home PC it's LAN IP
     std::string detectedIp = get_lan_ip();
 
     // Parse remaining args: [public_ip] [port] [password_hash]
@@ -929,7 +951,9 @@ int main(int argc, char* argv[]) {
     uint16_t portOverride = 0;
     for (int i = 2; i < argc; i++) {
         std::string a = argv[i];
-        if (a.find('.') != std::string::npos) {
+        if (a == "--lan") {
+            isLan = true;
+        } else if (a.find('.') != std::string::npos) {
             publicIp = a;
         } else if (!a.empty() && a.find_first_not_of("0123456789") == std::string::npos) {
             portOverride = (uint16_t)std::stoi(a);
@@ -939,7 +963,7 @@ int main(int argc, char* argv[]) {
     }
     if (publicIp.empty()) publicIp = detectedIp;
 
-    std::cout << "IP detected: " << detectedIp << "\n";
+    std::cout << "LAN IP detected: " << detectedIp << "\n";
     if (publicIp != detectedIp)
         std::cout << "Using override IP: " << publicIp << "\n";
     if (portOverride > 0)
@@ -972,6 +996,7 @@ int main(int argc, char* argv[]) {
     myGamePort = gamePort;
     // Manager-spawned instances (portOverride > 0) don't bind the lobby port —
     // the manager handles all list/join requests on port 8888.
+    // LAN host (no port override) binds lobby port normally.
     uint16_t lobbyPort = (portOverride > 0) ? 0 : LOBBY_PORT;
     int gameSock  = make_udp_sock(gamePort, 1);
     // For spawned instances, create a plain unbound socket — won't receive anything
@@ -1103,6 +1128,19 @@ int main(int argc, char* argv[]) {
             std::string key  = addrKey(src);
             uint8_t     type = (uint8_t)gameBuf[0];
 
+            // 41 discovery ping — reply with lobby info directly to sender
+            if (type == PKT_DISCOVERY_PING) {
+                char disc[128]; int doff = 0;
+                disc[doff++] = PKT_DISCOVERY;
+                doff += lp_write(disc, doff, lobbyName);
+                disc[doff++] = (uint8_t)players.size();
+                disc[doff++] = MAX_PLAYERS;
+                disc[doff++] = pwHash.empty() ? 0 : 1;
+                sendto(gameSock, disc, doff, 0, (sockaddr*)&src, srcLen);
+                std::cout << "Discovery ping from " << addrKey(src) << " -> replied\n";
+                continue;
+            }
+
             // 255 ping — echo, no registration
             if (type == 255) {
                 char pong[1] = { (char)255 };
@@ -1124,6 +1162,7 @@ int main(int argc, char* argv[]) {
                     broadcast_player_left(gameSock, leavingPid, key);
                     players.erase(key);
                     supabase_update_players((int)players.size());
+                    broadcast_player_list(gameSock);
                     if (leavingPid == 1) {
                         // Host left — delete lobby and shut down
                         std::cout << "Host disconnected — deleting lobby and shutting down.\n";
@@ -1170,6 +1209,7 @@ int main(int argc, char* argv[]) {
                 memcpy(ja + 1, &pid, 2);
                 sendto(gameSock, ja, 3, 0, (sockaddr*)&src, srcLen);
                 supabase_update_players((int)players.size());
+                broadcast_player_list(gameSock);
             }
             players[key].lastSeen = Clock::now();
 
