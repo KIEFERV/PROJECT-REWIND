@@ -1,4 +1,71 @@
-/// @description Draw Debug Menu Elements
+/// Draw_64 (Draw GUI) — oPlayerHitbox
+
+var _gw = display_get_gui_width();
+var _gh = display_get_gui_height();
+var _cx = _gw / 2;
+
+// ── WINNER SCREEN ─────────────────────────────────────────────────────────
+if (global.match_phase == "winner") {
+    draw_set_color(c_black);
+    draw_set_alpha(0.80);
+    draw_rectangle(0, 0, _gw, _gh, false);
+    draw_set_alpha(1);
+    draw_set_halign(fa_center);
+    draw_set_color(c_yellow);
+    draw_text(_cx, _gh/2 - 50, "MATCH OVER");
+    draw_set_color(c_white);
+    draw_text(_cx, _gh/2, global.match_winner_name + " wins!");
+    draw_set_color(c_dkgray);
+    draw_text(_cx, _gh/2 + 40, "Returning to menu...");
+    draw_set_halign(fa_left);
+    draw_set_valign(fa_top);
+    exit;
+}
+
+// ── COUNTDOWN ─────────────────────────────────────────────────────────────
+if (global.match_phase == "countdown") {
+    draw_set_halign(fa_center);
+    draw_set_color(c_white);
+    if (global.countdown_value > 0) {
+        draw_text(_cx, _gh/2 - 30, string(global.countdown_value));
+    } else {
+        draw_set_color(c_lime);
+        draw_text(_cx, _gh/2 - 30, "GO!");
+    }
+    draw_set_halign(fa_left);
+}
+
+// ── DEAD OVERLAY ──────────────────────────────────────────────────────────
+if (!global.player_alive && global.match_phase == "playing") {
+    draw_set_color(c_red);
+    draw_set_alpha(0.45);
+    draw_rectangle(0, 0, _gw, _gh, false);
+    draw_set_alpha(1);
+    draw_set_halign(fa_center);
+    draw_set_color(c_white);
+    draw_text(_cx, _gh/2, "ELIMINATED");
+    draw_set_color(c_dkgray);
+    draw_text(_cx, _gh/2 + 30, "Waiting for next round...");
+    draw_set_halign(fa_left);
+}
+
+// ── ROUND SCORES ──────────────────────────────────────────────────────────
+draw_set_halign(fa_center);
+draw_set_color(c_white);
+draw_text(_cx, 52, "Round " + string(global.round_number));
+var _sx = _cx - 60;
+for (var _pi = 1; _pi <= 4; _pi++) {
+    if (global.scores[_pi] > 0 || _pi <= 2) {
+        draw_set_color(_pi == my_pid ? c_yellow : c_ltgray);
+        draw_text(_sx, 72, "P" + string(_pi) + ": " + string(global.scores[_pi]));
+        _sx += 70;
+    }
+}
+draw_set_halign(fa_left);
+
+// ════════════════════════════════════════════════════════════════════════════
+//  ORIGINAL oPlayerHitbox HUD BELOW
+// ════════════════════════════════════════════════════════════════════════════
 #macro NEWLINE _dy += 20
 
 var _dy = 40
@@ -10,12 +77,10 @@ if(debug_menu = true){
 	draw_text(50, _dy, "constant_force: " + string_format(point_distance(0, 0, constant_force_x, constant_force_y), 5, 3)); NEWLINE;
 }
 
-
 if (show_GUI = true){
-	draw_healthbar(10, 700, 450, 750, hitpoints, c_maroon, c_red, c_green, 0, true, true);
+	draw_healthbar(10, 700, 450, 750, (hitpoints/max_hp)* 100, c_maroon, c_red, c_green, 0, true, true);
 }
 
-	
 // Format as MM:SS
 var minutes = floor(time_remaining / 60);
 var seconds = time_remaining mod 60;
@@ -42,14 +107,12 @@ if (show_GUI = true) {
         draw_set_color(c_yellow);
         draw_text(_gui_w - _margin, _gui_h - _margin, "KNIFE");
     } else {
-        // Weapon name (top)
         var _slot_label = (active_slot == 1) ? "[1] " : "[2] ";
         var _wlabel = string_upper(_slot_label
             + ((active_slot == 1) ? primary_name : secondary_name));
         draw_set_color(make_color_rgb(180, 210, 255));
         draw_text(_gui_w - _margin, _gui_h - _margin - _line_h * 2, _wlabel);
 
-        // Ammo count (middle)
         if (ammo_in_mag == 0)
             draw_set_color(c_red);
         else if (ammo_in_mag <= mag_size * 0.25)
@@ -60,7 +123,6 @@ if (show_GUI = true) {
         draw_text(_gui_w - _margin, _gui_h - _margin - _line_h,
             string(ammo_in_mag) + "  /  " + string(ammo_reserve));
 
-        // Reload indicator (bottom)
         if (reloading) {
             draw_set_color(make_color_rgb(255, 200, 50));
             draw_text(_gui_w - _margin, _gui_h - _margin, "RELOADING...");

@@ -124,6 +124,7 @@
 #include <string>
 #include <map>
 #include <set>
+#include <thread>
 #include <vector>
 #include <cstdint>
 #include <cstring>
@@ -159,6 +160,11 @@ static const int      TIMEOUT_S   = 5;
 #define PKT_PLAYER_LIST   13  // server broadcasts player names to lobby
 #define PKT_LOADOUT_READY 14  // client locked their loadout
 #define PKT_ALL_READY     15  // server tells all clients to start match
+#define PKT_ROUND_STATE   16  // server broadcasts scores: [u8:16][u8:round][u8:count][per pid: u16+u8]
+#define PKT_PLAYER_DEAD   17  // server broadcasts player death: [u8:17][u16:pid]
+#define PKT_COUNTDOWN     18  // server broadcasts countdown: [u8:18][u8:count 3..0]
+#define PKT_MATCH_WINNER  19  // server broadcasts final winner: [u8:19][u16:pid][lpstr:name]
+#define PKT_PLAYER_ALIVE  20  // client tells server they respawned (round start)
 #define PKT_DISCOVERY     40  // server reply to a discovery ping
 #define PKT_DISCOVERY_PING 41 // joiner sends this to game port; server replies type-40
 
@@ -211,6 +217,21 @@ TimePoint matchEndTime;
 int      matchDuration = 180;
 int      timeRemaining = 180;
 TimePoint lastTimerBroadcast;
+
+// ── Round state ───────────────────────────────────────────────────────────
+int      roundNumber    = 1;
+int      roundsToWin    = 3;
+bool     roundActive    = false;
+bool     inCountdown    = false;
+int      countdownValue = 3;
+TimePoint countdownStart;
+TimePoint roundStartTime;
+std::map<uint16_t, int> scores;       // pid -> round wins
+std::map<uint16_t, int> roundKills;   // pid -> kills this round
+std::map<uint16_t, int> roundDeaths;  // pid -> deaths this round
+std::set<uint16_t> alivePlayers;      // pids still alive this round
+bool      pendingCountdown      = false;
+TimePoint pendingCountdownStart;
 
 // Supabase IDs for this server instance
 int64_t  myLobbyId = -1;
@@ -693,10 +714,83 @@ void broadcast_player_list(int sock) {
     broadcast(sock, buf, off, "");
 }
 
+void broadcast_round_state(int sock) {
+    char buf[128]; int off = 0;
+    buf[off++] = PKT_ROUND_STATE;
+    buf[off++] = (uint8_t)roundNumber;
+    buf[off++] = (uint8_t)players.size();
+    for (auto& pair : players) {
+        uint16_t pid = pair.second.pid;
+        memcpy(buf + off, &pid, 2); off += 2;
+        buf[off++] = (uint8_t)(scores.count(pid) ? scores[pid] : 0);
+    }
+    broadcast(sock, buf, off, "");
+}
+
+void start_countdown(int sock) {
+    inCountdown    = true;
+    countdownValue = 3;
+    countdownStart = Clock::now();
+    // Reset alive set and ammo/hp for new round
+    alivePlayers.clear();
+    for (auto& pair : players) alivePlayers.insert(pair.second.pid);
+    char cd[2] = { PKT_COUNTDOWN, (char)countdownValue };
+    broadcast(sock, cd, 2, "");
+    std::cout << "Countdown started for round " << roundNumber << "\n";
+}
+
+void end_round(int sock, uint16_t winnerPid) {
+    roundActive = false;
+    scores[winnerPid]++;
+    std::cout << "Round " << roundNumber << " won by pid=" << winnerPid
+              << " score=" << scores[winnerPid] << "\n";
+
+    // Check if match is won
+    if (scores[winnerPid] >= roundsToWin) {
+        // Match winner — update stats and end match
+        matchRunning = false;
+        std::string winnerName;
+        for (auto& pr : players) {
+            if (pr.second.pid == winnerPid) winnerName = pr.second.username;
+            int won = (pr.second.pid == winnerPid) ? 1 : 0;
+            supabase_update_profile(pr.second.userId,
+                pr.second.kills, pr.second.deaths, won);
+        }
+        // Broadcast winner packet to ALL players
+        char wb[64]; int woff = 0;
+        wb[woff++] = PKT_MATCH_WINNER;
+        memcpy(wb + woff, &winnerPid, 2); woff += 2;
+        woff += lp_write(wb, woff, winnerName);
+        // Send multiple times to ensure delivery
+        broadcast(sock, wb, woff, "");
+        broadcast(sock, wb, woff, "");
+        broadcast(sock, wb, woff, "");
+        std::cout << "Match winner: " << winnerName << "\n";
+        supabase_match_end();
+        matchJustEnded = true;
+        matchEndTime   = Clock::now();
+    } else {
+        // Broadcast round state then start next round countdown
+        broadcast_round_state(sock);
+        roundNumber++;
+        // Delay handled by pendingCountdown timer in main loop
+        pendingCountdown = true;
+        pendingCountdownStart = Clock::now();
+    }
+}
+
 void reset_lobby() {
     nextPid      = 1;
     matchRunning = false;
     readyPlayers.clear();
+    scores.clear();
+    roundKills.clear();
+    roundDeaths.clear();
+    alivePlayers.clear();
+    roundNumber  = 0;
+    roundActive  = false;
+    inCountdown       = false;
+    pendingCountdown  = false;
     std::cout << "Lobby empty — pid counter reset.\n";
 }
 
@@ -1064,43 +1158,52 @@ int main(int argc, char* argv[]) {
         }
         if (players.empty() && nextPid != 1) reset_lobby();
 
-        // ── Match timer ───────────────────────────────────────────────────
-        if (matchRunning) {
+        // ── Pending countdown (delayed start after round end) ─────────────
+        if (pendingCountdown) {
+            auto pElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                now - pendingCountdownStart).count();
+            if (pElapsed >= 2000) {
+                pendingCountdown = false;
+                start_countdown(gameSock);
+            }
+        }
+
+        // ── Countdown tick ────────────────────────────────────────────────
+        if (inCountdown) {
+            auto cElapsed = std::chrono::duration_cast<std::chrono::seconds>(
+                                now - countdownStart).count();
+            int newCount = 3 - (int)cElapsed;
+            if (newCount != countdownValue) {
+                countdownValue = newCount;
+                if (countdownValue <= 0) {
+                    inCountdown    = false;
+                    roundActive    = true;
+                    roundStartTime = Clock::now();
+                    lastTimerBroadcast = Clock::now();
+                    char cd[2] = { PKT_COUNTDOWN, 0 };
+                    broadcast(gameSock, cd, 2, "");
+                    std::cout << "GO! Round " << roundNumber << " started.\n";
+                } else {
+                    // Re-broadcast current value every second so late joiners catch up
+                    char cd[2] = { PKT_COUNTDOWN, (char)countdownValue };
+                    broadcast(gameSock, cd, 2, "");
+                    std::cout << "Countdown: " << countdownValue << "\n";
+                }
+            }
+        }
+
+        // ── Match timer (timer bar only — round ends on last death) ────────
+        if (matchRunning && roundActive) {
             auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
                                now - lastTimerBroadcast).count();
             if (elapsed >= 1) {
                 lastTimerBroadcast = now;
                 if (--timeRemaining <= 0) {
-                    timeRemaining = 0;
-                    matchRunning  = false;
-                    std::cout << "Match over!\n";
-                    char ep[1] = { PKT_MATCH_END_BC };
-                    broadcast(gameSock, ep, 1, "");
-                    supabase_match_end();
-                    // Update cumulative profile stats for each player
-                    // Determine winner: player with most kills
-                    uint16_t topPid = 0; int topKills = -1;
-                    for (auto& pr : players) {
-                        if (pr.second.kills > topKills) {
-                            topKills = pr.second.kills;
-                            topPid   = pr.second.pid;
-                        }
-                    }
-                    for (auto& pr : players) {
-                        int won = (pr.second.pid == topPid) ? 1 : 0;
-                        supabase_update_profile(
-                            pr.second.userId,
-                            pr.second.kills,
-                            pr.second.deaths,
-                            won);
-                        std::cout << "Stats: " << pr.second.username
-                                  << " K=" << pr.second.kills
-                                  << " D=" << pr.second.deaths
-                                  << " W=" << won << "\n";
-                    }
-                    matchJustEnded = true;
-                    matchEndTime   = Clock::now();
-                    readyPlayers.clear();
+                    // Time ran out — no winner this round, restart round
+                    timeRemaining = matchDuration;
+                    roundNumber++;
+                    std::cout << "Round timed out — restarting.\n";
+                    start_countdown(gameSock);
                 }
                 char tp[3]; tp[0] = PKT_TIMER;
                 uint16_t t = (uint16_t)timeRemaining;
@@ -1115,10 +1218,31 @@ int main(int argc, char* argv[]) {
         if (matchJustEnded) {
             auto sinceEnd = std::chrono::duration_cast<std::chrono::milliseconds>(
                                 Clock::now() - matchEndTime).count();
-            if (sinceEnd >= 2000) {
+            // Re-broadcast winner packet every second to ensure delivery
+            static long lastWinnerBroadcast = -1;
+            long secondElapsed = sinceEnd / 1000;
+            if (secondElapsed != lastWinnerBroadcast && secondElapsed <= 4) {
+                lastWinnerBroadcast = secondElapsed;
+                // Find winner pid (player with max score)
+                uint16_t wPid = 0; int wScore = -1;
+                std::string wName;
+                for (auto& pr : players) {
+                    int s = scores.count(pr.second.pid) ? scores[pr.second.pid] : 0;
+                    if (s > wScore) { wScore = s; wPid = pr.second.pid; wName = pr.second.username; }
+                }
+                if (wPid > 0) {
+                    char wb[64]; int woff = 0;
+                    wb[woff++] = PKT_MATCH_WINNER;
+                    memcpy(wb + woff, &wPid, 2); woff += 2;
+                    woff += lp_write(wb, woff, wName);
+                    broadcast(gameSock, wb, woff, "");
+                }
+            }
+            if (sinceEnd >= 5000) {
                 players.clear();
                 nextPid        = 1;
                 matchJustEnded = false;
+                lastWinnerBroadcast = -1;
                 std::cout << "Lobby reset — ready for next match.\n";
             }
         }
@@ -1254,6 +1378,19 @@ int main(int argc, char* argv[]) {
                 broadcast(gameSock, sp, 1, "");
             }
 
+            // 20 player alive — client entered game room, resend countdown state
+            if (type == PKT_PLAYER_ALIVE) {
+                // Resend current phase to this specific player
+                if (inCountdown) {
+                    char cd[2] = { PKT_COUNTDOWN, (char)countdownValue };
+                    sendto(gameSock, cd, 2, 0, (sockaddr*)&src, srcLen);
+                } else if (roundActive) {
+                    char cd[2] = { PKT_COUNTDOWN, 0 };
+                    sendto(gameSock, cd, 2, 0, (sockaddr*)&src, srcLen);
+                }
+                broadcast_round_state(gameSock);
+            }
+
             // 14 loadout ready — player locked their loadout
             if (type == PKT_LOADOUT_READY) {
                 uint16_t pid = players[key].pid;
@@ -1265,9 +1402,12 @@ int main(int argc, char* argv[]) {
                     timeRemaining      = matchDuration;
                     lastTimerBroadcast = Clock::now();
                     supabase_match_start();
-                    char ar[1] = { PKT_ALL_READY };
-                    broadcast(gameSock, ar, 1, "");
-                    std::cout << "All players ready — match started!\n";
+                    scores.clear();
+                    roundKills.clear();
+                    roundDeaths.clear();
+                    roundNumber = 1;
+                    std::cout << "All players ready — starting countdown!\n";
+                    start_countdown(gameSock);
                 }
             }
 
@@ -1279,13 +1419,43 @@ int main(int argc, char* argv[]) {
                 sendto(gameSock, ja, 3, 0, (sockaddr*)&src, srcLen);
             }
 
-            // 11 kill report
-            if (type == PKT_KILL_REPORT && bytes >= 5 && matchRunning) {
-                uint16_t killer, victim;
-                memcpy(&killer, gameBuf + 1, 2);
-                memcpy(&victim, gameBuf + 3, 2);
-                if (killer == players[key].pid)
-                    supabase_record_kill(killer, victim);
+            // 11 kill report — sent by the victim, contains victim pid only
+            if (type == PKT_KILL_REPORT && bytes >= 3 && matchRunning && roundActive) {
+                uint16_t victim;
+                memcpy(&victim, gameBuf + 1, 2);
+                uint16_t killer = players[key].pid; // sender IS the victim actually
+                // The sender is the victim — find the actual killer (the other player)
+                // For 2-player match, killer is whoever is NOT the victim
+                uint16_t killerPid = 0;
+                for (auto& pr : players) {
+                    if (pr.second.pid != victim) { killerPid = pr.second.pid; break; }
+                }
+                std::cout << "Kill report: victim=" << victim << " killer=" << killerPid
+                          << " alive=" << alivePlayers.size() << "\n";
+                // Track stats
+                for (auto& pr : players) {
+                    if (pr.second.pid == killerPid) pr.second.kills++;
+                    if (pr.second.pid == victim)    pr.second.deaths++;
+                }
+                // Remove victim from alive set
+                alivePlayers.erase(victim);
+                // Broadcast death to all
+                char pd[3]; pd[0] = PKT_PLAYER_DEAD;
+                memcpy(pd + 1, &victim, 2);
+                broadcast(gameSock, pd, 3, "");
+                std::cout << "Player pid=" << victim << " eliminated — alive remaining: "
+                          << alivePlayers.size() << "\n";
+                // Check if round is over
+                if (alivePlayers.size() <= 1) {
+                    if (!alivePlayers.empty()) {
+                        uint16_t winnerPid = *alivePlayers.begin();
+                        end_round(gameSock, winnerPid);
+                    } else {
+                        roundNumber++;
+                        pendingCountdown = true;
+                        pendingCountdownStart = Clock::now();
+                    }
+                }
             }
         } // end game drain loop
 

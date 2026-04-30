@@ -1,11 +1,12 @@
-// Draw your own sprite normally
-draw_sprite_ext(sPlayerModel, image_index, x, y,
-                1, 1,
-                player_look_dir,
-                c_white, 1);
+// Draw your own sprite (only if alive)
+if (global.player_alive) {
+    draw_sprite_ext(sPlayerModel, image_index, x, y,
+                    1, 1,
+                    player_look_dir,
+                    c_white, 1);
+}
 
-
-// Draw other players
+// Draw other players (only if HP > 0)
 var pid = ds_map_find_first(other_players);
 repeat (ds_map_size(other_players)) {
     var entry = other_players[? pid];
@@ -16,33 +17,35 @@ repeat (ds_map_size(other_players)) {
         var oanim   = entry[3];
         var ofacing = entry[4];
 
-        draw_sprite_ext(sPlayerEnemyModel, oanim, ox, oy,
-                1, 1,
-                ofacing,
-                c_white, 1);
+        // Only draw if alive
+        if (ohp > 0) {
+            draw_sprite_ext(sPlayerEnemyModel, oanim, ox, oy,
+                    1, 1,
+                    ofacing,
+                    c_white, 1);
 
-        draw_set_color(c_red);
-        draw_rectangle(ox - 16, oy - 28, ox + 16, oy - 22, false);
-        draw_set_color(c_lime);
-        draw_rectangle(ox - 16, oy - 28, ox - 16 + (32 * (ohp/max_hp)), oy - 22, false);
-        draw_set_color(c_white);
+            // Health bar above head
+            draw_set_color(c_red);
+            draw_rectangle(ox - 16, oy - 28, ox + 16, oy - 22, false);
+            draw_set_color(c_lime);
+            draw_rectangle(ox - 16, oy - 28, ox - 16 + (32 * (ohp / max_hp)), oy - 22, false);
+            draw_set_color(c_white);
+        }
     }
     pid = ds_map_find_next(other_players, pid);
 }
 
-if(debug_menu = true){
+if (debug_menu = true) {}
 
-}
-
-if (show_GUI = true){
-    if (reloading = true){
+if (show_GUI = true) {
+    if (reloading = true) {
         draw_circular_bar(mouse_x, mouse_y, reload_time - reload_timer, reload_time, c_white, 16, 1, 3);
-    }else{
+    } else {
         draw_sprite_ext(sCrosshair, 0, mouse_x, mouse_y, 1, 1, 0, c_white, 1);
     }
 }
 
-// ── Knife swing cone flash ────────────────────────────────────────────────────
+// ── Knife swing cone flash ────────────────────────────────────────────────
 if (weapon_type == "melee" && knife_swing_timer > 0) {
     var _segments = 8;
     var _alpha    = knife_swing_timer / 12;

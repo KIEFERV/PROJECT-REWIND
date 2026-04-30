@@ -1,3 +1,26 @@
+// ── Countdown overlay (shown when locked in and waiting) ──────────────────
+if (variable_instance_exists(id, "locked_in") && locked_in) {
+    var _gw2 = display_get_gui_width();
+    var _gh2 = display_get_gui_height();
+    draw_set_color(c_black);
+    draw_set_alpha(0.55);
+    draw_rectangle(0, 0, _gw2, _gh2, false);
+    draw_set_alpha(1);
+    draw_set_halign(fa_center);
+    if (variable_global_exists("countdown_value") && global.countdown_value > 0) {
+        draw_set_color(c_white);
+        draw_text(_gw2/2, _gh2/2 - 20, string(global.countdown_value));
+    } else if (variable_global_exists("countdown_value") && global.countdown_value == 0) {
+        draw_set_color(c_lime);
+        draw_text(_gw2/2, _gh2/2 - 20, "GO!");
+    } else {
+        draw_set_color(c_yellow);
+        var _dots = string_repeat(".", (current_time div 400) mod 4);
+        draw_text(_gw2/2, _gh2/2 - 20, "Waiting for other players" + _dots);
+    }
+    draw_set_halign(fa_left);
+}
+
 var gui_w = display_get_gui_width();
 var gui_h = display_get_gui_height();
 
@@ -96,24 +119,19 @@ draw_set_color(c_white);
 draw_set_halign(fa_center);
 draw_text(back_x + button_w / 2, back_top + 12, "Back");
 
-// Show "Locked In" state if waiting for other players
 var _is_locked = variable_instance_exists(id, "locked_in") && locked_in;
-draw_set_color(_is_locked ? make_color_rgb(20, 80, 20) : (hover_play ? make_color_rgb(70, 95, 185) : make_color_rgb(42, 58, 108)));
+draw_set_color(_is_locked ? make_color_rgb(20,80,20) : (hover_play ? make_color_rgb(70,95,185) : make_color_rgb(42,58,108)));
 draw_rectangle(play_x, play_top, play_x + button_w, play_top + button_h, false);
 draw_set_color(_is_locked ? c_lime : make_color_rgb(190, 205, 255));
 draw_rectangle(play_x, play_top, play_x + button_w, play_top + button_h, true);
 draw_set_color(c_white);
-var _btn_label = _is_locked ? "Locked In!" : (global.socket >= 0 ? "Lock In" : "Start Match");
-draw_text(play_x + button_w / 2, play_top + 12, _btn_label);
+var _btn_text = _is_locked ? "Locked In!" : (global.socket >= 0 ? "Lock In" : "Start Match");
+draw_text(play_x + button_w / 2, play_top + 12, _btn_text);
 
 draw_set_halign(fa_center);
 draw_set_color(make_color_rgb(208, 212, 237));
-if (variable_instance_exists(id, "locked_in") && locked_in) {
-    var _dots = string_repeat(".", (current_time div 400) mod 4);
-    draw_set_color(c_lime);
-    draw_text(panel_x + panel_w / 2, panel_top + 570, "Waiting for other players" + _dots);
-} else {
-    draw_text(panel_x + panel_w / 2, panel_top + 570,
-        "TAB = switch column   |   UP/DOWN = choose   |   ENTER = lock in   |   ESC = back");
-}
+draw_text(panel_x + panel_w / 2, panel_top + 570,
+    (variable_instance_exists(id,"locked_in") && locked_in
+        ? "Waiting for other players..." 
+        : "TAB = switch column   |   UP/DOWN = choose   |   ENTER = lock in   |   ESC = back"));
 draw_set_halign(fa_left);
