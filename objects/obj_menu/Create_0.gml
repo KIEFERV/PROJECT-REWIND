@@ -18,7 +18,7 @@ array_push(menu_buttons, {
 
 array_push(menu_buttons, {
     label:          "Play Online",
-    target:         rm_menu,   // existing lobby browser room
+    target:         rServerBrowser,   // existing lobby browser room
     action:         "room",
     desc:           "Browse and join online or LAN lobbies",
     primary:        false,
