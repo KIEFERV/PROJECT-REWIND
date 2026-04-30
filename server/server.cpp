@@ -756,11 +756,14 @@ void end_round(int sock, uint16_t winnerPid) {
             supabase_update_profile(pr.second.userId,
                 pr.second.kills, pr.second.deaths, won);
         }
-        // Broadcast winner packet
+        // Broadcast winner packet to ALL players
         char wb[64]; int woff = 0;
         wb[woff++] = PKT_MATCH_WINNER;
         memcpy(wb + woff, &winnerPid, 2); woff += 2;
         woff += lp_write(wb, woff, winnerName);
+        // Send multiple times to ensure delivery
+        broadcast(sock, wb, woff, "");
+        broadcast(sock, wb, woff, "");
         broadcast(sock, wb, woff, "");
         std::cout << "Match winner: " << winnerName << "\n";
         supabase_match_end();
@@ -1215,10 +1218,31 @@ int main(int argc, char* argv[]) {
         if (matchJustEnded) {
             auto sinceEnd = std::chrono::duration_cast<std::chrono::milliseconds>(
                                 Clock::now() - matchEndTime).count();
-            if (sinceEnd >= 2000) {
+            // Re-broadcast winner packet every second to ensure delivery
+            static long lastWinnerBroadcast = -1;
+            long secondElapsed = sinceEnd / 1000;
+            if (secondElapsed != lastWinnerBroadcast && secondElapsed <= 4) {
+                lastWinnerBroadcast = secondElapsed;
+                // Find winner pid (player with max score)
+                uint16_t wPid = 0; int wScore = -1;
+                std::string wName;
+                for (auto& pr : players) {
+                    int s = scores.count(pr.second.pid) ? scores[pr.second.pid] : 0;
+                    if (s > wScore) { wScore = s; wPid = pr.second.pid; wName = pr.second.username; }
+                }
+                if (wPid > 0) {
+                    char wb[64]; int woff = 0;
+                    wb[woff++] = PKT_MATCH_WINNER;
+                    memcpy(wb + woff, &wPid, 2); woff += 2;
+                    woff += lp_write(wb, woff, wName);
+                    broadcast(gameSock, wb, woff, "");
+                }
+            }
+            if (sinceEnd >= 5000) {
                 players.clear();
                 nextPid        = 1;
                 matchJustEnded = false;
+                lastWinnerBroadcast = -1;
                 std::cout << "Lobby reset — ready for next match.\n";
             }
         }
