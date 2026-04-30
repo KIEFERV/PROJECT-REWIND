@@ -1,3 +1,26 @@
+// ── Countdown overlay (shown when locked in and waiting) ──────────────────
+if (variable_instance_exists(id, "locked_in") && locked_in) {
+    var _gw2 = display_get_gui_width();
+    var _gh2 = display_get_gui_height();
+    draw_set_color(c_black);
+    draw_set_alpha(0.55);
+    draw_rectangle(0, 0, _gw2, _gh2, false);
+    draw_set_alpha(1);
+    draw_set_halign(fa_center);
+    if (variable_global_exists("countdown_value") && global.countdown_value > 0) {
+        draw_set_color(c_white);
+        draw_text(_gw2/2, _gh2/2 - 20, string(global.countdown_value));
+    } else if (variable_global_exists("countdown_value") && global.countdown_value == 0) {
+        draw_set_color(c_lime);
+        draw_text(_gw2/2, _gh2/2 - 20, "GO!");
+    } else {
+        draw_set_color(c_yellow);
+        var _dots = string_repeat(".", (current_time div 400) mod 4);
+        draw_text(_gw2/2, _gh2/2 - 20, "Waiting for other players" + _dots);
+    }
+    draw_set_halign(fa_left);
+}
+
 var gui_w = display_get_gui_width();
 var gui_h = display_get_gui_height();
 

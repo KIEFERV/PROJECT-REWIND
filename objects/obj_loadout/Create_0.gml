@@ -31,5 +31,9 @@ hover_play     = false;
 hover_back     = false;
 button_w       = 160;
 button_h       = 42;
-locked_in      = false;       // true once ready packet sent
+locked_in      = false;
 keepalive_timer = 0;
+
+// Initialize countdown display
+if (!variable_global_exists("countdown_value")) global.countdown_value = -1;
+if (!variable_global_exists("match_phase"))     global.match_phase     = "countdown";

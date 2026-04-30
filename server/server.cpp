@@ -1369,8 +1369,6 @@ int main(int argc, char* argv[]) {
                     roundKills.clear();
                     roundDeaths.clear();
                     roundNumber = 1;
-                    char ar[1] = { PKT_ALL_READY };
-                    broadcast(gameSock, ar, 1, "");
                     std::cout << "All players ready — starting countdown!\n";
                     start_countdown(gameSock);
                 }
