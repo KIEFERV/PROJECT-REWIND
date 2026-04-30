@@ -25,15 +25,11 @@ for (var i = 0; i < array_length(secondary_list); i++) {
     if (secondary_list[i] == global.secondary_weapon) secondary_index = i;
 }
 
-active_column = 0;
-status_text   = "Choose your loadout.";
-hover_play    = false;
-hover_back    = false;
-button_w      = 160;
-button_h      = 42;
-
-status_text = "Choose your loadout.";
-hover_play = false;
-hover_back = false;
-button_w = 160;
-button_h = 42;
+active_column  = 0;
+status_text    = "Choose your loadout.";
+hover_play     = false;
+hover_back     = false;
+button_w       = 160;
+button_h       = 42;
+locked_in      = false;       // true once ready packet sent
+keepalive_timer = 0;

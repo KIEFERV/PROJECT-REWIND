@@ -17,10 +17,25 @@ var my = device_mouse_y_to_gui(0);
 hover_play = point_in_rectangle(mx, my, play_x, play_y, play_x + button_w, play_y + button_h);
 hover_back = point_in_rectangle(mx, my, back_x, back_y, back_x + button_w, back_y + button_h);
 
+// ── Keepalive — prevent server timeout while on loadout screen ─────────────
+keepalive_timer++;
+if (keepalive_timer >= game_get_speed(gamespeed_fps) * 2) {
+    keepalive_timer = 0;
+    if (global.socket >= 0) {
+        var _kbuf = buffer_create(1, buffer_fixed, 1);
+        buffer_write(_kbuf, buffer_u8, 12);
+        network_send_udp_raw(global.socket, global.ip_address, global.port, _kbuf, 1);
+        buffer_delete(_kbuf);
+    }
+}
+
+// ── If locked in, just wait for server PKT_ALL_READY ─────────────────────
+if (locked_in) exit;
+
+// ── Navigation ────────────────────────────────────────────────────────────
 if (keyboard_check_pressed(vk_tab)) {
     active_column = 1 - active_column;
 }
-
 if (keyboard_check_pressed(vk_up)) {
     if (active_column == 0) {
         primary_index--;
@@ -40,12 +55,31 @@ if (keyboard_check_pressed(vk_down)) {
     }
 }
 
+// ── Lock in ───────────────────────────────────────────────────────────────
 if (keyboard_check_pressed(vk_enter) || (hover_play && mouse_check_button_pressed(mb_left))) {
     global.primary_weapon   = primary_list[primary_index];
     global.secondary_weapon = secondary_list[secondary_index];
-    room_goto(rMovementTesting);
+
+    if (global.socket >= 0) {
+        // Multiplayer — send ready packet, wait for PKT_ALL_READY from server
+        locked_in   = true;
+        status_text = "Locked in! Waiting for other players...";
+        var _buf = buffer_create(1, buffer_fixed, 1);
+        buffer_write(_buf, buffer_u8, 14);   // PKT_LOADOUT_READY
+        network_send_udp_raw(global.socket, global.ip_address, global.port, _buf, 1);
+        buffer_delete(_buf);
+        show_debug_message("Loadout locked in: " + global.primary_weapon + " / " + global.secondary_weapon);
+    } else {
+        // Solo practice — go straight to game
+        room_goto(rMovementTesting);
+    }
 }
 
+// ── Back ──────────────────────────────────────────────────────────────────
 if (keyboard_check_pressed(vk_escape) || (hover_back && mouse_check_button_pressed(mb_left))) {
-    room_goto(rm_menu);
+    if (global.socket >= 0) {
+        room_goto(rLobby);
+    } else {
+        room_goto(rm_menu);
+    }
 }
