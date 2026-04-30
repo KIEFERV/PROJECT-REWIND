@@ -1,3 +1,10 @@
+// Reset draw state to prevent leaking from other objects/rooms
+draw_set_font(-1);
+draw_set_halign(fa_left);
+draw_set_valign(fa_top);
+draw_set_color(c_white);
+draw_set_alpha(1);
+
 var gui_w = display_get_gui_width();
 var gui_h = display_get_gui_height();
 
@@ -196,3 +203,8 @@ for (var i = 0; i < array_length(menu_buttons); i++) {
         btn.label, i == hover_index, is_logout, is_primary, is_disabled);
     vis_y += button_h + button_gap;
 }
+
+// Reset draw state after drawing
+draw_set_halign(fa_left);
+draw_set_valign(fa_top);
+draw_set_alpha(1);

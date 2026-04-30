@@ -25,15 +25,15 @@ for (var i = 0; i < array_length(secondary_list); i++) {
     if (secondary_list[i] == global.secondary_weapon) secondary_index = i;
 }
 
-active_column  = 0;
-status_text    = "Choose your loadout.";
-hover_play     = false;
-hover_back     = false;
-button_w       = 160;
-button_h       = 42;
-locked_in      = false;
-keepalive_timer = 0;
+active_column = 0;
+status_text   = "Choose your loadout.";
+hover_play    = false;
+hover_back    = false;
+button_w      = 160;
+button_h      = 42;
 
-// Initialize countdown display
-if (!variable_global_exists("countdown_value")) global.countdown_value = -1;
-if (!variable_global_exists("match_phase"))     global.match_phase     = "countdown";
+status_text = "Choose your loadout.";
+hover_play = false;
+hover_back = false;
+button_w = 160;
+button_h = 42;
