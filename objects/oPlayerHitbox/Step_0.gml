@@ -31,16 +31,11 @@ if (keyboard_check_released(ord("M"))){debug_menu = !debug_menu;}
 
 #region Player States
 
-if (hitpoints <= 0){
-    dead_state = true;
-    // Send kill report if we just died (only once)
-    if (!global.player_alive && global.match_phase == "playing") {
-        // Already handled
-    } else if (global.player_alive && hitpoints <= 0) {
-        global.player_alive = false;
-        visible = false;
-    }
-}else{
+if (hitpoints <= 0) {
+    dead_state          = true;
+    visible             = false;
+    global.player_alive = false;
+} else {
     dead_state = false;
 }
 

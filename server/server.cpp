@@ -1400,26 +1400,29 @@ int main(int argc, char* argv[]) {
                 uint16_t killer, victim;
                 memcpy(&killer, gameBuf + 1, 2);
                 memcpy(&victim, gameBuf + 3, 2);
+                std::cout << "Kill report: killer=" << killer << " victim=" << victim
+                          << " alive=" << alivePlayers.size() << "\n";
                 // Track stats
-                players[key].kills++;
-                for (auto& pr : players)
+                for (auto& pr : players) {
+                    if (pr.second.pid == killer) pr.second.kills++;
                     if (pr.second.pid == victim) pr.second.deaths++;
+                }
                 // Remove victim from alive set
                 alivePlayers.erase(victim);
                 // Broadcast death
                 char pd[3]; pd[0] = PKT_PLAYER_DEAD;
                 memcpy(pd + 1, &victim, 2);
                 broadcast(gameSock, pd, 3, "");
-                std::cout << "Player pid=" << victim << " killed by pid=" << killer << "\n";
+                std::cout << "Player pid=" << victim << " killed by pid=" << killer
+                          << " — alive remaining: " << alivePlayers.size() << "\n";
                 // Check if round is over
                 if (alivePlayers.size() == 1) {
                     uint16_t winnerPid = *alivePlayers.begin();
                     end_round(gameSock, winnerPid);
                 } else if (alivePlayers.empty()) {
-                    // Draw — no winner, restart round
                     roundNumber++;
-                    std::this_thread::sleep_for(std::chrono::seconds(2));
-                    start_countdown(gameSock);
+                    pendingCountdown = true;
+                    pendingCountdownStart = Clock::now();
                 }
             }
         } // end game drain loop
