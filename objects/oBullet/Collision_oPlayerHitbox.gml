@@ -29,3 +29,5 @@ if (other.hitpoints <= 0) {
 }
 
 instance_destroy();
+
+

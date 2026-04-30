@@ -1,3 +1,18 @@
+/// Step_0 — obj_loadout
+
+// ── Keepalive — prevent server from timing us out ─────────────────────────
+if (!variable_instance_exists(id, "keepalive_timer")) keepalive_timer = 0;
+keepalive_timer++;
+if (keepalive_timer >= game_get_speed(gamespeed_fps) * 2) {
+    keepalive_timer = 0;
+    if (global.socket >= 0) {
+        var _kbuf = buffer_create(1, buffer_fixed, 1);
+        buffer_write(_kbuf, buffer_u8, 12);  // type 12 = keepalive
+        network_send_udp_raw(global.socket, global.ip_address, global.port, _kbuf, 1);
+        buffer_delete(_kbuf);
+    }
+}
+
 var gui_w = display_get_gui_width();
 var gui_h = display_get_gui_height();
 

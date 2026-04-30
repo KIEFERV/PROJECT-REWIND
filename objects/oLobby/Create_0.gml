@@ -47,3 +47,4 @@ buffer_delete(_buf);
 
 // Clear flag — is_host is set authoritatively from server pid response
 global.is_creating_lobby = false;
+global.going_to_match    = false;
