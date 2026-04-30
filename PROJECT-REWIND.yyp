@@ -88,6 +88,7 @@
     {"id":{"name":"oClient","path":"objects/oClient/oClient.yy",},},
     {"id":{"name":"oCollisionBox","path":"objects/oCollisionBox/oCollisionBox.yy",},},
     {"id":{"name":"oCollisionController","path":"objects/oCollisionController/oCollisionController.yy",},},
+    {"id":{"name":"Oesccontroller","path":"objects/Oesccontroller/Oesccontroller.yy",},},
     {"id":{"name":"oFloorBoost","path":"objects/oFloorBoost/oFloorBoost.yy",},},
     {"id":{"name":"oFloorSlippery","path":"objects/oFloorSlippery/oFloorSlippery.yy",},},
     {"id":{"name":"oFloorSlow","path":"objects/oFloorSlow/oFloorSlow.yy",},},
