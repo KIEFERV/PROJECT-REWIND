@@ -123,7 +123,6 @@
 #include <iostream>
 #include <string>
 #include <map>
-#include <set>
 #include <vector>
 #include <cstdint>
 #include <cstring>
@@ -156,9 +155,7 @@ static const int      TIMEOUT_S   = 5;
 #define PKT_JOIN_REQUEST  10
 #define PKT_KILL_REPORT   11
 #define PKT_KEEPALIVE     12
-#define PKT_PLAYER_LIST   13  // server broadcasts player names to lobby
-#define PKT_LOADOUT_READY 14  // client locked their loadout
-#define PKT_ALL_READY     15  // server tells all clients to start match
+#define PKT_PLAYER_LIST   13  // server broadcasts all player names to lobby
 #define PKT_DISCOVERY     40  // server reply to a discovery ping
 #define PKT_DISCOVERY_PING 41 // joiner sends this to game port; server replies type-40
 
@@ -205,7 +202,6 @@ struct Player {
 std::map<std::string, Player> players;
 uint16_t nextPid      = 1;
 bool     matchRunning   = false;
-std::set<uint16_t> readyPlayers;  // pids that have locked their loadout
 bool     matchJustEnded = false;
 TimePoint matchEndTime;
 int      matchDuration = 180;
@@ -680,8 +676,10 @@ void broadcast_player_left(int sock, uint16_t pid, const std::string& excludeKey
     broadcast(sock, msg, 3, excludeKey);
 }
 
+
+// Broadcast current player list to all clients
+// Packet: [u8:13][u8:count] then per player: [u16:pid][lpstr:username]
 void broadcast_player_list(int sock) {
-    // [u8:13][u8:count] then per player: [u16:pid][lpstr:username]
     char buf[512]; int off = 0;
     buf[off++] = PKT_PLAYER_LIST;
     buf[off++] = (uint8_t)players.size();
@@ -696,7 +694,6 @@ void broadcast_player_list(int sock) {
 void reset_lobby() {
     nextPid      = 1;
     matchRunning = false;
-    readyPlayers.clear();
     std::cout << "Lobby empty — pid counter reset.\n";
 }
 
@@ -1100,7 +1097,6 @@ int main(int argc, char* argv[]) {
                     }
                     matchJustEnded = true;
                     matchEndTime   = Clock::now();
-                    readyPlayers.clear();
                 }
                 char tp[3]; tp[0] = PKT_TIMER;
                 uint16_t t = (uint16_t)timeRemaining;
@@ -1166,6 +1162,7 @@ int main(int argc, char* argv[]) {
                     broadcast_player_left(gameSock, leavingPid, key);
                     players.erase(key);
                     supabase_update_players((int)players.size());
+                    broadcast_player_list(gameSock);
                     if (leavingPid == 1) {
                         // Host left — delete lobby and shut down
                         std::cout << "Host disconnected — deleting lobby and shutting down.\n";
@@ -1212,7 +1209,7 @@ int main(int argc, char* argv[]) {
                 memcpy(ja + 1, &pid, 2);
                 sendto(gameSock, ja, 3, 0, (sockaddr*)&src, srcLen);
                 supabase_update_players((int)players.size());
-                broadcast_player_list(gameSock);  // tell all clients who's in the lobby
+                broadcast_player_list(gameSock);
             }
             players[key].lastSeen = Clock::now();
 
@@ -1247,28 +1244,13 @@ int main(int argc, char* argv[]) {
                     sendto(gameSock, ne, 1, 0, (sockaddr*)&src, srcLen);
                     continue;
                 }
-                // Send type-7 to trigger loadout phase — match starts after all ready
-                readyPlayers.clear();
-                std::cout << "Loadout phase started!\n";
+                matchRunning       = true;
+                timeRemaining      = matchDuration;
+                lastTimerBroadcast = Clock::now();
+                std::cout << "Match started!\n";
                 char sp[1] = { PKT_MATCH_START };
                 broadcast(gameSock, sp, 1, "");
-            }
-
-            // 14 loadout ready — player locked their loadout
-            if (type == PKT_LOADOUT_READY) {
-                uint16_t pid = players[key].pid;
-                readyPlayers.insert(pid);
-                std::cout << "Loadout ready: pid=" << pid
-                          << " (" << readyPlayers.size() << "/" << players.size() << ")\n";
-                if (readyPlayers.size() >= players.size() && !matchRunning) {
-                    matchRunning       = true;
-                    timeRemaining      = matchDuration;
-                    lastTimerBroadcast = Clock::now();
-                    supabase_match_start();
-                    char ar[1] = { PKT_ALL_READY };
-                    broadcast(gameSock, ar, 1, "");
-                    std::cout << "All players ready — match started!\n";
-                }
+                supabase_match_start();
             }
 
             // 10 join request

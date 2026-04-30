@@ -187,17 +187,7 @@ function spawnEnemyBullet(_x, _y, _dir) {
     b.direction   = _dir;
     b.speed       = 12;
     b.image_angle = b.direction;
-    b.owner_id    = noone;
-    b.damage      = 1;  // default damage
-}
-
-function spawnEnemyBulletDmg(_x, _y, _dir, _dmg) {
-    var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
-    b.direction   = _dir;
-    b.speed       = 12;
-    b.image_angle = b.direction;
-    b.owner_id    = noone;  // can damage local player
-    b.damage      = _dmg;   // actual damage from shooter's weapon
+    b.owner_id    = noone;  // no local owner — can damage local player
 }
 
 #endregion

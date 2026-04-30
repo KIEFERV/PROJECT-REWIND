@@ -1,12 +1,10 @@
 /// oBullet — Collision with oPlayerHitbox
 
-// Skip if this bullet belongs to the player being hit
+// Skip if the player who owns this bullet is the one being hit
 if (other.id == owner_id) exit;
 
 // Skip if player is already dead
 if (other.dead_state) exit;
 
-other.hitpoints -= damage;
+other.hitpoints -= 10;
 instance_destroy();
-
-

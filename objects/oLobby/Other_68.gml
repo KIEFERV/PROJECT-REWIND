@@ -54,12 +54,11 @@ if (ptype == 3) {
     exit;
 }
 
-// Type 7 — host started match, go to loadout selection
+// Type 7 — match is starting
 if (ptype == 7) {
-    global.socket          = socket;
-    global.my_pid          = my_pid;
-    global.going_to_match  = true;  // tell CleanUp not to disconnect
-    room_goto(rm_loadout);
+    global.socket = socket;
+    global.my_pid = my_pid;
+    room_goto(rMovementTesting);
     exit;
 }
 
