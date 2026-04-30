@@ -58,7 +58,8 @@ if (ptype == 3) {
 if (ptype == 7) {
     global.socket = socket;
     global.my_pid = my_pid;
-    room_goto(rMovementTesting);
+    global.going_to_match = true;
+    room_goto(rm_loadout);
     exit;
 }
 
