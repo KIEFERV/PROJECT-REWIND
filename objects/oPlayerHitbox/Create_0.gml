@@ -127,6 +127,15 @@ time_remaining = 180;
 is_host        = false;
 net_send_timer = 0;
 
+// Round / match state
+global.match_phase       = "countdown";  // countdown | playing | winner
+global.countdown_value   = 3;
+global.player_alive      = true;
+global.round_number      = 1;
+global.scores            = array_create(10, 0);  // indexed by pid
+global.match_winner_pid  = 0;
+global.match_winner_name = "";
+
 // Safe globals
 if (!variable_global_exists("socket"))     global.socket     = -1;
 if (!variable_global_exists("ip_address")) global.ip_address = "";
@@ -187,7 +196,17 @@ function spawnEnemyBullet(_x, _y, _dir) {
     b.direction   = _dir;
     b.speed       = 12;
     b.image_angle = b.direction;
-    b.owner_id    = noone;  // no local owner — can damage local player
+    b.owner_id    = noone;
+    b.damage      = 1;  // default damage
+}
+
+function spawnEnemyBulletDmg(_x, _y, _dir, _dmg) {
+    var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
+    b.direction   = _dir;
+    b.speed       = 12;
+    b.image_angle = b.direction;
+    b.owner_id    = noone;  // can damage local player
+    b.damage      = _dmg;   // actual damage from shooter's weapon
 }
 
 #endregion

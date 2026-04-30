@@ -77,9 +77,26 @@ if (ptype == 4) {
     var bx          = buffer_read(buf, buffer_f32);
     var by          = buffer_read(buf, buffer_f32);
     var bdir        = (buffer_read(buf, buffer_u8) / 255.0) * 360;
+    var bwtype      = buffer_read(buf, buffer_u8);   // 0=auto 1=shotgun 2=burst 3=sniper 4=melee(hit)
+    var bdamage     = buffer_read(buf, buffer_f32);  // damage value from shooter
 
     if (shooter_pid != my_pid) {
-        spawnEnemyBullet(bx, by, bdir);
+        switch (bwtype) {
+            case 1: // shotgun — 5 spread pellets
+                var _spread  = 15;
+                var _pellets = 5;
+                for (var _p = 0; _p < _pellets; _p++) {
+                    var _offset = (_p / (_pellets - 1) - 0.5) * _spread;
+                    spawnEnemyBulletDmg(bx, by, bdir + _offset, bdamage);
+                }
+                break;
+            case 4: // knife hit — apply damage directly, no bullet
+                hitpoints -= bdamage;
+                break;
+            default: // auto, burst, sniper
+                spawnEnemyBulletDmg(bx, by, bdir, bdamage);
+                break;
+        }
     }
     exit;
 }
@@ -87,6 +104,83 @@ if (ptype == 4) {
 // ── Type 5 — timer update ─────────────────────────────────────────────────
 if (ptype == 5) {
     time_remaining = buffer_read(buf, buffer_u16);
+    exit;
+}
+
+
+// ── Type 17 — player died ─────────────────────────────────────────────────
+if (ptype == 17) {
+    var dead_pid = buffer_read(buf, buffer_u16);
+    show_debug_message("Player dead: pid=" + string(dead_pid));
+    if (dead_pid == my_pid) {
+        // We died — hide player until next round
+        global.player_alive = false;
+        visible  = false;
+        hitpoints = 0;
+    } else {
+        // Remote player died — remove from other_players
+        ds_map_delete(other_players, dead_pid);
+    }
+    exit;
+}
+
+// ── Type 18 — countdown tick ──────────────────────────────────────────────
+if (ptype == 18) {
+    var count = buffer_read(buf, buffer_u8);
+    global.countdown_value = count;
+    if (count == 0) {
+        // GO — unlock movement and shooting
+        global.match_phase = "playing";
+        // Respawn if dead
+        if (!global.player_alive) {
+            global.player_alive = true;
+            hitpoints = max_hp;
+            visible   = true;
+            // Respawn at our spawn point
+            var _spawn_count = instance_number(oSpawnPoint);
+            if (_spawn_count > 0) {
+                var _spawn_idx = (my_pid - 1) mod _spawn_count;
+                var _i = 0;
+                with (oSpawnPoint) {
+                    if (_i == _spawn_idx) {
+                        other.x = x; other.y = y; break;
+                    }
+                    _i++;
+                }
+            }
+        }
+    } else {
+        global.match_phase = "countdown";
+    }
+    exit;
+}
+
+// ── Type 16 — round state (scores) ───────────────────────────────────────
+if (ptype == 16) {
+    var _round = buffer_read(buf, buffer_u8);
+    var _count = buffer_read(buf, buffer_u8);
+    global.round_number = _round;
+    for (var _i = 0; _i < _count; _i++) {
+        var _pid   = buffer_read(buf, buffer_u16);
+        var _score = buffer_read(buf, buffer_u8);
+        global.scores[_pid] = _score;
+    }
+    exit;
+}
+
+// ── Type 19 — match winner ────────────────────────────────────────────────
+if (ptype == 19) {
+    var _wpid  = buffer_read(buf, buffer_u16);
+    var _wlen  = buffer_read(buf, buffer_u8);
+    var _wname = "";
+    for (var _c = 0; _c < _wlen; _c++)
+        _wname += chr(buffer_read(buf, buffer_u8));
+    global.match_winner_pid  = _wpid;
+    global.match_winner_name = _wname;
+    global.match_phase       = "winner";
+    show_debug_message("Match winner: " + _wname);
+    // Show winner screen then return to menu after delay
+    alarm[0] = game_get_speed(gamespeed_fps) * 5;
     exit;
 }
 

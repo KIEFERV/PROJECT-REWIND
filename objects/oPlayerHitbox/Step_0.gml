@@ -1,5 +1,25 @@
 ///@description Player Logic
 if (!instance_exists(oPlayerHitbox)) exit;
+
+// ── Block input during countdown or when dead ─────────────────────────────
+if (global.match_phase == "countdown" || !global.player_alive) {
+    // Still send keepalive / state during countdown
+    net_send_timer++;
+    if (net_send_timer >= game_get_speed(gamespeed_fps) / 20) {
+        net_send_timer = 0;
+        var _sbuf = buffer_create(32, buffer_fixed, 1);
+        buffer_write(_sbuf, buffer_u8,  1);
+        buffer_write(_sbuf, buffer_f32, x);
+        buffer_write(_sbuf, buffer_f32, y);
+        buffer_write(_sbuf, buffer_u8,  hitpoints);
+        buffer_write(_sbuf, buffer_u8,  image_index);
+        buffer_write(_sbuf, buffer_u8,  round((player_look_dir / 360.0) * 255));
+        network_send_udp_raw(global.socket, global.ip_address, global.port,
+                             _sbuf, buffer_tell(_sbuf));
+        buffer_delete(_sbuf);
+    }
+    exit;
+}
 #region Keybinds
 var _input_x = keyboard_check(ord("D")) - keyboard_check(ord("A")),
     _input_y = keyboard_check(ord("S")) - keyboard_check(ord("W"));
@@ -13,6 +33,13 @@ if (keyboard_check_released(ord("M"))){debug_menu = !debug_menu;}
 
 if (hitpoints <= 0){
     dead_state = true;
+    // Send kill report if we just died (only once)
+    if (!global.player_alive && global.match_phase == "playing") {
+        // Already handled
+    } else if (global.player_alive && hitpoints <= 0) {
+        global.player_alive = false;
+        visible = false;
+    }
 }else{
     dead_state = false;
 }
@@ -155,7 +182,9 @@ if (weapon_type == "melee") {
 
     if (mouse_check_button_pressed(mb_left) && shoot_timer <= 0) {
         knife_swing_timer = 12;
+        var _knife_hit = false;
 
+        // Check local oPlayerHitbox instances (solo / practice)
         with (oPlayerHitbox) {
             if (id == other.id) continue;
             var _dist = point_distance(other.x, other.y, x, y);
@@ -164,7 +193,30 @@ if (weapon_type == "melee") {
             var _diff     = angle_difference(_angle_to, other.player_look_dir);
             if (abs(_diff) > other.knife_arc / 2) continue;
             hitpoints -= 1;
+            _knife_hit = true;
         }
+
+        // Check remote players from other_players map (multiplayer)
+        var _rpid = ds_map_find_first(other_players);
+        repeat (ds_map_size(other_players)) {
+            var _entry = other_players[? _rpid];
+            if (!is_undefined(_entry)) {
+                var _rx = _entry[0];
+                var _ry = _entry[1];
+                var _dist = point_distance(x, y, _rx, _ry);
+                if (_dist <= knife_range) {
+                    var _angle_to = point_direction(x, y, _rx, _ry);
+                    var _diff     = angle_difference(_angle_to, player_look_dir);
+                    if (abs(_diff) <= knife_arc / 2) {
+                        _knife_hit = true;
+                    }
+                }
+            }
+            _rpid = ds_map_find_next(other_players, _rpid);
+        }
+
+        // Send knife hit packet so remote players receive and apply damage
+        if (_knife_hit) _send_shoot_packet();
 
         shoot_timer = fire_delay;
     }
@@ -242,12 +294,24 @@ if (reloading) {
 
 // ── Local helper: send shoot packet ──────────────────────────────────────────
 function _send_shoot_packet() {
-    var _buf = buffer_create(10, buffer_grow, 1);
+    // Encode weapon type as a byte so receivers spawn correct bullets
+    // 0=auto 1=shotgun 2=burst 3=sniper 4=melee
+    var _wtype_byte = 0;
+    switch (weapon_type) {
+        case "auto":    _wtype_byte = 0; break;
+        case "shotgun": _wtype_byte = 1; break;
+        case "burst":   _wtype_byte = 2; break;
+        case "sniper":  _wtype_byte = 3; break;
+        case "melee":   _wtype_byte = 4; break;
+    }
+    var _buf = buffer_create(12, buffer_grow, 1);
     buffer_seek(_buf, buffer_seek_start, 0);
-    buffer_write(_buf, buffer_u8,  4);
-    buffer_write(_buf, buffer_f32, x);
-    buffer_write(_buf, buffer_f32, y);
-    buffer_write(_buf, buffer_u8,  round((player_look_dir / 360.0) * 255));
+    buffer_write(_buf, buffer_u8,  4);                    // type
+    buffer_write(_buf, buffer_f32, x);                    // x
+    buffer_write(_buf, buffer_f32, y);                    // y
+    buffer_write(_buf, buffer_u8,  round((player_look_dir / 360.0) * 255)); // dir
+    buffer_write(_buf, buffer_u8,  _wtype_byte);          // weapon type
+    buffer_write(_buf, buffer_f32, bullet_damage);        // damage
     network_send_udp_raw(global.socket, global.ip_address, global.port,
                          _buf, buffer_tell(_buf));
     buffer_delete(_buf);

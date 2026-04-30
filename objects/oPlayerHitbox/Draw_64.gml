@@ -1,73 +1,181 @@
-/// @description Draw Debug Menu Elements
-#macro NEWLINE _dy += 20
+/// Round overlays — drawn on top of existing HUD
 
-var _dy = 40
+var _gw = display_get_gui_width();
+var _gh = display_get_gui_height();
+var _cx = _gw / 2;
 
-if(debug_menu = true){
-	draw_text(50, _dy, "total velocity: " + string_format(velocity, 5, 3)); NEWLINE;
-	draw_text(50, _dy, "move_speed:     " + string_format(move_speed, 5, 3)); NEWLINE;
-	draw_text(50, _dy, "impulse_force:  " + string_format(point_distance(0, 0, impulse_force_x, impulse_force_y), 5, 3)); NEWLINE;
-	draw_text(50, _dy, "constant_force: " + string_format(point_distance(0, 0, constant_force_x, constant_force_y), 5, 3)); NEWLINE;
+// ── WINNER SCREEN ─────────────────────────────────────────────────────────
+if (global.match_phase == "winner") {
+    draw_set_color(c_black);
+    draw_set_alpha(0.75);
+    draw_rectangle(0, 0, _gw, _gh, false);
+    draw_set_alpha(1);
+    draw_set_halign(fa_center);
+    draw_set_color(c_yellow);
+    draw_text(_cx, _gh/2 - 50, "MATCH OVER");
+    draw_set_color(c_white);
+    draw_text(_cx, _gh/2, global.match_winner_name + " wins!");
+    draw_set_color(c_dkgray);
+    draw_text(_cx, _gh/2 + 40, "Returning to menu...");
+    draw_set_halign(fa_left);
 }
 
-
-if (show_GUI = true){
-	draw_healthbar(10, 700, 450, 750, hitpoints, c_maroon, c_red, c_green, 0, true, true);
-}
-
-	
-// Format as MM:SS
-var minutes = floor(time_remaining / 60);
-var seconds = time_remaining mod 60;
-var timeStr = string(minutes) + ":" + (seconds < 10 ? "0" : "") + string(seconds);
-
-draw_set_halign(fa_center);
-draw_set_valign(fa_top);
-draw_set_color(c_white);
-draw_text(display_get_gui_width() / 2, 20, timeStr);
-draw_set_halign(fa_left);
-draw_set_valign(fa_top);
-
-// ── Ammo HUD — bottom right ───────────────────────────────────────────────────
-if (show_GUI = true) {
-    var _gui_w  = display_get_gui_width();
-    var _gui_h  = display_get_gui_height();
-    var _margin = 20;
-    var _line_h = 20;
-
-    draw_set_halign(fa_right);
-    draw_set_valign(fa_bottom);
-
-    if (weapon_type == "melee") {
-        draw_set_color(c_yellow);
-        draw_text(_gui_w - _margin, _gui_h - _margin, "KNIFE");
+// ── COUNTDOWN ─────────────────────────────────────────────────────────────
+if (global.match_phase == "countdown") {
+    draw_set_halign(fa_center);
+    if (global.countdown_value > 0) {
+        draw_set_color(c_white);
+        draw_set_alpha(0.9);
+        draw_set_font(-1);
+        draw_text(_cx, _gh/2 - 30, string(global.countdown_value));
     } else {
-        // Weapon name (top)
-        var _slot_label = (active_slot == 1) ? "[1] " : "[2] ";
-        var _wlabel = string_upper(_slot_label
-            + ((active_slot == 1) ? primary_name : secondary_name));
-        draw_set_color(make_color_rgb(180, 210, 255));
-        draw_text(_gui_w - _margin, _gui_h - _margin - _line_h * 2, _wlabel);
+        draw_set_color(c_lime);
+        draw_text(_cx, _gh/2 - 30, "GO!");
+    }
+    draw_set_alpha(1);
+    draw_set_halign(fa_left);
+}
 
-        // Ammo count (middle)
-        if (ammo_in_mag == 0)
-            draw_set_color(c_red);
-        else if (ammo_in_mag <= mag_size * 0.25)
-            draw_set_color(make_color_rgb(255, 165, 0));
-        else
-            draw_set_color(c_white);
+// ── DEAD OVERLAY ──────────────────────────────────────────────────────────
+if (!global.player_alive && global.match_phase != "winner") {
+    draw_set_color(c_red);
+    draw_set_alpha(0.5);
+    draw_rectangle(0, 0, _gw, _gh, false);
+    draw_set_alpha(1);
+    draw_set_halign(fa_center);
+    draw_set_color(c_white);
+    draw_text(_cx, _gh/2, "ELIMINATED");
+    draw_set_color(c_dkgray);
+    draw_text(_cx, _gh/2 + 30, "Waiting for next round...");
+    draw_set_halign(fa_left);
+}
 
-        draw_text(_gui_w - _margin, _gui_h - _margin - _line_h,
-            string(ammo_in_mag) + "  /  " + string(ammo_reserve));
-
-        // Reload indicator (bottom)
-        if (reloading) {
-            draw_set_color(make_color_rgb(255, 200, 50));
-            draw_text(_gui_w - _margin, _gui_h - _margin, "RELOADING...");
+// ── ROUND SCORES (top centre) ─────────────────────────────────────────────
+if (global.match_phase != "winner") {
+    draw_set_halign(fa_center);
+    draw_set_color(c_white);
+    draw_text(_cx, 52, "Round " + string(global.round_number));
+    // Scores
+    var _sx = _cx - 60;
+    for (var _pi = 1; _pi <= 4; _pi++) {
+        var _sc = global.scores[_pi];
+        if (_sc > 0 || _pi <= 2) {  // show at least 2 slots
+            draw_set_color(_pi == my_pid ? c_yellow : c_ltgray);
+            draw_text(_sx, 72, "P" + string(_pi) + ": " + string(_sc));
+            _sx += 70;
         }
     }
-
     draw_set_halign(fa_left);
-    draw_set_valign(fa_top);
-    draw_set_color(c_white);
 }
+
+
+var gui_w = display_get_gui_width();
+var gui_h = display_get_gui_height();
+
+draw_sprite_stretched(spr_time_bg, 0, 0, 0, gui_w, gui_h);
+
+draw_set_alpha(0.60);
+draw_set_color(make_color_rgb(8, 10, 18));
+draw_rectangle(0, 0, gui_w, gui_h, false);
+draw_set_alpha(1);
+
+var panel_w   = 860;
+var panel_h   = 600;
+var panel_x   = (gui_w - panel_w) / 2;
+var panel_top = (gui_h - panel_h) / 2;
+
+draw_set_alpha(0.92);
+draw_set_color(make_color_rgb(18, 20, 30));
+draw_rectangle(panel_x, panel_top, panel_x + panel_w, panel_top + panel_h, false);
+draw_set_alpha(1);
+draw_set_color(make_color_rgb(90, 110, 185));
+draw_rectangle(panel_x, panel_top, panel_x + panel_w, panel_top + panel_h, true);
+
+draw_set_color(c_white);
+draw_set_halign(fa_center);
+draw_text(panel_x + panel_w / 2, panel_top + 25, "LOADOUT");
+draw_set_color(make_color_rgb(208, 212, 237));
+draw_text(panel_x + panel_w / 2, panel_top + 55, "Choose your weapons before entering the match");
+draw_set_halign(fa_left);
+
+var col1_x   = panel_x + 70;
+var col2_x   = panel_x + 450;
+var list_top = panel_top + 120;
+var row_h    = 42;
+
+// Column headers
+draw_set_color(make_color_rgb(255, 200, 80));
+draw_text(col1_x, list_top - 35, "PRIMARY  [1]");
+draw_text(col2_x, list_top - 35, "SECONDARY  [2]");
+
+// Primary list
+for (var i = 0; i < array_length(primary_list); i++) {
+    var row_top  = list_top + i * row_h;
+    var selected = (i == primary_index);
+    var active   = (active_column == 0);
+
+    draw_set_color(selected ? make_color_rgb(42, 58, 108) : make_color_rgb(24, 28, 42));
+    draw_rectangle(col1_x, row_top, col1_x + 310, row_top + 32, false);
+    draw_set_color((selected && active) ? make_color_rgb(255, 100, 100) : make_color_rgb(180, 190, 255));
+    draw_rectangle(col1_x, row_top, col1_x + 310, row_top + 32, true);
+    draw_set_color(c_white);
+    draw_text(col1_x + 14, row_top + 9, string_upper(primary_list[i]));
+}
+
+// Secondary list
+for (var j = 0; j < array_length(secondary_list); j++) {
+    var row_top2  = list_top + j * row_h;
+    var selected2 = (j == secondary_index);
+    var active2   = (active_column == 1);
+
+    draw_set_color(selected2 ? make_color_rgb(42, 58, 108) : make_color_rgb(24, 28, 42));
+    draw_rectangle(col2_x, row_top2, col2_x + 310, row_top2 + 32, false);
+    draw_set_color((selected2 && active2) ? make_color_rgb(255, 100, 100) : make_color_rgb(180, 190, 255));
+    draw_rectangle(col2_x, row_top2, col2_x + 310, row_top2 + 32, true);
+    draw_set_color(c_white);
+    draw_text(col2_x + 14, row_top2 + 9, string_upper(secondary_list[j]));
+}
+
+// Description boxes — anchored below primary list (longest column)
+var desc_y = list_top + 4 * row_h + 14;
+
+draw_set_color(make_color_rgb(20, 26, 48));
+draw_rectangle(col1_x, desc_y, col1_x + 310, desc_y + 50, false);
+draw_set_color(make_color_rgb(90, 110, 185));
+draw_rectangle(col1_x, desc_y, col1_x + 310, desc_y + 50, true);
+draw_set_color(make_color_rgb(170, 200, 255));
+draw_text_ext(col1_x + 10, desc_y + 8, primary_info[primary_index], -1, 290);
+
+draw_set_color(make_color_rgb(20, 26, 48));
+draw_rectangle(col2_x, desc_y, col2_x + 310, desc_y + 50, false);
+draw_set_color(make_color_rgb(90, 110, 185));
+draw_rectangle(col2_x, desc_y, col2_x + 310, desc_y + 50, true);
+draw_set_color(make_color_rgb(170, 200, 255));
+draw_text_ext(col2_x + 10, desc_y + 8, secondary_info[secondary_index], -1, 290);
+
+// Buttons
+var back_x   = panel_x + 330;
+var back_top = panel_top + 520;
+var play_x   = panel_x + 520;
+var play_top = panel_top + 520;
+
+draw_set_color(hover_back ? make_color_rgb(190, 55, 55) : make_color_rgb(135, 38, 38));
+draw_rectangle(back_x, back_top, back_x + button_w, back_top + button_h, false);
+draw_set_color(make_color_rgb(255, 115, 115));
+draw_rectangle(back_x, back_top, back_x + button_w, back_top + button_h, true);
+draw_set_color(c_white);
+draw_set_halign(fa_center);
+draw_text(back_x + button_w / 2, back_top + 12, "Back");
+
+draw_set_color(hover_play ? make_color_rgb(70, 95, 185) : make_color_rgb(42, 58, 108));
+draw_rectangle(play_x, play_top, play_x + button_w, play_top + button_h, false);
+draw_set_color(make_color_rgb(190, 205, 255));
+draw_rectangle(play_x, play_top, play_x + button_w, play_top + button_h, true);
+draw_set_color(c_white);
+draw_text(play_x + button_w / 2, play_top + 12, "Start Match");
+
+draw_set_halign(fa_center);
+draw_set_color(make_color_rgb(208, 212, 237));
+draw_text(panel_x + panel_w / 2, panel_top + 570,
+    "TAB = switch column   |   UP/DOWN = choose   |   ENTER = start   |   ESC = back");
+draw_set_halign(fa_left);
