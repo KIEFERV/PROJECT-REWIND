@@ -56,16 +56,9 @@ if (ptype == 3) {
 
 // Type 7 — match is starting
 if (ptype == 7) {
-<<<<<<< HEAD
     global.socket = socket;
     global.my_pid = my_pid;
     room_goto(rMovementTesting);
-=======
-    global.socket          = socket;
-    global.my_pid          = my_pid;
-    global.going_to_match  = true;  // tell CleanUp not to disconnect
-    room_goto(rm_loadout);
->>>>>>> parent of 7349df5 (Merge pull request #53 from KIEFERV/round-logic)
     exit;
 }
 
