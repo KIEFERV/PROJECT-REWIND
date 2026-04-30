@@ -37,3 +37,5 @@ hover_play = false;
 hover_back = false;
 button_w = 160;
 button_h = 42;
+// Multiplayer lock-in state
+locked_in = false;

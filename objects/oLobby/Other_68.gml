@@ -54,11 +54,11 @@ if (ptype == 3) {
     exit;
 }
 
-// Type 7 — match is starting
+// Type 7 — host started match, go to loadout selection
 if (ptype == 7) {
     global.socket = socket;
     global.my_pid = my_pid;
-    room_goto(rMovementTesting);
+    room_goto(rm_loadout);
     exit;
 }
 
