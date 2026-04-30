@@ -16,34 +16,45 @@ var start_y = panel_y + 140;
 
 var logged_in = (global.auth_token != "");
 
+// Track visible button positions (skip hidden ones)
+var visible_y = start_y;
+
 for (var i = 0; i < array_length(menu_buttons); i++) {
+    var btn = menu_buttons[i];
+
+    // Hide login/register when logged in
+    var hidden = variable_struct_exists(btn, "hide_when_logged_in")
+                 && btn.hide_when_logged_in && logged_in;
+    if (hidden) continue;
+
     var bx1 = left_x;
-    var by1 = start_y + i * (button_h + button_gap);
+    var by1 = visible_y;
     var bx2 = bx1 + button_w;
     var by2 = by1 + button_h;
+    visible_y += button_h + button_gap;
 
-    var disabled = (menu_buttons[i].requires_login && !logged_in);
+    var disabled = (btn.requires_login && !logged_in);
 
     if (point_in_rectangle(gui_mx, gui_my, bx1, by1, bx2, by2)) {
         hover_index = i;
 
         if (disabled) {
-            status_text = "Login required for " + menu_buttons[i].label;
+            status_text = "Login required for " + btn.label;
         } else {
-            status_text = menu_buttons[i].desc;
+            status_text = btn.desc;
         }
 
         if (mouse_check_button_pressed(mb_left) && !disabled) {
-            switch (menu_buttons[i].action) {
+            switch (btn.action) {
                 case "room":
-                    room_goto(menu_buttons[i].target);
+                    room_goto(btn.target);
                 break;
                 case "logout":
                     global.auth_token = "";
                     global.username   = "";
                     global.user_role  = "";
                     global.user_id    = "";
-                    room_goto(menu_buttons[i].target);
+                    room_goto(btn.target);
                 break;
             }
         }
@@ -51,10 +62,8 @@ for (var i = 0; i < array_length(menu_buttons); i++) {
 }
 
 // Keyboard shortcuts
-if (keyboard_check_pressed(vk_enter))   room_goto(rm_loadout);
-if (keyboard_check_pressed(ord("P")))   room_goto(rServerBrowser);
-if (keyboard_check_pressed(ord("L")))   room_goto(rm_login);
-if (keyboard_check_pressed(ord("R")))   room_goto(rm_register);
-if (keyboard_check_pressed(ord("T")))   room_goto(rm_leaderboard);
-if (logged_in && keyboard_check_pressed(ord("O")))
-    room_goto(rLobbyBrowser);
+if (keyboard_check_pressed(vk_enter)) room_goto(rm_loadout);
+if (keyboard_check_pressed(ord("P"))) room_goto(rLobbyBrowser);
+if (keyboard_check_pressed(ord("T"))) room_goto(rm_leaderboard);
+if (!logged_in && keyboard_check_pressed(ord("L"))) room_goto(rm_login);
+if (!logged_in && keyboard_check_pressed(ord("R"))) room_goto(rm_register);

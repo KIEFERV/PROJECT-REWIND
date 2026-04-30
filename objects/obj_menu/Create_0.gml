@@ -1,10 +1,5 @@
 /// Create_0 — obj_menu
 
-if (!variable_global_exists("socket"))     global.socket     = -1;
-if (!variable_global_exists("ip_address")) global.ip_address = "";
-if (!variable_global_exists("port"))       global.port       = 0;
-if (!variable_global_exists("my_pid"))     global.my_pid     = 0;
-    
 if (!variable_global_exists("auth_token")) global.auth_token = "";
 if (!variable_global_exists("username"))   global.username   = "";
 if (!variable_global_exists("user_role"))  global.user_role  = "";
@@ -23,7 +18,7 @@ array_push(menu_buttons, {
 
 array_push(menu_buttons, {
     label:          "Play Online",
-    target:         rServerBrowser,   // existing lobby browser room
+    target:         rm_menu,   // existing lobby browser room
     action:         "room",
     desc:           "Browse and join online or LAN lobbies",
     primary:        false,
@@ -40,30 +35,33 @@ array_push(menu_buttons, {
 });
 
 array_push(menu_buttons, {
-    label:          "Login",
-    target:         rm_login,
-    action:         "room",
-    desc:           "Sign into your account",
-    primary:        false,
-    requires_login: false
+    label:               "Login",
+    target:              rm_login,
+    action:              "room",
+    desc:                "Sign into your account",
+    primary:             false,
+    requires_login:      false,
+    hide_when_logged_in: true
 });
 
 array_push(menu_buttons, {
-    label:          "Register",
-    target:         rm_register,
-    action:         "room",
-    desc:           "Create a new account",
-    primary:        false,
-    requires_login: false
+    label:               "Register",
+    target:              rm_register,
+    action:              "room",
+    desc:                "Create a new account",
+    primary:             false,
+    requires_login:      false,
+    hide_when_logged_in: true
 });
 
 array_push(menu_buttons, {
-    label:          "Logout",
-    target:         rm_login,
-    action:         "logout",
-    desc:           "Clear your session and return to login",
-    primary:        false,
-    requires_login: true
+    label:                "Logout",
+    target:               rm_login,
+    action:               "logout",
+    desc:                 "Clear your session and return to login",
+    primary:              false,
+    requires_login:       true,
+    hide_when_logged_in:  false
 });
 
 button_w   = 320;

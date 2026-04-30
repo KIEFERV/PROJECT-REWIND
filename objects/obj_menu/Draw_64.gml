@@ -120,7 +120,11 @@ draw_text(info_x + 20, info_y + 248, status_text);
 
 // Footer help
 draw_set_color(make_color_rgb(208, 212, 237));
-draw_text(info_x + 20, panel_y + panel_h - 35, "ENTER Practice | P Play Online | L Login | R Register | T Leaderboard");
+if (logged_in) {
+    draw_text(info_x + 20, panel_y + panel_h - 35, "ENTER Practice | P Play Online | T Leaderboard | Logout available");
+} else {
+    draw_text(info_x + 20, panel_y + panel_h - 35, "ENTER Practice | P Play Online | L Login | R Register | T Leaderboard");
+}
 
 // Button drawer
 function draw_hub_button(_x, _y, _w, _h, _label, _hovered, _danger, _primary, _disabled) {
@@ -172,25 +176,23 @@ function draw_hub_button(_x, _y, _w, _h, _label, _hovered, _danger, _primary, _d
 }
 
 // Buttons
-var left_x = panel_x + 50;
+var left_x  = panel_x + 50;
 var start_y = panel_y + 140;
+var vis_y   = start_y;
 
 for (var i = 0; i < array_length(menu_buttons); i++) {
-    var by = start_y + i * (button_h + button_gap);
+    var btn = menu_buttons[i];
 
-    var is_logout = (menu_buttons[i].action == "logout");
-    var is_primary = menu_buttons[i].primary;
-    var is_disabled = (menu_buttons[i].requires_login && !logged_in);
+    // Skip login/register when logged in
+    var hidden = variable_struct_exists(btn, "hide_when_logged_in")
+                 && btn.hide_when_logged_in && logged_in;
+    if (hidden) continue;
 
-    draw_hub_button(
-        left_x,
-        by,
-        button_w,
-        button_h,
-        menu_buttons[i].label,
-        i == hover_index,
-        is_logout,
-        is_primary,
-        is_disabled
-    );
+    var is_logout  = (btn.action == "logout");
+    var is_primary = btn.primary;
+    var is_disabled = (btn.requires_login && !logged_in);
+
+    draw_hub_button(left_x, vis_y, button_w, button_h,
+        btn.label, i == hover_index, is_logout, is_primary, is_disabled);
+    vis_y += button_h + button_gap;
 }
