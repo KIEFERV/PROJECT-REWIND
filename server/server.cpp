@@ -1395,34 +1395,42 @@ int main(int argc, char* argv[]) {
                 sendto(gameSock, ja, 3, 0, (sockaddr*)&src, srcLen);
             }
 
-            // 11 kill report
-            if (type == PKT_KILL_REPORT && bytes >= 5 && matchRunning && roundActive) {
-                uint16_t killer, victim;
-                memcpy(&killer, gameBuf + 1, 2);
-                memcpy(&victim, gameBuf + 3, 2);
-                std::cout << "Kill report: killer=" << killer << " victim=" << victim
+            // 11 kill report — sent by the victim, contains victim pid only
+            if (type == PKT_KILL_REPORT && bytes >= 3 && matchRunning && roundActive) {
+                uint16_t victim;
+                memcpy(&victim, gameBuf + 1, 2);
+                uint16_t killer = players[key].pid; // sender IS the victim actually
+                // The sender is the victim — find the actual killer (the other player)
+                // For 2-player match, killer is whoever is NOT the victim
+                uint16_t killerPid = 0;
+                for (auto& pr : players) {
+                    if (pr.second.pid != victim) { killerPid = pr.second.pid; break; }
+                }
+                std::cout << "Kill report: victim=" << victim << " killer=" << killerPid
                           << " alive=" << alivePlayers.size() << "\n";
                 // Track stats
                 for (auto& pr : players) {
-                    if (pr.second.pid == killer) pr.second.kills++;
-                    if (pr.second.pid == victim) pr.second.deaths++;
+                    if (pr.second.pid == killerPid) pr.second.kills++;
+                    if (pr.second.pid == victim)    pr.second.deaths++;
                 }
                 // Remove victim from alive set
                 alivePlayers.erase(victim);
-                // Broadcast death
+                // Broadcast death to all
                 char pd[3]; pd[0] = PKT_PLAYER_DEAD;
                 memcpy(pd + 1, &victim, 2);
                 broadcast(gameSock, pd, 3, "");
-                std::cout << "Player pid=" << victim << " killed by pid=" << killer
-                          << " — alive remaining: " << alivePlayers.size() << "\n";
+                std::cout << "Player pid=" << victim << " eliminated — alive remaining: "
+                          << alivePlayers.size() << "\n";
                 // Check if round is over
-                if (alivePlayers.size() == 1) {
-                    uint16_t winnerPid = *alivePlayers.begin();
-                    end_round(gameSock, winnerPid);
-                } else if (alivePlayers.empty()) {
-                    roundNumber++;
-                    pendingCountdown = true;
-                    pendingCountdownStart = Clock::now();
+                if (alivePlayers.size() <= 1) {
+                    if (!alivePlayers.empty()) {
+                        uint16_t winnerPid = *alivePlayers.begin();
+                        end_round(gameSock, winnerPid);
+                    } else {
+                        roundNumber++;
+                        pendingCountdown = true;
+                        pendingCountdownStart = Clock::now();
+                    }
                 }
             }
         } // end game drain loop

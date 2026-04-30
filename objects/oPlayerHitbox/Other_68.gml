@@ -57,6 +57,9 @@ if (ptype == 1) {
     var oanim   = buffer_read(buf, buffer_u8);
     var ofacing = (buffer_read(buf, buffer_u8) / 255.0) * 360;
 
+    // Don't update state for dead remote players
+    if (ohp <= 0) exit;
+
     var entry = ds_map_find_value(other_players, pid);
     if (is_undefined(entry)) {
         entry = array_create(5);
@@ -129,28 +132,36 @@ if (ptype == 18) {
     var count = buffer_read(buf, buffer_u8);
     global.countdown_value = count;
     if (count == 0) {
-        // GO — unlock movement and shooting
-        global.match_phase = "playing";
-        // Respawn if dead
-        if (!global.player_alive) {
-            global.player_alive = true;
-            hitpoints = max_hp;
-            visible   = true;
-            // Respawn at our spawn point
-            var _spawn_count = instance_number(oSpawnPoint);
-            if (_spawn_count > 0) {
-                var _spawn_idx = (my_pid - 1) mod _spawn_count;
-                var _i = 0;
-                with (oSpawnPoint) {
-                    if (_i == _spawn_idx) {
-                        other.x = x; other.y = y; break;
-                    }
-                    _i++;
+        global.match_phase  = "playing";
+        // Always reset hp and make visible at round start
+        hitpoints           = max_hp;
+        dead_state          = false;
+        visible             = true;
+        global.player_alive = true;
+        // Re-add all players to other_players map (they respawn too)
+        // Teleport to spawn point
+        var _spawn_count = instance_number(oSpawnPoint);
+        if (_spawn_count > 0) {
+            var _spawn_idx = (my_pid - 1) mod _spawn_count;
+            var _i = 0;
+            with (oSpawnPoint) {
+                if (_i == _spawn_idx) {
+                    other.x = x; other.y = y; break;
                 }
+                _i++;
             }
+        } else {
+            var _angle  = ((my_pid - 1) / 4.0) * 360;
+            x = room_width  / 2 + lengthdir_x(400, _angle);
+            y = room_height / 2 + lengthdir_y(400, _angle);
         }
+        show_debug_message("Round GO — respawned at spawn point");
     } else {
         global.match_phase = "countdown";
+        // Hide player during countdown if they died last round
+        if (!global.player_alive) {
+            visible = false;
+        }
     }
     exit;
 }
