@@ -230,6 +230,8 @@ std::map<uint16_t, int> scores;       // pid -> round wins
 std::map<uint16_t, int> roundKills;   // pid -> kills this round
 std::map<uint16_t, int> roundDeaths;  // pid -> deaths this round
 std::set<uint16_t> alivePlayers;      // pids still alive this round
+bool      pendingCountdown      = false;
+TimePoint pendingCountdownStart;
 
 // Supabase IDs for this server instance
 int64_t  myLobbyId = -1;
@@ -768,9 +770,9 @@ void end_round(int sock, uint16_t winnerPid) {
         // Broadcast round state then start next round countdown
         broadcast_round_state(sock);
         roundNumber++;
-        // Small delay then start countdown
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-        start_countdown(sock);
+        // Delay handled by pendingCountdown timer in main loop
+        pendingCountdown = true;
+        pendingCountdownStart = Clock::now();
     }
 }
 
@@ -784,7 +786,8 @@ void reset_lobby() {
     alivePlayers.clear();
     roundNumber  = 0;
     roundActive  = false;
-    inCountdown  = false;
+    inCountdown       = false;
+    pendingCountdown  = false;
     std::cout << "Lobby empty — pid counter reset.\n";
 }
 
@@ -1152,6 +1155,16 @@ int main(int argc, char* argv[]) {
         }
         if (players.empty() && nextPid != 1) reset_lobby();
 
+        // ── Pending countdown (delayed start after round end) ─────────────
+        if (pendingCountdown) {
+            auto pElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                now - pendingCountdownStart).count();
+            if (pElapsed >= 2000) {
+                pendingCountdown = false;
+                start_countdown(gameSock);
+            }
+        }
+
         // ── Countdown tick ────────────────────────────────────────────────
         if (inCountdown) {
             auto cElapsed = std::chrono::duration_cast<std::chrono::seconds>(
@@ -1160,15 +1173,18 @@ int main(int argc, char* argv[]) {
             if (newCount != countdownValue) {
                 countdownValue = newCount;
                 if (countdownValue <= 0) {
-                    inCountdown  = false;
-                    roundActive  = true;
+                    inCountdown    = false;
+                    roundActive    = true;
                     roundStartTime = Clock::now();
+                    lastTimerBroadcast = Clock::now();
                     char cd[2] = { PKT_COUNTDOWN, 0 };
                     broadcast(gameSock, cd, 2, "");
                     std::cout << "GO! Round " << roundNumber << " started.\n";
                 } else {
+                    // Re-broadcast current value every second so late joiners catch up
                     char cd[2] = { PKT_COUNTDOWN, (char)countdownValue };
                     broadcast(gameSock, cd, 2, "");
+                    std::cout << "Countdown: " << countdownValue << "\n";
                 }
             }
         }
