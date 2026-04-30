@@ -155,7 +155,9 @@ if (weapon_type == "melee") {
 
     if (mouse_check_button_pressed(mb_left) && shoot_timer <= 0) {
         knife_swing_timer = 12;
+        var _knife_hit = false;
 
+        // Check local oPlayerHitbox instances (solo / practice)
         with (oPlayerHitbox) {
             if (id == other.id) continue;
             var _dist = point_distance(other.x, other.y, x, y);
@@ -164,7 +166,30 @@ if (weapon_type == "melee") {
             var _diff     = angle_difference(_angle_to, other.player_look_dir);
             if (abs(_diff) > other.knife_arc / 2) continue;
             hitpoints -= 1;
+            _knife_hit = true;
         }
+
+        // Check remote players from other_players map (multiplayer)
+        var _rpid = ds_map_find_first(other_players);
+        repeat (ds_map_size(other_players)) {
+            var _entry = other_players[? _rpid];
+            if (!is_undefined(_entry)) {
+                var _rx = _entry[0];
+                var _ry = _entry[1];
+                var _dist = point_distance(x, y, _rx, _ry);
+                if (_dist <= knife_range) {
+                    var _angle_to = point_direction(x, y, _rx, _ry);
+                    var _diff     = angle_difference(_angle_to, player_look_dir);
+                    if (abs(_diff) <= knife_arc / 2) {
+                        _knife_hit = true;
+                    }
+                }
+            }
+            _rpid = ds_map_find_next(other_players, _rpid);
+        }
+
+        // Send knife hit packet so remote players receive and apply damage
+        if (_knife_hit) _send_shoot_packet();
 
         shoot_timer = fire_delay;
     }
