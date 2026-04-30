@@ -119,22 +119,13 @@ reload_time  = 45;
 reload_timer = 0.5;
 reloading    = false;
 
-max_hp = 30;
+max_hp = 100;
 facing = 0;
 
 // Networking
 time_remaining = 180;
 is_host        = false;
 net_send_timer = 0;
-
-// Round / match state
-global.match_phase       = "countdown";  // countdown | playing | winner
-global.countdown_value   = 3;
-global.player_alive      = true;
-global.round_number      = 1;
-global.scores            = array_create(10, 0);  // indexed by pid
-global.match_winner_pid  = 0;
-global.match_winner_name = "";
 
 // Safe globals
 if (!variable_global_exists("socket"))     global.socket     = -1;
@@ -149,15 +140,6 @@ if (global.socket == -1) {
 }
 socket = global.socket;
 my_pid = global.my_pid;
-
-// Tell server we've entered the game room — server resends countdown state
-if (global.socket >= 0 && global.ip_address != "") {
-    var _abuf = buffer_create(1, buffer_fixed, 1);
-    buffer_write(_abuf, buffer_u8, 20);  // PKT_PLAYER_ALIVE
-    network_send_udp_raw(global.socket, global.ip_address, global.port, _abuf, 1);
-    buffer_delete(_abuf);
-    show_debug_message("Sent PKT_PLAYER_ALIVE to server");
-}
 
 // ── Spawn at position matching our pid ───────────────────────────────────
 // global.my_pid is set in oLobby when the server assigns a pid.

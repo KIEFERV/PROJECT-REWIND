@@ -57,9 +57,6 @@ if (ptype == 1) {
     var oanim   = buffer_read(buf, buffer_u8);
     var ofacing = (buffer_read(buf, buffer_u8) / 255.0) * 360;
 
-    // Don't update state for dead remote players
-    if (ohp <= 0) exit;
-
     var entry = ds_map_find_value(other_players, pid);
     if (is_undefined(entry)) {
         entry = array_create(5);
@@ -90,99 +87,6 @@ if (ptype == 4) {
 // ── Type 5 — timer update ─────────────────────────────────────────────────
 if (ptype == 5) {
     time_remaining = buffer_read(buf, buffer_u16);
-    exit;
-}
-
-
-// ── Type 17 — player died ─────────────────────────────────────────────────
-if (ptype == 17) {
-    var dead_pid = buffer_read(buf, buffer_u16);
-    show_debug_message("Player dead: pid=" + string(dead_pid));
-    if (dead_pid == my_pid) {
-        // We died — go to spectator mode until round ends
-        global.player_alive = false;
-        visible             = false;
-        dead_state          = true;
-        hitpoints           = 0;
-    } else {
-        // Remote player died — zero their HP so they stop being drawn
-        // Keep entry so state packets still track them (won't update at ohp=0)
-        var _entry = ds_map_find_value(other_players, dead_pid);
-        if (!is_undefined(_entry)) {
-            _entry[2] = 0; // set hp to 0 — Draw_0 will hide them
-        }
-    }
-    exit;
-}
-
-// ── Type 18 — countdown tick ──────────────────────────────────────────────
-if (ptype == 18) {
-    var count = buffer_read(buf, buffer_u8);
-    global.countdown_value = count;
-
-    if (count == 0) {
-        // GO — new round starting, respawn ALL players
-        global.match_phase  = "playing";
-        global.player_alive = true;
-        hitpoints           = max_hp;
-        dead_state          = false;
-        visible             = true;
-
-        // Teleport to spawn point
-        var _spawn_count = instance_number(oSpawnPoint);
-        if (_spawn_count > 0) {
-            var _spawn_idx = (my_pid - 1) mod _spawn_count;
-            var _i = 0;
-            with (oSpawnPoint) {
-                if (_i == _spawn_idx) {
-                    other.x = x; other.y = y; break;
-                }
-                _i++;
-            }
-        } else {
-            var _angle = ((my_pid - 1) / 4.0) * 360;
-            x = room_width  / 2 + lengthdir_x(400, _angle);
-            y = room_height / 2 + lengthdir_y(400, _angle);
-        }
-
-        // Re-add all other players to other_players so they're visible again
-        // (they were removed when they died — clear and wait for state packets)
-        ds_map_clear(other_players);
-
-        show_debug_message("Round GO — respawned pid=" + string(my_pid));
-    } else {
-        // Countdown ticking — block movement but don't change alive state
-        global.match_phase = "countdown";
-    }
-    exit;
-}
-
-// ── Type 16 — round state (scores) ───────────────────────────────────────
-if (ptype == 16) {
-    var _round = buffer_read(buf, buffer_u8);
-    var _count = buffer_read(buf, buffer_u8);
-    global.round_number = _round;
-    for (var _i = 0; _i < _count; _i++) {
-        var _pid   = buffer_read(buf, buffer_u16);
-        var _score = buffer_read(buf, buffer_u8);
-        global.scores[_pid] = _score;
-    }
-    exit;
-}
-
-// ── Type 19 — match winner ────────────────────────────────────────────────
-if (ptype == 19) {
-    var _wpid  = buffer_read(buf, buffer_u16);
-    var _wlen  = buffer_read(buf, buffer_u8);
-    var _wname = "";
-    for (var _c = 0; _c < _wlen; _c++)
-        _wname += chr(buffer_read(buf, buffer_u8));
-    global.match_winner_pid  = _wpid;
-    global.match_winner_name = _wname;
-    global.match_phase       = "winner";
-    show_debug_message("Match winner: " + _wname);
-    // Show winner screen then return to menu after delay
-    alarm[0] = game_get_speed(gamespeed_fps) * 5;
     exit;
 }
 

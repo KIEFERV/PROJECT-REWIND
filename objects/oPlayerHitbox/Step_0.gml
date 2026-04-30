@@ -1,29 +1,5 @@
 ///@description Player Logic
 if (!instance_exists(oPlayerHitbox)) exit;
-
-// ── Block input during countdown or when dead ─────────────────────────────
-// Only block on countdown — player_alive is handled by visibility/dead_state
-if (global.match_phase == "countdown" || global.match_phase == "winner") {
-    // Still send state packets during countdown
-    net_send_timer++;
-    if (net_send_timer >= game_get_speed(gamespeed_fps) / 20) {
-        net_send_timer = 0;
-        var _sbuf = buffer_create(32, buffer_fixed, 1);
-        buffer_write(_sbuf, buffer_u8,  1);
-        buffer_write(_sbuf, buffer_f32, x);
-        buffer_write(_sbuf, buffer_f32, y);
-        buffer_write(_sbuf, buffer_u8,  hitpoints);
-        buffer_write(_sbuf, buffer_u8,  image_index);
-        buffer_write(_sbuf, buffer_u8,  round((player_look_dir / 360.0) * 255));
-        network_send_udp_raw(global.socket, global.ip_address, global.port,
-                             _sbuf, buffer_tell(_sbuf));
-        buffer_delete(_sbuf);
-    }
-    exit;
-}
-
-// ── Also block if dead (waiting for round end) ────────────────────────────
-if (!global.player_alive) exit;
 #region Keybinds
 var _input_x = keyboard_check(ord("D")) - keyboard_check(ord("A")),
     _input_y = keyboard_check(ord("S")) - keyboard_check(ord("W"));
@@ -35,11 +11,9 @@ if (keyboard_check_released(ord("M"))){debug_menu = !debug_menu;}
 
 #region Player States
 
-if (hitpoints <= 0) {
-    dead_state          = true;
-    visible             = false;
-    global.player_alive = false;
-} else {
+if (hitpoints <= 0){
+    dead_state = true;
+}else{
     dead_state = false;
 }
 
