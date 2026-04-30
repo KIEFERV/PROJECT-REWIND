@@ -96,37 +96,15 @@ draw_set_color(c_white);
 draw_set_halign(fa_center);
 draw_text(back_x + button_w / 2, back_top + 12, "Back");
 
-<<<<<<< HEAD
 draw_set_color(hover_play ? make_color_rgb(70, 95, 185) : make_color_rgb(42, 58, 108));
-=======
-// Show "Locked In" state if waiting for other players
-var _is_locked = variable_instance_exists(id, "locked_in") && locked_in;
-draw_set_color(_is_locked ? make_color_rgb(20, 80, 20) : (hover_play ? make_color_rgb(70, 95, 185) : make_color_rgb(42, 58, 108)));
->>>>>>> parent of 7349df5 (Merge pull request #53 from KIEFERV/round-logic)
 draw_rectangle(play_x, play_top, play_x + button_w, play_top + button_h, false);
 draw_set_color(make_color_rgb(190, 205, 255));
 draw_rectangle(play_x, play_top, play_x + button_w, play_top + button_h, true);
 draw_set_color(c_white);
-<<<<<<< HEAD
 draw_text(play_x + button_w / 2, play_top + 12, "Start Match");
 
 draw_set_halign(fa_center);
 draw_set_color(make_color_rgb(208, 212, 237));
 draw_text(panel_x + panel_w / 2, panel_top + 570,
     "TAB = switch column   |   UP/DOWN = choose   |   ENTER = start   |   ESC = back");
-=======
-var _btn_label = _is_locked ? "Locked In!" : (global.socket >= 0 ? "Lock In" : "Start Match");
-draw_text(play_x + button_w / 2, play_top + 12, _btn_label);
-
-draw_set_halign(fa_center);
-draw_set_color(make_color_rgb(208, 212, 237));
-if (variable_instance_exists(id, "locked_in") && locked_in) {
-    var _dots = string_repeat(".", (current_time div 400) mod 4);
-    draw_set_color(c_lime);
-    draw_text(panel_x + panel_w / 2, panel_top + 570, "Waiting for other players" + _dots);
-} else {
-    draw_text(panel_x + panel_w / 2, panel_top + 570,
-        "TAB = switch column   |   UP/DOWN = choose   |   ENTER = lock in   |   ESC = back");
-}
->>>>>>> parent of 7349df5 (Merge pull request #53 from KIEFERV/round-logic)
 draw_set_halign(fa_left);

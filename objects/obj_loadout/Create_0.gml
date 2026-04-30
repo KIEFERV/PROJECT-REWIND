@@ -36,10 +36,4 @@ status_text = "Choose your loadout.";
 hover_play = false;
 hover_back = false;
 button_w = 160;
-<<<<<<< HEAD
 button_h = 42;
-=======
-button_h = 42;
-// Multiplayer lock-in state
-locked_in = false;
->>>>>>> parent of 7349df5 (Merge pull request #53 from KIEFERV/round-logic)
