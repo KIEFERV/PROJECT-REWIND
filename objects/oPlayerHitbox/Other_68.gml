@@ -77,9 +77,26 @@ if (ptype == 4) {
     var bx          = buffer_read(buf, buffer_f32);
     var by          = buffer_read(buf, buffer_f32);
     var bdir        = (buffer_read(buf, buffer_u8) / 255.0) * 360;
+    var bwtype      = buffer_read(buf, buffer_u8);   // 0=auto 1=shotgun 2=burst 3=sniper 4=melee(hit)
+    var bdamage     = buffer_read(buf, buffer_f32);  // damage value from shooter
 
     if (shooter_pid != my_pid) {
-        spawnEnemyBullet(bx, by, bdir);
+        switch (bwtype) {
+            case 1: // shotgun — 5 spread pellets
+                var _spread  = 15;
+                var _pellets = 5;
+                for (var _p = 0; _p < _pellets; _p++) {
+                    var _offset = (_p / (_pellets - 1) - 0.5) * _spread;
+                    spawnEnemyBulletDmg(bx, by, bdir + _offset, bdamage);
+                }
+                break;
+            case 4: // knife hit — apply damage directly, no bullet
+                hitpoints -= bdamage;
+                break;
+            default: // auto, burst, sniper
+                spawnEnemyBulletDmg(bx, by, bdir, bdamage);
+                break;
+        }
     }
     exit;
 }

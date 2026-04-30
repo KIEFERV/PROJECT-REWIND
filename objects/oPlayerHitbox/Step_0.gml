@@ -259,6 +259,7 @@ function _send_shoot_packet() {
     buffer_write(_buf, buffer_f32, y);                    // y
     buffer_write(_buf, buffer_u8,  round((player_look_dir / 360.0) * 255)); // dir
     buffer_write(_buf, buffer_u8,  _wtype_byte);          // weapon type
+    buffer_write(_buf, buffer_f32, bullet_damage);        // damage
     network_send_udp_raw(global.socket, global.ip_address, global.port,
                          _buf, buffer_tell(_buf));
     buffer_delete(_buf);
