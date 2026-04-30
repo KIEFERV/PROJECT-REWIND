@@ -1,6 +1,5 @@
 /// Other_68 (Async - Networking) — obj_loadout
-/// Listens for PKT_ALL_READY (type 15) from the server.
-/// When received, all players transition to the game room.
+/// Keeps the connection alive and listens for PKT_ALL_READY (type 15).
 
 if (async_load[? "type"] != network_type_data) exit;
 
@@ -15,10 +14,19 @@ if (_ptype == 15) {
     exit;
 }
 
+// Type 13 — player list update (ignore in loadout)
+if (_ptype == 13) exit;
+
 // Type 3 — a player disconnected while in loadout
 if (_ptype == 3) {
-    status_msg = "A player disconnected. Returning to lobby...";
-    show_debug_message("Player left during loadout — returning to lobby.");
-    alarm[0] = game_get_speed(gamespeed_fps) * 2;
+    var _left_pid = buffer_read(_buf, buffer_u16);
+    show_debug_message("Player pid=" + string(_left_pid) + " left during loadout.");
+    // Only go back to lobby if the host left
+    if (_left_pid == 1 && global.my_pid != 1) {
+        show_debug_message("Host left during loadout — returning to lobby.");
+        room_goto(rLobby);
+    }
     exit;
 }
+
+// Silently ignore all other packet types (keepalive echoes, etc.)
