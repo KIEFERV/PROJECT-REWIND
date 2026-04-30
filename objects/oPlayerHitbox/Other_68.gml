@@ -116,13 +116,18 @@ if (ptype == 17) {
     var dead_pid = buffer_read(buf, buffer_u16);
     show_debug_message("Player dead: pid=" + string(dead_pid));
     if (dead_pid == my_pid) {
-        // We died — hide player until next round
+        // We died — go to spectator mode until round ends
         global.player_alive = false;
-        visible  = false;
-        hitpoints = 0;
+        visible             = false;
+        dead_state          = true;
+        hitpoints           = 0;
     } else {
-        // Remote player died — remove from other_players
-        ds_map_delete(other_players, dead_pid);
+        // Remote player died — zero their HP so they stop being drawn
+        // Keep entry so state packets still track them (won't update at ohp=0)
+        var _entry = ds_map_find_value(other_players, dead_pid);
+        if (!is_undefined(_entry)) {
+            _entry[2] = 0; // set hp to 0 — Draw_0 will hide them
+        }
     }
     exit;
 }
@@ -131,14 +136,15 @@ if (ptype == 17) {
 if (ptype == 18) {
     var count = buffer_read(buf, buffer_u8);
     global.countdown_value = count;
+
     if (count == 0) {
+        // GO — new round starting, respawn ALL players
         global.match_phase  = "playing";
-        // Always reset hp and make visible at round start
+        global.player_alive = true;
         hitpoints           = max_hp;
         dead_state          = false;
         visible             = true;
-        global.player_alive = true;
-        // Re-add all players to other_players map (they respawn too)
+
         // Teleport to spawn point
         var _spawn_count = instance_number(oSpawnPoint);
         if (_spawn_count > 0) {
@@ -151,17 +157,19 @@ if (ptype == 18) {
                 _i++;
             }
         } else {
-            var _angle  = ((my_pid - 1) / 4.0) * 360;
+            var _angle = ((my_pid - 1) / 4.0) * 360;
             x = room_width  / 2 + lengthdir_x(400, _angle);
             y = room_height / 2 + lengthdir_y(400, _angle);
         }
-        show_debug_message("Round GO — respawned at spawn point");
+
+        // Re-add all other players to other_players so they're visible again
+        // (they were removed when they died — clear and wait for state packets)
+        ds_map_clear(other_players);
+
+        show_debug_message("Round GO — respawned pid=" + string(my_pid));
     } else {
+        // Countdown ticking — block movement but don't change alive state
         global.match_phase = "countdown";
-        // Hide player during countdown if they died last round
-        if (!global.player_alive) {
-            visible = false;
-        }
     }
     exit;
 }
