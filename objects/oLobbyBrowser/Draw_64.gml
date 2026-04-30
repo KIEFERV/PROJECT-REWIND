@@ -10,7 +10,7 @@ draw_set_halign(fa_center);
 draw_set_valign(fa_top);
 
 // ════════════════════════════════════════════════════════════════════════════
-//  LAUNCH OVERLAY
+//  LAUNCH OVERLAY — waiting for manager-spawned server to respond
 // ════════════════════════════════════════════════════════════════════════════
 if (launching) {
     draw_set_color(c_black);
@@ -25,156 +25,12 @@ if (launching) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  SCREEN: MODE SELECT
-// ════════════════════════════════════════════════════════════════════════════
-if (current_screen == SCREEN_MODE) {
-
-    draw_set_color(c_white);
-    draw_text(_cx, 80, "SELECT MODE");
-
-    var _bw = 200;
-    var _bh = 60;
-    var _gap = 40;
-    var _total = (_bw * 2) + _gap;
-    var _online_x = _cx - _total / 2;
-    var _lan_x    = _cx + _gap / 2;
-    var _by       = _cy - _bh / 2;
-
-    // Online button
-    draw_set_color(make_color_rgb(30, 60, 120));
-    draw_rectangle(_online_x, _by, _online_x + _bw, _by + _bh, false);
-    draw_set_color(c_aqua);
-    draw_rectangle(_online_x, _by, _online_x + _bw, _by + _bh, true);
-    draw_set_color(c_white);
-    draw_text(_online_x + _bw / 2, _by + 12, "ONLINE");
-    draw_set_color(c_ltgray);
-    draw_text(_online_x + _bw / 2, _by + 34, "press O");
-
-    // LAN button
-    draw_set_color(make_color_rgb(30, 80, 40));
-    draw_rectangle(_lan_x, _by, _lan_x + _bw, _by + _bh, false);
-    draw_set_color(c_lime);
-    draw_rectangle(_lan_x, _by, _lan_x + _bw, _by + _bh, true);
-    draw_set_color(c_white);
-    draw_text(_lan_x + _bw / 2, _by + 12, "LAN");
-    draw_set_color(c_ltgray);
-    draw_text(_lan_x + _bw / 2, _by + 34, "press L");
-
-    exit;
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//  SCREEN: LAN
-// ════════════════════════════════════════════════════════════════════════════
-if (current_screen == SCREEN_LAN) {
-
-    draw_set_color(c_white);
-    draw_text(_cx, 30, "LAN");
-    draw_set_color(c_ltgray);
-    draw_text(_cx, 60, status_msg);
-
-    // Tab headers
-    var _tab_w  = 160;
-    var _tab_h  = 34;
-    var _join_x = _cx - _tab_w - 4;
-    var _host_x = _cx + 4;
-    var _tab_y  = 96;
-
-    // Join tab
-    draw_set_color(lan_join_mode ? make_color_rgb(30, 60, 120) : make_color_rgb(20,20,20));
-    draw_rectangle(_join_x, _tab_y, _join_x + _tab_w, _tab_y + _tab_h, false);
-    draw_set_color(lan_join_mode ? c_aqua : c_dkgray);
-    draw_rectangle(_join_x, _tab_y, _join_x + _tab_w, _tab_y + _tab_h, true);
-    draw_set_color(lan_join_mode ? c_white : c_gray);
-    draw_text(_join_x + _tab_w / 2, _tab_y + 8, "JOIN");
-
-    // Host tab
-    draw_set_color(!lan_join_mode ? make_color_rgb(60, 30, 10) : make_color_rgb(20,20,20));
-    draw_rectangle(_host_x, _tab_y, _host_x + _tab_w, _tab_y + _tab_h, false);
-    draw_set_color(!lan_join_mode ? c_orange : c_dkgray);
-    draw_rectangle(_host_x, _tab_y, _host_x + _tab_w, _tab_y + _tab_h, true);
-    draw_set_color(!lan_join_mode ? c_white : c_gray);
-    draw_text(_host_x + _tab_w / 2, _tab_y + 8, "HOST");
-
-    var _row_top = _tab_y + _tab_h + 16;
-    var _row_h   = 28;
-
-    if (lan_join_mode) {
-        // ── JOIN TAB — lobby list ─────────────────────────────────────────
-        draw_set_halign(fa_center);
-        draw_set_color(c_ltgray);
-        draw_text(_cx, _tab_y + _tab_h + 4, status_msg);
-
-        var _count = ds_list_size(lobby_list);
-        if (_count == 0) {
-            draw_set_color(c_gray);
-            draw_text(_cx, _cy, "(No LAN lobbies found)");
-            draw_set_color(c_dkgray);
-            draw_text(_cx, _cy + 26, "Ask your host to press TAB and start hosting.");
-            draw_text(_cx, _cy + 46, "R to refresh");
-        } else {
-            var _col_name    = 60;
-            var _col_players = _gw - 140;
-            draw_set_halign(fa_left);
-            draw_set_color(c_yellow);
-            draw_text(_col_name,    _row_top, "LOBBY");
-            draw_text(_col_players, _row_top, "PLAYERS");
-            draw_set_color(c_dkgray);
-            draw_line(50, _row_top + 18, _gw - 50, _row_top + 18);
-
-            for (var _i = 0; _i < _count; _i++) {
-                var _ry  = _row_top + 24 + _i * _row_h;
-                var _e   = ds_list_find_value(lobby_list, _i);
-                var _sel = (_i == selected_index);
-                if (_sel) {
-                    draw_set_color(make_color_rgb(35, 70, 130));
-                    draw_rectangle(48, _ry - 3, _gw - 48, _ry + _row_h - 4, false);
-                }
-                draw_set_color(_sel ? c_white : c_silver);
-                var _dname = _e[? "name"];
-                if (_e[? "has_password"]) _dname = "[P] " + _dname;
-                draw_text(_col_name, _ry, _dname);
-                draw_text(_col_players, _ry,
-                    string(_e[? "current"]) + " / " + string(_e[? "max"]));
-            }
-        }
-
-        draw_set_halign(fa_center);
-        draw_set_color(c_dkgray);
-        draw_text(_cx, _gh - 36, "Up/Down select   ENTER join   R refresh   TAB host   ESC back");
-
-    } else {
-        // ── HOST TAB ──────────────────────────────────────────────────────
-        draw_set_halign(fa_center);
-        if (launching) {
-            draw_set_color(c_yellow);
-            draw_text(_cx, _cy - 10, "Starting server...");
-            draw_set_color(c_dkgray);
-            draw_text(_cx, _cy + 18, string_repeat(".", (current_time div 250) mod 4));
-        } else {
-            draw_set_color(c_lime);
-            draw_text(_cx, _cy - 20, "Hosting LAN Lobby");
-            draw_set_color(c_ltgray);
-            draw_text(_cx, _cy + 10, "Waiting for players on your network...");
-            draw_set_color(c_dkgray);
-            draw_text(_cx, _cy + 36, "They will see your lobby in the JOIN tab.");
-        }
-
-        draw_set_halign(fa_center);
-        draw_set_color(c_dkgray);
-        draw_text(_cx, _gh - 36, "ESC back");
-    }
-
-    exit;
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//  SCREEN: CREATE LOBBY (online)
+//  SCREEN: CREATE LOBBY
 // ════════════════════════════════════════════════════════════════════════════
 if (current_screen == SCREEN_CREATE) {
 
     draw_set_color(c_white);
-    draw_text(_cx, 30, "CREATE LOBBY  (ONLINE)");
+    draw_text(_cx, 30, "CREATE LOBBY");
     draw_set_color(c_ltgray);
     draw_text(_cx, 60, status_msg);
 
@@ -249,11 +105,11 @@ if (current_screen == SCREEN_CREATE) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  SCREEN: BROWSE (online)
+//  SCREEN: BROWSE
 // ════════════════════════════════════════════════════════════════════════════
 
 draw_set_color(c_white);
-draw_text(_cx, 30, "SERVER BROWSER  (ONLINE)");
+draw_text(_cx, 30, "SERVER BROWSER");
 draw_set_color(c_ltgray);
 draw_text(_cx, 60, status_msg);
 
