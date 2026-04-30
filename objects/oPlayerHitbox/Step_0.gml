@@ -242,12 +242,23 @@ if (reloading) {
 
 // ── Local helper: send shoot packet ──────────────────────────────────────────
 function _send_shoot_packet() {
-    var _buf = buffer_create(10, buffer_grow, 1);
+    // Encode weapon type as a byte so receivers spawn correct bullets
+    // 0=auto 1=shotgun 2=burst 3=sniper 4=melee
+    var _wtype_byte = 0;
+    switch (weapon_type) {
+        case "auto":    _wtype_byte = 0; break;
+        case "shotgun": _wtype_byte = 1; break;
+        case "burst":   _wtype_byte = 2; break;
+        case "sniper":  _wtype_byte = 3; break;
+        case "melee":   _wtype_byte = 4; break;
+    }
+    var _buf = buffer_create(12, buffer_grow, 1);
     buffer_seek(_buf, buffer_seek_start, 0);
-    buffer_write(_buf, buffer_u8,  4);
-    buffer_write(_buf, buffer_f32, x);
-    buffer_write(_buf, buffer_f32, y);
-    buffer_write(_buf, buffer_u8,  round((player_look_dir / 360.0) * 255));
+    buffer_write(_buf, buffer_u8,  4);                    // type
+    buffer_write(_buf, buffer_f32, x);                    // x
+    buffer_write(_buf, buffer_f32, y);                    // y
+    buffer_write(_buf, buffer_u8,  round((player_look_dir / 360.0) * 255)); // dir
+    buffer_write(_buf, buffer_u8,  _wtype_byte);          // weapon type
     network_send_udp_raw(global.socket, global.ip_address, global.port,
                          _buf, buffer_tell(_buf));
     buffer_delete(_buf);

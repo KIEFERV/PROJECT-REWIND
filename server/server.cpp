@@ -680,6 +680,19 @@ void broadcast_player_left(int sock, uint16_t pid, const std::string& excludeKey
     broadcast(sock, msg, 3, excludeKey);
 }
 
+void broadcast_player_list(int sock) {
+    // [u8:13][u8:count] then per player: [u16:pid][lpstr:username]
+    char buf[512]; int off = 0;
+    buf[off++] = PKT_PLAYER_LIST;
+    buf[off++] = (uint8_t)players.size();
+    for (auto& pair : players) {
+        uint16_t pid = pair.second.pid;
+        memcpy(buf + off, &pid, 2); off += 2;
+        off += lp_write(buf, off, pair.second.username);
+    }
+    broadcast(sock, buf, off, "");
+}
+
 void reset_lobby() {
     nextPid      = 1;
     matchRunning = false;
@@ -1199,6 +1212,7 @@ int main(int argc, char* argv[]) {
                 memcpy(ja + 1, &pid, 2);
                 sendto(gameSock, ja, 3, 0, (sockaddr*)&src, srcLen);
                 supabase_update_players((int)players.size());
+                broadcast_player_list(gameSock);  // tell all clients who's in the lobby
             }
             players[key].lastSeen = Clock::now();
 
