@@ -11,7 +11,7 @@ if (ptype == 2) {
     my_pid        = buffer_read(buf, buffer_u16);
     player_count  = my_pid;
     is_host       = (my_pid == 1);
-    global.my_pid = my_pid;  // store so oPlayerHitbox can use it for spawn
+    global.my_pid = my_pid;
 
     if (is_host) {
         status_msg = "You are the host. Press SPACE to start.";
@@ -23,15 +23,33 @@ if (ptype == 2) {
     exit;
 }
 
+// Type 13 — player list update
+// [u8:13][u8:count] then per player: [u16:pid][lpstr:username]
+if (ptype == 13) {
+    ds_map_clear(lobby_players);
+    var _pcount = buffer_read(buf, buffer_u8);
+    for (var _i = 0; _i < _pcount; _i++) {
+        var _pid  = buffer_read(buf, buffer_u16);
+        var _nlen = buffer_read(buf, buffer_u8);
+        var _name = "";
+        for (var _c = 0; _c < _nlen; _c++)
+            _name += chr(buffer_read(buf, buffer_u8));
+        ds_map_add(lobby_players, _pid, _name);
+    }
+    player_count = _pcount;
+    show_debug_message("Player list updated: " + string(_pcount) + " players");
+    exit;
+}
+
 // Type 3 — a player left
 if (ptype == 3) {
     var left_pid = buffer_read(buf, buffer_u16);
+    ds_map_delete(lobby_players, left_pid);
     show_debug_message("Player left: pid=" + string(left_pid));
 
-    // If the host left, return everyone to the lobby browser
     if (left_pid == 1 && !is_host) {
         show_debug_message("Host left — returning to lobby browser.");
-        room_goto(rLobbyBrowser);  // ← replace rLobbyBrowser with your actual room name
+        room_goto(rLobbyBrowser);
     }
     exit;
 }
