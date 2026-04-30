@@ -156,6 +156,9 @@ static const int      TIMEOUT_S   = 5;
 #define PKT_JOIN_REQUEST  10
 #define PKT_KILL_REPORT   11
 #define PKT_KEEPALIVE     12
+#define PKT_PLAYER_LIST   13  // server broadcasts player names to lobby
+#define PKT_LOADOUT_READY 14  // client locked their loadout
+#define PKT_ALL_READY     15  // server tells all clients to start match
 #define PKT_DISCOVERY     40  // server reply to a discovery ping
 #define PKT_DISCOVERY_PING 41 // joiner sends this to game port; server replies type-40
 
@@ -1230,13 +1233,28 @@ int main(int argc, char* argv[]) {
                     sendto(gameSock, ne, 1, 0, (sockaddr*)&src, srcLen);
                     continue;
                 }
-                matchRunning       = true;
-                timeRemaining      = matchDuration;
-                lastTimerBroadcast = Clock::now();
-                std::cout << "Match started!\n";
+                // Send type-7 to trigger loadout phase — match starts after all ready
+                readyPlayers.clear();
+                std::cout << "Loadout phase started!\n";
                 char sp[1] = { PKT_MATCH_START };
                 broadcast(gameSock, sp, 1, "");
-                supabase_match_start();
+            }
+
+            // 14 loadout ready — player locked their loadout
+            if (type == PKT_LOADOUT_READY) {
+                uint16_t pid = players[key].pid;
+                readyPlayers.insert(pid);
+                std::cout << "Loadout ready: pid=" << pid
+                          << " (" << readyPlayers.size() << "/" << players.size() << ")\n";
+                if (readyPlayers.size() >= players.size() && !matchRunning) {
+                    matchRunning       = true;
+                    timeRemaining      = matchDuration;
+                    lastTimerBroadcast = Clock::now();
+                    supabase_match_start();
+                    char ar[1] = { PKT_ALL_READY };
+                    broadcast(gameSock, ar, 1, "");
+                    std::cout << "All players ready — match started!\n";
+                }
             }
 
             // 10 join request
