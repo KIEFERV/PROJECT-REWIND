@@ -224,5 +224,13 @@ if (ptype == 3) {
     var left_pid = buffer_read(buf, buffer_u16);
     ds_map_delete(other_players, left_pid);
     show_debug_message("Player left: pid=" + string(left_pid));
+
+    // If host left during match, everyone returns to menu
+    if (left_pid == 1 && my_pid != 1) {
+        show_debug_message("Host left match — returning to menu.");
+        global.match_phase = "countdown"; // reset for next session
+        global.socket      = -1;
+        room_goto(rm_menu);
+    }
     exit;
 }
