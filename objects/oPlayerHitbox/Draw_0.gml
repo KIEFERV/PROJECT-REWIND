@@ -24,11 +24,12 @@ repeat (ds_map_size(other_players)) {
                     ofacing,
                     c_white, 1);
 
-            // Health bar above head
+            // Health bar above head — clamp to prevent overflow
+            var _hp_ratio = clamp(ohp / max_hp, 0, 1);
             draw_set_color(c_red);
             draw_rectangle(ox - 16, oy - 28, ox + 16, oy - 22, false);
             draw_set_color(c_lime);
-            draw_rectangle(ox - 16, oy - 28, ox - 16 + (32 * (ohp / max_hp)), oy - 22, false);
+            draw_rectangle(ox - 16, oy - 28, ox - 16 + (32 * _hp_ratio), oy - 22, false);
             draw_set_color(c_white);
         }
     }
