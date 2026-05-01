@@ -80,8 +80,11 @@ if (ptype == 4) {
     var bx          = buffer_read(buf, buffer_f32);
     var by          = buffer_read(buf, buffer_f32);
     var bdir        = (buffer_read(buf, buffer_u8) / 255.0) * 360;
-    var bwtype      = buffer_read(buf, buffer_u8);   // 0=auto 1=shotgun 2=burst 3=sniper 4=melee(hit)
-    var bdamage     = buffer_read(buf, buffer_f32);  // damage value from shooter
+
+    // Guard — only read wtype/damage if packet is long enough
+    var _remaining = buffer_get_size(buf) - buffer_tell(buf);
+    var bwtype  = (_remaining >= 1) ? buffer_read(buf, buffer_u8)  : 0;
+    var bdamage = (_remaining >= 5) ? buffer_read(buf, buffer_f32) : 10;
 
     if (shooter_pid != my_pid) {
         switch (bwtype) {
