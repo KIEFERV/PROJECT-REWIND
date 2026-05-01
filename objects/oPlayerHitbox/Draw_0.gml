@@ -16,13 +16,11 @@ repeat (ds_map_size(other_players)) {
         var ohp     = entry[2];
         var oanim   = entry[3];
         var ofacing = entry[4];
-		var otime_phase = entry[5]; //player time phase
+        var otime_phase = (array_length(entry) > 5) ? entry[5] : 0; // 0=present 1=past
+        var otime_str   = (otime_phase == 1) ? "past" : "present";
 
-    
-    // Check if the remote player exists and if states match
-    if (instance_exists(pid) && otime_phase == oPlayerHitbox.time_phase) {
-        // Only draw if alive
-        if (ohp > 0) {
+    // Only draw if alive and in the same time phase
+    if (ohp > 0 && otime_str == oPlayerHitbox.time_phase) {
             draw_sprite_ext(sPlayerEnemyModel, oanim, ox, oy,
                     1, 1,
                     ofacing,
@@ -35,9 +33,8 @@ repeat (ds_map_size(other_players)) {
             draw_set_color(c_lime);
             draw_rectangle(ox - 16, oy - 28, ox - 16 + (32 * _hp_ratio), oy - 22, false);
             draw_set_color(c_white);
-			}
-		}
-	}	
+        }
+    }
     pid = ds_map_find_next(other_players, pid);
 }
 

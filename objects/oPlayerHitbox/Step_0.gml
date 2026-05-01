@@ -15,6 +15,7 @@ if (global.match_phase == "countdown" || global.match_phase == "winner") {
         buffer_write(_sbuf, buffer_u8,  clamp(hitpoints, 0, 255));
         buffer_write(_sbuf, buffer_u8,  image_index);
         buffer_write(_sbuf, buffer_u8,  round((player_look_dir / 360.0) * 255));
+        buffer_write(_sbuf, buffer_u8,  (time_phase == "past") ? 1 : 0); // time_phase
         network_send_udp_raw(global.socket, global.ip_address, global.port,
                              _sbuf, buffer_tell(_sbuf));
         buffer_delete(_sbuf);
@@ -331,6 +332,7 @@ if (net_send_timer >= game_get_speed(gamespeed_fps) / 20) {
     buffer_write(buf, buffer_u8,  clamp(hitpoints, 0, 255));
     buffer_write(buf, buffer_u8,  image_index);
     buffer_write(buf, buffer_u8,  round((player_look_dir / 360.0) * 255));
+    buffer_write(buf, buffer_u8,  (time_phase == "past") ? 1 : 0); // time_phase
     network_send_udp_raw(global.socket, global.ip_address, global.port,
                          buf, buffer_tell(buf));
     buffer_delete(buf);
@@ -342,7 +344,10 @@ if (time_phase == "present" && time_cd > 0){
 	time_cd--;
 }
 
-if (keyboard_check_pressed(ord("Z")) && time_phase == "present" && time_cd <= 0) {
+// Only allow rewind when alive and playing (not in countdown/winner)
+var _can_rewind = (global.match_phase == "playing") && global.player_alive;
+if (keyboard_check_pressed(ord("Z")) && time_phase == "present"
+    && time_cd <= 0 && _can_rewind) {
     if (!rewind_active) {
         plr_travel_start();
     }
