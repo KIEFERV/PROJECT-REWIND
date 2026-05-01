@@ -1,5 +1,12 @@
 if (!variable_global_exists("primary_weapon"))   global.primary_weapon   = "assault_rifle";
 if (!variable_global_exists("secondary_weapon")) global.secondary_weapon = "pistol";
+if (!variable_global_exists("countdown_value"))  global.countdown_value  = -1;
+if (!variable_global_exists("match_phase"))      global.match_phase      = "countdown";
+
+// Reset socket for practice mode detection
+if (!variable_global_exists("socket"))     global.socket     = -1;
+if (!variable_global_exists("ip_address")) global.ip_address = "";
+if (!variable_global_exists("port"))       global.port       = 0;
 
 primary_list   = ["assault_rifle", "shotgun", "smg", "sniper"];
 secondary_list = ["pistol", "knife"];
@@ -25,15 +32,11 @@ for (var i = 0; i < array_length(secondary_list); i++) {
     if (secondary_list[i] == global.secondary_weapon) secondary_index = i;
 }
 
-active_column = 0;
-status_text   = "Choose your loadout.";
-hover_play    = false;
-hover_back    = false;
-button_w      = 160;
-button_h      = 42;
-
-status_text = "Choose your loadout.";
-hover_play = false;
-hover_back = false;
-button_w = 160;
-button_h = 42;
+active_column   = 0;
+status_text     = "Choose your loadout.";
+hover_play      = false;
+hover_back      = false;
+button_w        = 160;
+button_h        = 42;
+locked_in       = false;
+keepalive_timer = 0;
