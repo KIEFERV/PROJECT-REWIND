@@ -12,7 +12,7 @@ if (global.match_phase == "countdown" || global.match_phase == "winner") {
         buffer_write(_sbuf, buffer_u8,  1);
         buffer_write(_sbuf, buffer_f32, x);
         buffer_write(_sbuf, buffer_f32, y);
-        buffer_write(_sbuf, buffer_u8,  hitpoints);
+        buffer_write(_sbuf, buffer_u8,  clamp(hitpoints, 0, 255));
         buffer_write(_sbuf, buffer_u8,  image_index);
         buffer_write(_sbuf, buffer_u8,  round((player_look_dir / 360.0) * 255));
         network_send_udp_raw(global.socket, global.ip_address, global.port,
@@ -328,7 +328,7 @@ if (net_send_timer >= game_get_speed(gamespeed_fps) / 20) {
     buffer_write(buf, buffer_u8,  1);
     buffer_write(buf, buffer_f32, x);
     buffer_write(buf, buffer_f32, y);
-    buffer_write(buf, buffer_u8,  hitpoints);
+    buffer_write(buf, buffer_u8,  clamp(hitpoints, 0, 255));
     buffer_write(buf, buffer_u8,  image_index);
     buffer_write(buf, buffer_u8,  round((player_look_dir / 360.0) * 255));
     network_send_udp_raw(global.socket, global.ip_address, global.port,

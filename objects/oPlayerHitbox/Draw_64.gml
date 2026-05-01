@@ -53,13 +53,32 @@ if (!global.player_alive && global.match_phase == "playing") {
 draw_set_halign(fa_center);
 draw_set_color(c_white);
 draw_text(_cx, 52, "Round " + string(global.round_number));
-var _sx = _cx - 60;
-for (var _pi = 1; _pi <= 4; _pi++) {
-    if (global.scores[_pi] > 0 || _pi <= 2) {
-        draw_set_color(_pi == my_pid ? c_yellow : c_ltgray);
-        draw_text(_sx, 72, "P" + string(_pi) + ": " + string(global.scores[_pi]));
-        _sx += 70;
+
+// Build list of all known pids (self + other players)
+var _pids = [];
+array_push(_pids, my_pid);
+var _rpid = ds_map_find_first(other_players);
+repeat (ds_map_size(other_players)) {
+    array_push(_pids, _rpid);
+    _rpid = ds_map_find_next(other_players, _rpid);
+}
+
+// Sort pids ascending so order is consistent
+for (var _a = 0; _a < array_length(_pids) - 1; _a++) {
+    for (var _b = _a + 1; _b < array_length(_pids); _b++) {
+        if (_pids[_b] < _pids[_a]) {
+            var _tmp = _pids[_a]; _pids[_a] = _pids[_b]; _pids[_b] = _tmp;
+        }
     }
+}
+
+var _sx = _cx - (array_length(_pids) * 35);
+for (var _pi = 0; _pi < array_length(_pids); _pi++) {
+    var _pid = _pids[_pi];
+    var _sc  = global.scores[_pid];
+    draw_set_color(_pid == my_pid ? c_yellow : c_ltgray);
+    draw_text(_sx, 72, "P" + string(_pid) + ": " + string(_sc));
+    _sx += 70;
 }
 draw_set_halign(fa_left);
 
@@ -79,7 +98,7 @@ if(debug_menu = true){
 }
 
 if (show_GUI = true){
-	draw_healthbar(10, 700, 450, 750, (hitpoints/max_hp)* 100, c_maroon, c_red, c_green, 0, true, true);
+	draw_healthbar(10, 700, 450, 750, hitpoints, c_maroon, c_red, c_green, 0, true, true);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
