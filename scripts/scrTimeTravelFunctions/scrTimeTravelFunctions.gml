@@ -30,11 +30,6 @@ function plr_enter_past() {
     time_cd       = time_cd_max;
     image_alpha   = 1;
 
-    // Set oPlayerHitbox phase so networking picks it up immediately
-    if (instance_exists(oPlayerHitbox)) {
-        oPlayerHitbox.time_phase = "past";
-    }
-
     // Use ghost_ref instead of oGhost directly (safer in multiplayer)
     if (instance_exists(ghost_ref)) {
         ghost_ref.image_alpha = 0.5;
@@ -76,12 +71,7 @@ function return_to_present() {
         // Destroy the ghost
         if (instance_exists(ghost_ref)) {
             instance_destroy(ghost_ref);
-        }
-
-        // Restore oPlayerHitbox phase so networking reflects it immediately
-        if (instance_exists(oPlayerHitbox)) {
-            oPlayerHitbox.time_phase = "present";
-        }
+		}
 
         time_phase = "present";
     }
