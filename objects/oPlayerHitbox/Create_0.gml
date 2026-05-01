@@ -150,15 +150,6 @@ if (global.socket == -1) {
 socket = global.socket;
 my_pid = global.my_pid;
 
-// Tell server we've entered the game room — server resends countdown state
-if (global.socket >= 0 && global.ip_address != "") {
-    var _abuf = buffer_create(1, buffer_fixed, 1);
-    buffer_write(_abuf, buffer_u8, 20);  // PKT_PLAYER_ALIVE
-    network_send_udp_raw(global.socket, global.ip_address, global.port, _abuf, 1);
-    buffer_delete(_abuf);
-    show_debug_message("Sent PKT_PLAYER_ALIVE to server");
-}
-
 // ── Spawn at position matching our pid ───────────────────────────────────
 // global.my_pid is set in oLobby when the server assigns a pid.
 // oSpawnPoint instances in the room are used as spawn positions.

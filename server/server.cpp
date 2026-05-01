@@ -1378,19 +1378,6 @@ int main(int argc, char* argv[]) {
                 broadcast(gameSock, sp, 1, "");
             }
 
-            // 20 player alive — client entered game room, resend countdown state
-            if (type == PKT_PLAYER_ALIVE) {
-                // Resend current phase to this specific player
-                if (inCountdown) {
-                    char cd[2] = { PKT_COUNTDOWN, (char)countdownValue };
-                    sendto(gameSock, cd, 2, 0, (sockaddr*)&src, srcLen);
-                } else if (roundActive) {
-                    char cd[2] = { PKT_COUNTDOWN, 0 };
-                    sendto(gameSock, cd, 2, 0, (sockaddr*)&src, srcLen);
-                }
-                broadcast_round_state(gameSock);
-            }
-
             // 14 loadout ready — player locked their loadout
             if (type == PKT_LOADOUT_READY) {
                 uint16_t pid = players[key].pid;
