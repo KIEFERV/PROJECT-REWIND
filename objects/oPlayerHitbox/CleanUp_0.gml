@@ -9,3 +9,4 @@ if (global.socket >= 0) {
     network_destroy(global.socket);
     global.socket = -1;
 }
+

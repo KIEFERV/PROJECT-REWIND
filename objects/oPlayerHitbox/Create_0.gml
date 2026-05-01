@@ -212,17 +212,13 @@ function spawnBullet(_x, _y, _dir, myID){
 }
 
 function spawnEnemyBullet(_x, _y, _dir) {
-	ds_map_iterate_keys(other_players, function(key) {
-    var remote_player_id = other_players[? key]; // Get the instance ID from the map
     var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
     b.direction   = _dir;
-    b.time_phase  =  remote_player_id.time_phase
     b.speed       = 12;
     b.image_angle = b.direction;
-
     b.owner_id    = noone;
-    b.damage      = 1;  // default damage
-});}
+    b.damage      = 1;
+}
 
 function spawnEnemyBulletDmg(_x, _y, _dir, _dmg) {
     var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
