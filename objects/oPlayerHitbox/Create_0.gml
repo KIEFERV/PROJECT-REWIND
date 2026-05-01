@@ -119,7 +119,7 @@ reload_time  = 45;
 reload_timer = 0.5;
 reloading    = false;
 
-max_hp = 100;
+max_hp = 30;
 facing = 0;
 
 // Networking
