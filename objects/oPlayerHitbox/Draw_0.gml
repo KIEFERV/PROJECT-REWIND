@@ -16,12 +16,10 @@ repeat (ds_map_size(other_players)) {
         var ohp     = entry[2];
         var oanim   = entry[3];
         var ofacing = entry[4];
-		
-	ds_map_iterate_keys(other_players, function(key) {
-    var remote_player_id = other_players[? key]; // Get the instance ID from the map
+
     
     // Check if the remote player exists and if states match
-    if (instance_exists(remote_player_id) && remote_player_id.time_phase == oPlayerHitbox.time_phase) {
+    if (instance_exists(pid) && pid.time_phase == oPlayerHitbox.time_phase) {
         // Only draw if alive
         if (ohp > 0) {
             draw_sprite_ext(sPlayerEnemyModel, oanim, ox, oy,
@@ -36,10 +34,9 @@ repeat (ds_map_size(other_players)) {
             draw_set_color(c_lime);
             draw_rectangle(ox - 16, oy - 28, ox - 16 + (32 * _hp_ratio), oy - 22, false);
             draw_set_color(c_white);
-        }
-    }});
-	}
-	
+			}
+		}
+	}	
     pid = ds_map_find_next(other_players, pid);
 }
 
