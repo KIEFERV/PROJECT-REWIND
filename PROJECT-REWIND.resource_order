@@ -3,9 +3,11 @@
     {"name":"Libraries","order":2,"path":"folders/Scripts/Libraries.yy",},
     {"name":"Occlusion","order":3,"path":"folders/Scripts/Occlusion.yy",},
     {"name":"Rewind Scripts","order":5,"path":"folders/Scripts/Rewind Scripts.yy",},
+    {"name":"scr_scripts","order":3,"path":"folders/Scripts/Libraries/scr_scripts.yy",},
   ],
   "ResourceOrderSettings":[
     {"name":"oAudioEmitter","order":1,"path":"objects/oAudioEmitter/oAudioEmitter.yy",},
+    {"name":"obj_powerup_station","order":1,"path":"objects/obj_powerup_station/obj_powerup_station.yy",},
     {"name":"oCollisionBox","order":6,"path":"objects/oCollisionBox/oCollisionBox.yy",},
     {"name":"oCollisionController","order":1,"path":"objects/oCollisionController/oCollisionController.yy",},
     {"name":"Oesccontroller","order":1,"path":"objects/Oesccontroller/Oesccontroller.yy",},

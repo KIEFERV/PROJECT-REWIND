@@ -1,3 +1,5 @@
+
+
 ///@description Player Logic
 if (!instance_exists(oPlayerHitbox)) exit;
 
