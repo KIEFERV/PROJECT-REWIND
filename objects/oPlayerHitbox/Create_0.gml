@@ -222,7 +222,7 @@ function spawnEnemyBullet(_x, _y, _dir) {
 
     b.owner_id    = noone;
     b.damage      = 1;  // default damage
-}
+});}
 
 function spawnEnemyBulletDmg(_x, _y, _dir, _dmg) {
     var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
@@ -232,7 +232,7 @@ function spawnEnemyBulletDmg(_x, _y, _dir, _dmg) {
     b.owner_id    = noone;  // can damage local player
     b.damage      = _dmg;   // actual damage from shooter's weapon
 }
-});}
+
 
 
 #endregion

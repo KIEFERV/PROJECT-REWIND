@@ -82,6 +82,10 @@ if (show_GUI = true){
 	draw_healthbar(10, 700, 450, 750, (hitpoints/max_hp)* 100, c_maroon, c_red, c_green, 0, true, true);
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// REWIND ABILITY BAR
+// ════════════════════════════════════════════════════════════════════════════
+
 if (show_GUI = true){ //this is the rewind ability bar, probably a placeholder. cd is 6 secs.
 
 var p = 1 - (time_cd / time_cd_max);
@@ -96,7 +100,7 @@ var bar_height = 20;
 draw_set_color(c_gray);
 draw_rectangle(bar_x, bar_y, bar_x + bar_width, bar_y + bar_height, false);
 
-// Draw progress (lime, fills from left)
+// Draw progress (teal, fills from left)
 draw_set_color(#00FFE0);
 draw_rectangle(bar_x, bar_y, bar_x + (bar_width * p), bar_y + bar_height, false);
 draw_set_color(c_black);
@@ -108,6 +112,10 @@ draw_text(bar_x + (bar_width/4), bar_y-bar_height, time_phase);
 draw_set_color(c_white); // Reset color	
 draw_set_font(-1); //Reset font
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// TIMER
+// ════════════════════════════════════════════════════════════════════════════
 
 // Format as MM:SS
 var minutes = floor(time_remaining / 60);
