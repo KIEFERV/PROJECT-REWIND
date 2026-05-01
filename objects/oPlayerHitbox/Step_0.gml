@@ -354,9 +354,9 @@ if (keyboard_check_pressed(ord("Z")) && time_phase == "present"
 }
 
 if (time_phase == "past") {
-    oRewindParent.buffer_read_index = (oRewindParent.buffer_read_index + 1) mod oRewindParent.buffer_size;
-    oRewindParent.past_frames_elapsed++;
-    if (oRewindParent.past_frames_elapsed >= oRewindParent.past_duration) {
+    buffer_read_index = (buffer_read_index + 1) mod buffer_size;
+    past_frames_elapsed++;
+    if (past_frames_elapsed >= past_duration) {
         return_to_present();
     }
 }
