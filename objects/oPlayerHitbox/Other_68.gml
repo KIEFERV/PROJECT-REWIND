@@ -56,6 +56,7 @@ if (ptype == 1) {
     var ohp     = buffer_read(buf, buffer_u8);
     var oanim   = buffer_read(buf, buffer_u8);
     var ofacing = (buffer_read(buf, buffer_u8) / 255.0) * 360;
+	var otime_phase = buffer_read(buf, buffer_u8);
 
     // Don't update state for dead remote players
     if (ohp <= 0) exit;
@@ -71,6 +72,7 @@ if (ptype == 1) {
     entry[2] = ohp;
     entry[3] = oanim;
     entry[4] = ofacing;
+	entry[5] = otime_phase;
     exit;
 }
 

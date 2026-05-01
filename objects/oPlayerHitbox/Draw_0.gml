@@ -16,10 +16,11 @@ repeat (ds_map_size(other_players)) {
         var ohp     = entry[2];
         var oanim   = entry[3];
         var ofacing = entry[4];
+		var otime_phase = entry[5]; //player time phase
 
     
     // Check if the remote player exists and if states match
-    if (instance_exists(pid) && pid.time_phase == oPlayerHitbox.time_phase) {
+    if (instance_exists(pid) && otime_phase == oPlayerHitbox.time_phase) {
         // Only draw if alive
         if (ohp > 0) {
             draw_sprite_ext(sPlayerEnemyModel, oanim, ox, oy,
