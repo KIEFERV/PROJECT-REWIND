@@ -75,7 +75,7 @@ if (keyboard_check_pressed(vk_enter)) {
     global.port       = 0;
     room_goto(rm_loadout);
 }
-if (keyboard_check_pressed(ord("P"))) room_goto(rLobbyBrowser);
+if (keyboard_check_pressed(ord("P"))) room_goto(rServerBrowser);
 if (keyboard_check_pressed(ord("T"))) room_goto(rm_leaderboard);
 if (!logged_in && keyboard_check_pressed(ord("L"))) room_goto(rm_login);
 if (!logged_in && keyboard_check_pressed(ord("R"))) room_goto(rm_register);
