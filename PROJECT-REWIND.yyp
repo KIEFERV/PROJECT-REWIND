@@ -102,6 +102,7 @@
     {"id":{"name":"oLobbyBrowser","path":"objects/oLobbyBrowser/oLobbyBrowser.yy",},},
     {"id":{"name":"oMultiplayerController","path":"objects/oMultiplayerController/oMultiplayerController.yy",},},
     {"id":{"name":"oPlayerHitbox","path":"objects/oPlayerHitbox/oPlayerHitbox.yy",},},
+    {"id":{"name":"oRewindable","path":"objects/oRewindable/oRewindable.yy",},},
     {"id":{"name":"oRewindParent","path":"objects/oRewindParent/oRewindParent.yy",},},
     {"id":{"name":"oSpawnPoint","path":"objects/oSpawnPoint/oSpawnPoint.yy",},},
     {"id":{"name":"oTestPlayer","path":"objects/oTestPlayer/oTestPlayer.yy",},},

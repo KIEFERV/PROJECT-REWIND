@@ -16,7 +16,12 @@ repeat (ds_map_size(other_players)) {
         var ohp     = entry[2];
         var oanim   = entry[3];
         var ofacing = entry[4];
-
+		
+	ds_map_iterate_keys(other_players, function(key) {
+    var remote_player_id = other_players[? key]; // Get the instance ID from the map
+    
+    // Check if the remote player exists and if states match
+    if (instance_exists(remote_player_id) && remote_player_id.time_phase == oPlayerHitbox.time_phase) {
         // Only draw if alive
         if (ohp > 0) {
             draw_sprite_ext(sPlayerEnemyModel, oanim, ox, oy,
@@ -31,7 +36,9 @@ repeat (ds_map_size(other_players)) {
             draw_rectangle(ox - 16, oy - 28, ox - 16 + (32 * (ohp / max_hp)), oy - 22, false);
             draw_set_color(c_white);
         }
-    }
+    }});
+	}
+	
     pid = ds_map_find_next(other_players, pid);
 }
 
@@ -44,6 +51,7 @@ if (show_GUI = true) {
         draw_sprite_ext(sCrosshair, 0, mouse_x, mouse_y, 1, 1, 0, c_white, 1);
     }
 }
+
 
 // ── Knife swing cone flash ────────────────────────────────────────────────
 if (weapon_type == "melee" && knife_swing_timer > 0) {
@@ -74,4 +82,5 @@ if (weapon_type == "melee" && knife_swing_timer > 0) {
 
     draw_set_alpha(1);
     draw_set_color(c_white);
-}
+	
+	}

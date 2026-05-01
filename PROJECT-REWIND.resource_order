@@ -67,4 +67,6 @@
     {"name":"ts_Collision","order":2,"path":"tilesets/ts_Collision/ts_Collision.yy",},
     {"name":"ts_WallTest","order":1,"path":"tilesets/ts_WallTest/ts_WallTest.yy",},
   ],
+  "FolderOrderSettings":[],
+  "ResourceOrderSettings":[],
 }

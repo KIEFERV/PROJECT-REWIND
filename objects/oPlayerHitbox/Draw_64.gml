@@ -71,6 +71,7 @@ draw_set_halign(fa_left);
 var _dy = 40
 
 if(debug_menu = true){
+	draw_set_font(-1)
 	draw_text(50, _dy, "total velocity: " + string_format(velocity, 5, 3)); NEWLINE;
 	draw_text(50, _dy, "move_speed:     " + string_format(move_speed, 5, 3)); NEWLINE;
 	draw_text(50, _dy, "impulse_force:  " + string_format(point_distance(0, 0, impulse_force_x, impulse_force_y), 5, 3)); NEWLINE;
@@ -79,6 +80,33 @@ if(debug_menu = true){
 
 if (show_GUI = true){
 	draw_healthbar(10, 700, 450, 750, (hitpoints/max_hp)* 100, c_maroon, c_red, c_green, 0, true, true);
+}
+
+if (show_GUI = true){ //this is the rewind ability bar, probably a placeholder. cd is 6 secs.
+
+var p = 1 - (time_cd / time_cd_max);
+p = clamp(p, 0, 1); // Ensure within bounds
+
+var bar_x = 130;
+var bar_y = 670;
+var bar_width = 200;
+var bar_height = 20;
+
+// Draw background
+draw_set_color(c_gray);
+draw_rectangle(bar_x, bar_y, bar_x + bar_width, bar_y + bar_height, false);
+
+// Draw progress (lime, fills from left)
+draw_set_color(#00FFE0);
+draw_rectangle(bar_x, bar_y, bar_x + (bar_width * p), bar_y + bar_height, false);
+draw_set_color(c_black);
+draw_set_font(RewindBold);
+draw_text(bar_x + (bar_width/4), bar_y-1, "R  E  W  I  N  D");
+draw_set_color(#00FFE0);
+draw_set_font(RewindFancy);
+draw_text(bar_x + (bar_width/4), bar_y-bar_height, time_phase);
+draw_set_color(c_white); // Reset color	
+draw_set_font(-1); //Reset font
 }
 
 // Format as MM:SS

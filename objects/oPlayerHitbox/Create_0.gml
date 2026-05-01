@@ -110,6 +110,10 @@ can_sneak  = true;
 
 // Rewind set vars
 time_phase = "present";
+time_cd_max = 360;
+time_cd = 0;
+
+
 
 // Gun variables
 mag_size    = 30;
@@ -192,8 +196,9 @@ if (my_pid > 0) {
 #region Functions
 
 function spawnBullet(_x, _y, _dir, myID){
-    var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
-        b.owner_id = myID;
+	var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
+	b.time_phase = oPlayerHitbox.time_phase
+	b.owner_id = myID;
         b.direction = _dir;
         b.speed = bullet_speed;
         b.image_angle = b.direction;
@@ -201,10 +206,14 @@ function spawnBullet(_x, _y, _dir, myID){
 }
 
 function spawnEnemyBullet(_x, _y, _dir) {
+	ds_map_iterate_keys(other_players, function(key) {
+    var remote_player_id = other_players[? key]; // Get the instance ID from the map
     var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
     b.direction   = _dir;
+    b.time_phase  =  remote_player_id.time_phase
     b.speed       = 12;
     b.image_angle = b.direction;
+
     b.owner_id    = noone;
     b.damage      = 1;  // default damage
 }
@@ -217,6 +226,8 @@ function spawnEnemyBulletDmg(_x, _y, _dir, _dmg) {
     b.owner_id    = noone;  // can damage local player
     b.damage      = _dmg;   // actual damage from shooter's weapon
 }
+});}
+
 
 #endregion
 

@@ -30,4 +30,7 @@ if (other.hitpoints <= 0) {
 
 instance_destroy();
 
-
+if (oPlayerHitbox.dead_state = false && owner_id != oPlayerHitbox.id && oBullet.time_phase == oPlayerHitbox.time_phase){
+	oPlayerHitbox.hitpoints -= 10;
+	instance_destroy(self);
+}

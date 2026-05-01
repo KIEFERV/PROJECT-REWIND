@@ -338,7 +338,11 @@ if (net_send_timer >= game_get_speed(gamespeed_fps) / 20) {
 #endregion
 
 #region Time rewind
-if (keyboard_check_pressed(ord("Z")) && time_phase == "present") {
+if (time_phase == "present" && time_cd > 0){
+	time_cd--;
+}
+
+if (keyboard_check_pressed(ord("Z")) && time_phase == "present" && time_cd <= 0) {
     if (!rewind_active) {
         plr_travel_start();
     }
