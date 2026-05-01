@@ -47,6 +47,12 @@ for (var i = 0; i < array_length(menu_buttons); i++) {
         if (mouse_check_button_pressed(mb_left) && !disabled) {
             switch (btn.action) {
                 case "room":
+                    // Reset socket if going to practice (loadout)
+                    if (btn.target == rm_loadout) {
+                        global.socket     = -1;
+                        global.ip_address = "";
+                        global.port       = 0;
+                    }
                     room_goto(btn.target);
                 break;
                 case "logout":
@@ -62,8 +68,14 @@ for (var i = 0; i < array_length(menu_buttons); i++) {
 }
 
 // Keyboard shortcuts
-if (keyboard_check_pressed(vk_enter)) room_goto(rm_loadout);
-if (keyboard_check_pressed(ord("P"))) room_goto(rLobbyBrowser);
+if (keyboard_check_pressed(vk_enter)) {
+    // Practice Room — reset socket so loadout knows it's solo
+    global.socket     = -1;
+    global.ip_address = "";
+    global.port       = 0;
+    room_goto(rm_loadout);
+}
+if (keyboard_check_pressed(ord("P"))) room_goto(rServerBrowser);
 if (keyboard_check_pressed(ord("T"))) room_goto(rm_leaderboard);
 if (!logged_in && keyboard_check_pressed(ord("L"))) room_goto(rm_login);
 if (!logged_in && keyboard_check_pressed(ord("R"))) room_goto(rm_register);

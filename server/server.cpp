@@ -1393,6 +1393,14 @@ int main(int argc, char* argv[]) {
 
             // 14 loadout ready — player locked their loadout
             if (type == PKT_LOADOUT_READY) {
+                std::cout << "Type-14 from: " << key
+                          << " known=" << (players.count(key) ? "yes" : "NO") << "\n";
+                if (!players.count(key)) {
+                    std::cout << "Known players:\n";
+                    for (auto& pr : players)
+                        std::cout << "  " << pr.first << " pid=" << pr.second.pid << "\n";
+                }
+                if (players.count(key)) {
                 uint16_t pid = players[key].pid;
                 readyPlayers.insert(pid);
                 std::cout << "Loadout ready: pid=" << pid
@@ -1408,6 +1416,7 @@ int main(int argc, char* argv[]) {
                     roundNumber = 1;
                     std::cout << "All players ready — starting countdown!\n";
                     start_countdown(gameSock);
+                }
                 }
             }
 

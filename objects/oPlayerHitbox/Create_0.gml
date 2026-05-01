@@ -123,7 +123,7 @@ reload_time  = 45;
 reload_timer = 0.5;
 reloading    = false;
 
-max_hp = 30;
+max_hp = 100;
 facing = 0;
 
 // Networking
@@ -132,11 +132,17 @@ is_host        = false;
 net_send_timer = 0;
 
 // Round / match state
-global.match_phase       = "countdown";  // countdown | playing | winner
-global.countdown_value   = 3;
+// In practice mode (no socket) skip countdown and go straight to playing
+if (global.socket >= 0 && global.ip_address != "") {
+    global.match_phase     = "countdown";
+    global.countdown_value = 3;
+} else {
+    global.match_phase     = "playing";  // practice — no countdown needed
+    global.countdown_value = 0;
+}
 global.player_alive      = true;
 global.round_number      = 1;
-global.scores            = array_create(10, 0);  // indexed by pid
+global.scores            = array_create(10, 0);
 global.match_winner_pid  = 0;
 global.match_winner_name = "";
 
