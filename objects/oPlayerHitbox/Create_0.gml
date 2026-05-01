@@ -6,17 +6,15 @@ show_GUI   = true; // Show HUD/GUI elements
 //--Player Stats
 //Movement
 base_move_speed_max = 8;
-base_move_accel = 2;
-base_move_decel = 0.8;
-player_look_dir = 0;
-sprinting = false;
-sneaking = false;
-can_sprint = true;
-can_sneak = true;
-//Health Variables
-max_hp = hitpoints;
+base_move_accel     = 2;
+base_move_decel     = 0.8;
+player_look_dir     = 0;
+sprinting           = false;
+sneaking            = false;
+can_sprint          = true;
+can_sneak           = true;
 
-// ── Weapon definitions ────────────────────────────────────────────────────────
+// ── Weapon definitions ────────────────────────────────────────────────────
 weapon_defs = ds_map_create();
 
 var _ar  = ds_map_create();
@@ -29,7 +27,7 @@ ds_map_add(weapon_defs, "assault_rifle", _ar);
 var _sg  = ds_map_create();
 ds_map_add(_sg,  "mag_size",    5);   ds_map_add(_sg,  "max_reserve", 20);
 ds_map_add(_sg,  "fire_delay",  25);  ds_map_add(_sg,  "bullet_speed", 12);
-ds_map_add(_sg,  "damage",      1); ds_map_add(_sg,  "reload_time",  120);
+ds_map_add(_sg,  "damage",      1);   ds_map_add(_sg,  "reload_time",  120);
 ds_map_add(_sg,  "type", "shotgun");
 ds_map_add(weapon_defs, "shotgun", _sg);
 
@@ -61,7 +59,7 @@ ds_map_add(_kn,  "damage",      1);   ds_map_add(_kn,  "reload_time",  0);
 ds_map_add(_kn,  "type", "melee");
 ds_map_add(weapon_defs, "knife", _kn);
 
-// ── Slots ─────────────────────────────────────────────────────────────────────
+// ── Slots ─────────────────────────────────────────────────────────────────
 if (!variable_global_exists("primary_weapon"))   global.primary_weapon   = "assault_rifle";
 if (!variable_global_exists("secondary_weapon")) global.secondary_weapon = "pistol";
 
@@ -69,7 +67,7 @@ primary_name   = global.primary_weapon;
 secondary_name = global.secondary_weapon;
 active_slot    = 1;
 
-// ── Per-slot ammo ─────────────────────────────────────────────────────────────
+// ── Per-slot ammo ─────────────────────────────────────────────────────────
 var _pdef = weapon_defs[? primary_name];
 primary_ammo_mag     = _pdef[? "mag_size"];
 primary_ammo_reserve = _pdef[? "max_reserve"];
@@ -82,14 +80,14 @@ secondary_ammo_reserve = (secondary_name == "knife") ? 0 : _sdef[? "max_reserve"
 secondary_reloading    = false;
 secondary_reload_timer = 0;
 
-// ── Burst / knife state ───────────────────────────────────────────────────────
+// ── Burst / knife state ───────────────────────────────────────────────────
 burst_shots_left  = 0;
 burst_fire_timer  = 0;
 knife_swing_timer = 0;
 knife_range       = 75;
 knife_arc         = 90;
 
-// ── Active weapon convenience vars ────────────────────────────────────────────
+// ── Active weapon convenience vars ────────────────────────────────────────
 var _adef     = weapon_defs[? primary_name];
 mag_size      = _adef[? "mag_size"];
 ammo_in_mag   = primary_ammo_mag;
@@ -103,12 +101,12 @@ shoot_timer   = 0;
 bullet_speed  = _adef[? "bullet_speed"];
 bullet_damage = _adef[? "damage"];
 
-sprinting = false;
-sneaking  = false;
-can_sprint = true;
-can_sneak  = true;
+// ── Health ────────────────────────────────────────────────────────────────
+max_hp    = 30;
+hitpoints = max_hp;
+facing    = 0;
 
-// Rewind set vars
+// ── Rewind vars ───────────────────────────────────────────────────────────
 time_phase          = "present";
 time_cd_max         = 360;
 time_cd             = 0;
@@ -116,31 +114,17 @@ past_frames_elapsed = 0;
 past_duration       = 0;
 rewind_active       = false;
 
-
-
-// Gun variables
-mag_size    = 30;
-ammo_in_mag = mag_size;
-ammo_reserve = 120;
-reload_time  = 45;
-reload_timer = 0.5;
-reloading    = false;
-
-max_hp = 30;
-facing = 0;
-
-// Networking
+// ── Networking ────────────────────────────────────────────────────────────
 time_remaining = 180;
 is_host        = false;
 net_send_timer = 0;
 
 // Round / match state
-// In practice mode (no socket) skip countdown and go straight to playing
 if (global.socket >= 0 && global.ip_address != "") {
     global.match_phase     = "countdown";
     global.countdown_value = 3;
 } else {
-    global.match_phase     = "playing";  // practice — no countdown needed
+    global.match_phase     = "playing";
     global.countdown_value = 0;
 }
 global.player_alive      = true;
@@ -163,18 +147,16 @@ if (global.socket == -1) {
 socket = global.socket;
 my_pid = global.my_pid;
 
-// Tell server we've entered the game room — server resends countdown state
+// Tell server we've entered the game room
 if (global.socket >= 0 && global.ip_address != "") {
     var _abuf = buffer_create(1, buffer_fixed, 1);
-    buffer_write(_abuf, buffer_u8, 20);  // PKT_PLAYER_ALIVE
+    buffer_write(_abuf, buffer_u8, 20);
     network_send_udp_raw(global.socket, global.ip_address, global.port, _abuf, 1);
     buffer_delete(_abuf);
     show_debug_message("Sent PKT_PLAYER_ALIVE to server");
 }
 
-// ── Spawn at position matching our pid ───────────────────────────────────
-// global.my_pid is set in oLobby when the server assigns a pid.
-// oSpawnPoint instances in the room are used as spawn positions.
+// ── Spawn at pid-matched spawn point ─────────────────────────────────────
 if (my_pid > 0) {
     var _spawn_count = instance_number(oSpawnPoint);
     if (_spawn_count > 0) {
@@ -191,7 +173,6 @@ if (my_pid > 0) {
             _i++;
         }
     } else {
-        // No spawn points — spread players in a circle around room centre
         var _angle  = ((my_pid - 1) / 4.0) * 360;
         var _radius = 400;
         x = room_width  / 2 + lengthdir_x(_radius, _angle);
@@ -204,14 +185,14 @@ if (my_pid > 0) {
 
 #region Functions
 
-function spawnBullet(_x, _y, _dir, myID){
-	var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
-	b.time_phase = oPlayerHitbox.time_phase
-	b.owner_id = myID;
-        b.direction = _dir;
-        b.speed = bullet_speed;
-        b.image_angle = b.direction;
-        b.damage = bullet_damage;
+function spawnBullet(_x, _y, _dir, myID) {
+    var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
+    b.time_phase  = oPlayerHitbox.time_phase;
+    b.owner_id    = myID;
+    b.direction   = _dir;
+    b.speed       = bullet_speed;
+    b.image_angle = b.direction;
+    b.damage      = bullet_damage;
 }
 
 function spawnEnemyBullet(_x, _y, _dir) {
@@ -223,17 +204,15 @@ function spawnEnemyBullet(_x, _y, _dir) {
     b.damage      = 1;
 }
 
-function spawnEnemyBulletDmg(_x, _y, _dir, _dmg, otime_phase) {
+function spawnEnemyBulletDmg(_x, _y, _dir, _dmg, _otime_phase) {
     var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
-	b.time_phase = otime_phase;
+    b.time_phase  = _otime_phase;
     b.direction   = _dir;
     b.speed       = 12;
     b.image_angle = b.direction;
-    b.owner_id    = noone;  // can damage local player
-    b.damage      = _dmg;   // actual damage from shooter's weapon
+    b.owner_id    = noone;
+    b.damage      = _dmg;
 }
-
-
 
 #endregion
 
