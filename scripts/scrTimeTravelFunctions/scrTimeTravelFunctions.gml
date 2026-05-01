@@ -58,10 +58,6 @@ function plr_travel_start() {
     visible        = true;
     image_alpha    = 0.5;
 
-    // Immediately mark oPlayerHitbox as past so state packets reflect it
-    if (instance_exists(oPlayerHitbox)) {
-        oPlayerHitbox.time_phase = "past";
-    }
 
     // Spawn ghost at current position
     ghostX    = x;
@@ -70,7 +66,7 @@ function plr_travel_start() {
 }
 
 function return_to_present() {
-    if (time_phase == "past") {  // == not = 
+    if (time_phase == "past") {  
         show_debug_message("return_to_present called");
 
         // Teleport back to where ghost is
@@ -122,7 +118,7 @@ function rewindable_playback() {
                     ghost.is_ghost   = true; //testing to see if rewind bullet damaging is worth trying out.
                     ghost.bullet_id  = state.bullet_id;
                     ghost.speed      = 0;
-                    //ghost.damage     = 0;        // ghost bullets deal no damage
+                    //ghost.damage     = 0;        // ghost bullets deal no damage --changed this because i wanted to try out ghost bullets doing dmg to past players
                 }
             break;
         }
