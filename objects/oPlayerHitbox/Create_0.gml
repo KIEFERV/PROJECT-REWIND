@@ -22,20 +22,20 @@ weapon_defs = ds_map_create();
 var _ar  = ds_map_create();
 ds_map_add(_ar,  "mag_size",    30);  ds_map_add(_ar,  "max_reserve", 120);
 ds_map_add(_ar,  "fire_delay",  8);   ds_map_add(_ar,  "bullet_speed", 14);
-ds_map_add(_ar,  "damage",      1);   ds_map_add(_ar,  "reload_time",  90);
+ds_map_add(_ar,  "damage",      2);   ds_map_add(_ar,  "reload_time",  90);
 ds_map_add(_ar,  "type", "auto");
 ds_map_add(weapon_defs, "assault_rifle", _ar);
 
 var _sg  = ds_map_create();
 ds_map_add(_sg,  "mag_size",    5);   ds_map_add(_sg,  "max_reserve", 20);
 ds_map_add(_sg,  "fire_delay",  25);  ds_map_add(_sg,  "bullet_speed", 12);
-ds_map_add(_sg,  "damage",      0.5); ds_map_add(_sg,  "reload_time",  120);
+ds_map_add(_sg,  "damage",      1); ds_map_add(_sg,  "reload_time",  120);
 ds_map_add(_sg,  "type", "shotgun");
 ds_map_add(weapon_defs, "shotgun", _sg);
 
 var _smg = ds_map_create();
 ds_map_add(_smg, "mag_size",    24);  ds_map_add(_smg, "max_reserve", 96);
-ds_map_add(_smg, "fire_delay",  5);   ds_map_add(_smg, "bullet_speed", 13);
+ds_map_add(_smg, "fire_delay",  2);   ds_map_add(_smg, "bullet_speed", 13);
 ds_map_add(_smg, "damage",      1);   ds_map_add(_smg, "reload_time",  70);
 ds_map_add(_smg, "type", "burst");
 ds_map_add(weapon_defs, "smg", _smg);
