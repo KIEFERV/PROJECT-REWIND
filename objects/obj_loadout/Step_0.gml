@@ -1,3 +1,5 @@
+show_debug_message("Sending type-14 to " + string(global.ip_address) + ":" + string(global.port) + " socket=" + string(global.socket));
+show_debug_message("ENTER pressed in loadout. locked_in=" + string(locked_in) + " socket=" + string(global.socket));
 var gui_w = display_get_gui_width();
 var gui_h = display_get_gui_height();
 
