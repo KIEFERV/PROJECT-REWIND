@@ -59,14 +59,14 @@ if (ptype == 1) {
 
     // Guard — only read time_phase if packet is long enough (updated client)
     var _remaining  = buffer_get_size(buf) - buffer_tell(buf);
-    var otime_phase = (_remaining >= 1) ? buffer_read(buf, buffer_u8) : 0; // 0 = present
+    var otime_phase = buffer_read(buf, buffer_string);
 
     // Don't update state for dead remote players
     if (ohp <= 0) exit;
 
     var entry = ds_map_find_value(other_players, pid);
     if (is_undefined(entry)) {
-        entry = array_create(5);
+        entry = array_create(6);
         ds_map_add(other_players, pid, entry);
         show_debug_message("New other player: " + string(pid));
     }
@@ -90,6 +90,7 @@ if (ptype == 4) {
     var _remaining = buffer_get_size(buf) - buffer_tell(buf);
     var bwtype  = (_remaining >= 1) ? buffer_read(buf, buffer_u8)  : 0;
     var bdamage = (_remaining >= 5) ? buffer_read(buf, buffer_f32) : 10;
+	var otime_phase = buffer_read(buf, buffer_string);
 
     if (shooter_pid != my_pid) {
         switch (bwtype) {
@@ -98,14 +99,14 @@ if (ptype == 4) {
                 var _pellets = 5;
                 for (var _p = 0; _p < _pellets; _p++) {
                     var _offset = (_p / (_pellets - 1) - 0.5) * _spread;
-                    spawnEnemyBulletDmg(bx, by, bdir + _offset, bdamage);
+                    spawnEnemyBulletDmg(bx, by, bdir + _offset, bdamage, otime_phase);
                 }
                 break;
             case 4: // knife hit — apply damage directly, no bullet
                 hitpoints -= bdamage;
                 break;
             default: // auto, burst, sniper
-                spawnEnemyBulletDmg(bx, by, bdir, bdamage);
+                spawnEnemyBulletDmg(bx, by, bdir, bdamage,otime_phase);
                 break;
         }
     }

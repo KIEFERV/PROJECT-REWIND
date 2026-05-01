@@ -9,8 +9,8 @@ if (other.id == owner_id) exit;
 // ── Skip if already dead ─────────────────────────────────────────────────
 if (other.dead_state) exit;
 
-// ── Ghost bullets don't deal damage ──────────────────────────────────────
-if (is_ghost) exit;
+// ── Ghost bullets only hurt players in the past ──────────────────────────────────────
+if (other.time_phase == "present" && is_ghost) exit;
 
 other.hitpoints -= damage;
 

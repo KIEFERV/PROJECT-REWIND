@@ -16,11 +16,10 @@ repeat (ds_map_size(other_players)) {
         var ohp     = entry[2];
         var oanim   = entry[3];
         var ofacing = entry[4];
-        var otime_phase = (array_length(entry) > 5) ? entry[5] : 0; // 0=present 1=past
-        var otime_str   = (otime_phase == 1) ? "past" : "present";
+        var otime_phase = entry[5];
 
     // Only draw if alive and in the same time phase
-    if (ohp > 0 && otime_str == oPlayerHitbox.time_phase) {
+    if (ohp > 0 && otime_phase == oPlayerHitbox.time_phase) {
             draw_sprite_ext(sPlayerEnemyModel, oanim, ox, oy,
                     1, 1,
                     ofacing,

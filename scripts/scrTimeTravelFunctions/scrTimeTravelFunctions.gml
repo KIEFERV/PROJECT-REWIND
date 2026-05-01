@@ -119,10 +119,10 @@ function rewindable_playback() {
                     var ghost = instance_create_layer(state.x, state.y, "layer_instances", oBullet);
                     ghost.time_phase = "past";   // always past — won't hit present players
                     ghost.owner_id   = oPlayerHitbox.id;
-                    ghost.is_ghost   = true;
+                    ghost.is_ghost   = true; //testing to see if rewind bullet damaging is worth trying out.
                     ghost.bullet_id  = state.bullet_id;
                     ghost.speed      = 0;
-                    ghost.damage     = 0;        // ghost bullets deal no damage
+                    //ghost.damage     = 0;        // ghost bullets deal no damage
                 }
             break;
         }

@@ -223,8 +223,9 @@ function spawnEnemyBullet(_x, _y, _dir) {
     b.damage      = 1;
 }
 
-function spawnEnemyBulletDmg(_x, _y, _dir, _dmg) {
+function spawnEnemyBulletDmg(_x, _y, _dir, _dmg, otime_phase) {
     var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
+	b.time_phase = otime_phase;
     b.direction   = _dir;
     b.speed       = 12;
     b.image_angle = b.direction;
