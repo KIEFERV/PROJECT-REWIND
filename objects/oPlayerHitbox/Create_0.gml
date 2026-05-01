@@ -109,9 +109,12 @@ can_sprint = true;
 can_sneak  = true;
 
 // Rewind set vars
-time_phase = "present";
-time_cd_max = 360;
-time_cd = 0;
+time_phase          = "present";
+time_cd_max         = 360;
+time_cd             = 0;
+past_frames_elapsed = 0;
+past_duration       = 0;
+rewind_active       = false;
 
 
 

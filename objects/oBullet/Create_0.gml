@@ -12,4 +12,14 @@ if (!variable_global_exists("bullet_id_counter")) global.bullet_id_counter = 0;
 global.bullet_id_counter++;
 bullet_id = global.bullet_id_counter;
 
-event_inherited();
+event_inherited();  // sets up rewind_get_state as empty — we override below
+
+// Override rewind state capture with bullet-specific function
+rewind_get_state = function(idx) {
+    bullet_rewind_buffer(idx);
+};  // calls oRewindable Create — sets up rewind base
+
+// Override rewind state capture with bullet-specific implementation
+rewind_get_state = function(idx) {
+    bullet_rewind_buffer(idx);
+};
