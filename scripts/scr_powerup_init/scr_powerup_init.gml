@@ -1,6 +1,12 @@
 function scr_powerup_init(){
 var _player = argument0;
 
+if (variable_instance_exists(_player, "powerups")) {
+    if (ds_exists(_player.powerups, ds_type_map)) {
+        ds_map_destroy(_player.powerups);
+    }
+}
+
 _player.powerups = ds_map_create();
 
 // base stats

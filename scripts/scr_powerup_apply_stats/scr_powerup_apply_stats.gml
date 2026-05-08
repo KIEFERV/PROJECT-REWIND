@@ -9,6 +9,8 @@ _player.can_place_cover = false;
 _player.can_gravity_shot = false;
 _player.max_cover_count = 0;
 
+if (!variable_instance_exists(_player, "powerups")) return;
+
 var _keys = ds_map_keys_to_array(_player.powerups);
 
 for (var i = 0; i < array_length(_keys); i++) {

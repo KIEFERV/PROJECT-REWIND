@@ -1,3 +1,20 @@
+#region Powerups
+
+
+scr_powerup_update(self);
+
+if (ds_map_exists(powerups, global.POWER_MOVE_SPEED)) {
+    // scr_powerup_apply_stats already adjusted move_speed
+}
+fireRate = fire_delay;
+
+if (shoot_timer > 0) shoot_timer--;
+if (cover_cooldown > 0) cover_cooldown--;
+
+
+#endregion
+
+
 ///@description Player Logic
 if (!instance_exists(oPlayerHitbox)) exit;
 
@@ -129,6 +146,10 @@ move_decel = (base_move_decel
 
 #region Shooting
 
+//EULA
+if (keyboard_check_pressed(vk_escape)) {
+    room_goto(rm_menu);
+}
 // ── Weapon switching ──────────────────────────────────────────────────────────
 var _prev_slot = active_slot;
 if (keyboard_check_pressed(ord("1"))) active_slot = 1;
@@ -172,6 +193,8 @@ if (active_slot != _prev_slot) {
     knife_swing_timer = 0;
     shoot_timer       = 0;
 }
+
+
 
 // ── Shoot timer tick ──────────────────────────────────────────────────────────
 if (shoot_timer > 0) shoot_timer--;
@@ -287,6 +310,21 @@ if (reloading) {
         ammo_in_mag  += _loaded;
         ammo_reserve -= _loaded;
         reloading = false;
+    }
+}
+
+#endregion
+
+#region Cover Placement
+
+if (keyboard_check_pressed(vk_space) && can_place_cover && cover_cooldown <= 0) {
+    var cover_spawn_x = x + lengthdir_x(48, player_look_dir);
+    var cover_spawn_y = y + lengthdir_y(48, player_look_dir);
+
+    if (!place_meeting(cover_spawn_x, cover_spawn_y, oWall)) {
+        var cover_inst = instance_create_layer(cover_spawn_x, cover_spawn_y, "layer_instances", obj_cover_powerup);
+        cover_inst.owner = id;
+        cover_cooldown = room_speed div 2;
     }
 }
 

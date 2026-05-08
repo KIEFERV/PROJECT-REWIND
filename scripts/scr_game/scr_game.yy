@@ -6,7 +6,7 @@
   "name":"scr_game",
   "parent":{
     "name":"scr_scripts",
-    "path":"folders/Scripts/Rewind Scripts/scr_scripts.yy",
+    "path":"folders/Scripts/Libraries/scr_scripts.yy",
   },
   "resourceType":"GMScript",
   "resourceVersion":"2.0",

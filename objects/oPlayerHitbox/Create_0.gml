@@ -14,6 +14,13 @@ sneaking            = false;
 can_sprint          = true;
 can_sneak           = true;
 
+// ---------- Globals safety ----------
+if (!variable_global_exists("POWER_FIRE_RATE")) global.POWER_FIRE_RATE = "fire_rate";
+if (!variable_global_exists("POWER_MOVE_SPEED")) global.POWER_MOVE_SPEED = "move_speed";
+if (!variable_global_exists("POWER_RICOCHET")) global.POWER_RICOCHET = "ricochet";
+if (!variable_global_exists("POWER_COVER")) global.POWER_COVER = "cover";
+if (!variable_global_exists("POWER_GRAVITY_SHOT")) global.POWER_GRAVITY_SHOT = "gravity_shot";
+
 // ── Weapon definitions ────────────────────────────────────────────────────
 weapon_defs = ds_map_create();
 
@@ -189,10 +196,17 @@ function spawnBullet(_x, _y, _dir, myID) {
     var b = instance_create_layer(_x, _y, "layer_instances", oBullet);
     b.time_phase  = oPlayerHitbox.time_phase;
     b.owner_id    = myID;
+	b.owner = id;
     b.direction   = _dir;
     b.speed       = bullet_speed;
     b.image_angle = b.direction;
     b.damage      = bullet_damage;
+	b.can_ricochet = can_ricochet;
+    b.ricochet_count = can_ricochet ? 2 : 0;
+    b.is_gravity_shot = can_gravity_shot;
+    b.gravity_radius = can_gravity_shot ? 140 : 0;
+    b.gravity_duration = can_gravity_shot ? room_speed * 2 : 0;
+    b.gravity_pull = can_gravity_shot ? 1.1 : 0;
 }
 
 function spawnEnemyBullet(_x, _y, _dir) {
@@ -213,6 +227,21 @@ function spawnEnemyBulletDmg(_x, _y, _dir, _dmg, _otime_phase) {
     b.owner_id    = noone;
     b.damage      = _dmg;
 }
+// Make powerup base speed match your movement system
+
+scr_powerup_init(self);
+
+base_move_speed = base_move_speed_max;
+move_speed = base_move_speed;
+base_fire_delay = 15;
+fire_delay = base_fire_delay;
+fireRate = fire_delay;
+shoot_timer = 0;
+cover_cooldown = 0;
+can_ricochet = false;
+can_place_cover = false;
+can_gravity_shot = false;
+max_cover_count = 0;
 
 #endregion
 
