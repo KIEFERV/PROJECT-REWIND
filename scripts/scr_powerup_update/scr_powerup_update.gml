@@ -1,6 +1,11 @@
 function scr_powerup_update(){
 var _player = argument0;
 
+if (!variable_instance_exists(_player, "powerups")) {
+    scr_powerup_init(_player);
+    return;
+}
+
 var _keys = ds_map_keys_to_array(_player.powerups);
 var _changed = false;
 

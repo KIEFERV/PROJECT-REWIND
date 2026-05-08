@@ -4,6 +4,10 @@ var _power_name = argument1;
 var _duration = argument2;
 var _magnitude = argument3;
 
+if (!variable_instance_exists(_player, "powerups")) {
+    scr_powerup_init(_player);
+}
+
 var _expire_time = current_time + (_duration * (1000 / room_speed));
 
 
