@@ -57,12 +57,16 @@ if (ptype == 1) {
     var oanim   = buffer_read(buf, buffer_u8);
     var ofacing = (buffer_read(buf, buffer_u8) / 255.0) * 360;
 
+    // Guard — only read time_phase if packet is long enough
+    var _remaining  = buffer_get_size(buf) - buffer_tell(buf);
+    var otime_phase = (_remaining > 1) ? buffer_read(buf, buffer_string) : "present";
+
     // Don't update state for dead remote players
     if (ohp <= 0) exit;
 
     var entry = ds_map_find_value(other_players, pid);
     if (is_undefined(entry)) {
-        entry = array_create(5);
+        entry = array_create(6);
         ds_map_add(other_players, pid, entry);
         show_debug_message("New other player: " + string(pid));
     }
@@ -71,6 +75,7 @@ if (ptype == 1) {
     entry[2] = ohp;
     entry[3] = oanim;
     entry[4] = ofacing;
+	entry[5] = otime_phase;
     exit;
 }
 
@@ -80,8 +85,13 @@ if (ptype == 4) {
     var bx          = buffer_read(buf, buffer_f32);
     var by          = buffer_read(buf, buffer_f32);
     var bdir        = (buffer_read(buf, buffer_u8) / 255.0) * 360;
-    var bwtype      = buffer_read(buf, buffer_u8);   // 0=auto 1=shotgun 2=burst 3=sniper 4=melee(hit)
-    var bdamage     = buffer_read(buf, buffer_f32);  // damage value from shooter
+
+    // Guard — only read wtype/damage if packet is long enough
+    var _remaining = buffer_get_size(buf) - buffer_tell(buf);
+    var bwtype  = (_remaining >= 1) ? buffer_read(buf, buffer_u8)  : 0;
+    var bdamage = (_remaining >= 5) ? buffer_read(buf, buffer_f32) : 10;
+    var _rem2 = buffer_get_size(buf) - buffer_tell(buf);
+    var otime_phase = (_rem2 > 1) ? buffer_read(buf, buffer_string) : "present";
 
     if (shooter_pid != my_pid) {
         switch (bwtype) {
@@ -90,14 +100,14 @@ if (ptype == 4) {
                 var _pellets = 5;
                 for (var _p = 0; _p < _pellets; _p++) {
                     var _offset = (_p / (_pellets - 1) - 0.5) * _spread;
-                    spawnEnemyBulletDmg(bx, by, bdir + _offset, bdamage);
+                    spawnEnemyBulletDmg(bx, by, bdir + _offset, bdamage, otime_phase);
                 }
                 break;
             case 4: // knife hit — apply damage directly, no bullet
                 hitpoints -= bdamage;
                 break;
             default: // auto, burst, sniper
-                spawnEnemyBulletDmg(bx, by, bdir, bdamage);
+                spawnEnemyBulletDmg(bx, by, bdir, bdamage,otime_phase);
                 break;
         }
     }
@@ -162,8 +172,23 @@ if (ptype == 18) {
             y = room_height / 2 + lengthdir_y(400, _angle);
         }
 
+        // Reset ammo for new round
+        var _wname = (active_slot == 1) ? primary_name : secondary_name;
+        var _wdef  = weapon_defs[? _wname];
+        primary_ammo_mag       = weapon_defs[? primary_name][? "mag_size"];
+        primary_ammo_reserve   = weapon_defs[? primary_name][? "max_reserve"];
+        primary_reloading      = false;
+        primary_reload_timer   = 0;
+        secondary_ammo_mag     = (secondary_name == "knife") ? 0 : weapon_defs[? secondary_name][? "mag_size"];
+        secondary_ammo_reserve = (secondary_name == "knife") ? 0 : weapon_defs[? secondary_name][? "max_reserve"];
+        secondary_reloading    = false;
+        secondary_reload_timer = 0;
+        ammo_in_mag   = (active_slot == 1) ? primary_ammo_mag   : secondary_ammo_mag;
+        ammo_reserve  = (active_slot == 1) ? primary_ammo_reserve : secondary_ammo_reserve;
+        reloading     = false;
+        reload_timer  = 0;
+
         // Re-add all other players to other_players so they're visible again
-        // (they were removed when they died — clear and wait for state packets)
         ds_map_clear(other_players);
 
         show_debug_message("Round GO — respawned pid=" + string(my_pid));
@@ -216,5 +241,13 @@ if (ptype == 3) {
     var left_pid = buffer_read(buf, buffer_u16);
     ds_map_delete(other_players, left_pid);
     show_debug_message("Player left: pid=" + string(left_pid));
+
+    // If host left during match, everyone returns to menu
+    if (left_pid == 1 && my_pid != 1) {
+        show_debug_message("Host left match — returning to menu.");
+        global.match_phase = "countdown"; // reset for next session
+        global.socket      = -1;
+        room_goto(rm_menu);
+    }
     exit;
 }

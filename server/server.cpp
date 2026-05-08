@@ -1,100 +1,3 @@
-/*
- * server.cpp  —  Merged game + lobby server  v4
- *
- * Single executable. Handles all game traffic AND the lobby browser.
- * Writes lobby/match/stats data to Supabase (hosted PostgreSQL).
- * Replaces both server.exe and lobby_db_server.exe.
- *
- * ─── USAGE ───────────────────────────────────────────────────────────────────
- *
- *   server.exe <lobby_name> <public_ip> [password_hash]
- *
- *   lobby_name     Human-readable lobby name (quote if it contains spaces)
- *   public_ip      This machine's public IP that clients will connect to
- *   password_hash  (optional) djb2 hex hash of lobby password
- *
- *   Example (public):   server.exe "My Lobby" 203.0.113.10
- *   Example (private):  server.exe "Secret"   203.0.113.10 a3f1c9b2
- *
- * ─── PORTS ───────────────────────────────────────────────────────────────────
- *   7777  Game traffic  (player state, bullets, match control)
- *   8888  Lobby traffic (list requests, join requests from clients)
- *         Both ports on the same machine. Clients connect to public_ip.
- *
- * ─── SUPABASE SETUP ──────────────────────────────────────────────────────────
- *   1. Create a free project at https://supabase.com
- *   2. In the SQL editor, run the schema at the bottom of this file
- *   3. Go to Settings -> API and copy:
- *        Project URL  -> set SUPABASE_URL below
- *        anon/public key -> set SUPABASE_KEY below
- *
- * ─── BUILD ───────────────────────────────────────────────────────────────────
- *   Compile natively on Linux (the Droplet):
- *
- *   apt install -y g++ libcurl4-openssl-dev
- *   g++ server.cpp -o server -lcurl
- *
- * ─── SUPABASE SCHEMA (run once in Supabase SQL editor) ───────────────────────
- *
- *   CREATE TABLE lobbies (
- *     id              BIGSERIAL PRIMARY KEY,
- *     lobby_name      TEXT NOT NULL,
- *     host_ip         TEXT NOT NULL,
- *     host_port       INTEGER NOT NULL,
- *     max_players     INTEGER NOT NULL,
- *     current_players INTEGER NOT NULL DEFAULT 0,
- *     password_hash   TEXT DEFAULT NULL,
- *     is_active       BOOLEAN NOT NULL DEFAULT FALSE,
- *     match_id        BIGINT DEFAULT NULL,
- *     created_at      TIMESTAMPTZ DEFAULT NOW()
- *   );
- *
- *   CREATE TABLE matches (
- *     id          BIGSERIAL PRIMARY KEY,
- *     lobby_id    BIGINT NOT NULL,
- *     started_at  TIMESTAMPTZ DEFAULT NOW(),
- *     ended_at    TIMESTAMPTZ DEFAULT NULL
- *   );
- *
- *   CREATE TABLE players (
- *     id           BIGSERIAL PRIMARY KEY,
- *     pid          INTEGER NOT NULL,
- *     display_name TEXT NOT NULL DEFAULT 'Player',
- *     created_at   TIMESTAMPTZ DEFAULT NOW()
- *   );
- *
- *   CREATE TABLE match_players (
- *     id         BIGSERIAL PRIMARY KEY,
- *     match_id   BIGINT NOT NULL REFERENCES matches(id),
- *     player_id  BIGINT NOT NULL REFERENCES players(id),
- *     pid        INTEGER NOT NULL,
- *     kills      INTEGER NOT NULL DEFAULT 0,
- *     deaths     INTEGER NOT NULL DEFAULT 0
- *   );
- *
- *   -- Cumulative player stats linked to Supabase Auth
- *   CREATE TABLE profiles (
- *     user_id  UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
- *     username TEXT NOT NULL,
- *     wins     INTEGER NOT NULL DEFAULT 0,
- *     kills    INTEGER NOT NULL DEFAULT 0,
- *     deaths   INTEGER NOT NULL DEFAULT 0
- *   );
- *
- *   -- RPC to atomically increment stats (avoids race conditions)
- *   CREATE OR REPLACE FUNCTION increment_player_stats(
- *     user_id UUID, kills_inc INT, deaths_inc INT, wins_inc INT
- *   ) RETURNS void LANGUAGE plpgsql AS $$
- *   BEGIN
- *     INSERT INTO profiles(user_id, username, kills, deaths, wins)
- *     VALUES (user_id, (SELECT raw_user_meta_data->>'username' FROM auth.users WHERE id = user_id), kills_inc, deaths_inc, wins_inc)
- *     ON CONFLICT (user_id) DO UPDATE SET
- *       kills  = profiles.kills  + EXCLUDED.kills,
- *       deaths = profiles.deaths + EXCLUDED.deaths,
- *       wins   = profiles.wins   + EXCLUDED.wins;
- *   END;
- *   $$;
- */
 
 #ifdef _WIN32
   #include <winsock2.h>
@@ -105,7 +8,7 @@
   #define CLOSE_SOCK(s) closesocket(s)
   #define SOCK_T SOCKET
   #define INVALID_SOCK INVALID_SOCKET
-  typedef int socklen_t;  // Windows uses int where POSIX uses socklen_t
+  typedef int socklen_t;  
   #define SOCKOPT_CAST (const char*)
 #else
   #include <sys/socket.h>
@@ -131,20 +34,17 @@
 #include <chrono>
 #include <sstream>
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  CONFIGURATION — set these to your Supabase project values
-// ═══════════════════════════════════════════════════════════════════════════
+//  CONFIGURATION — set these to  Supabase project values
 #define SUPABASE_URL  "https://zqnvimeyzogmtgydrkuz.supabase.co"
 #define SUPABASE_KEY  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxbnZpbWV5em9nbXRneWRya3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MjcwNzEsImV4cCI6MjA5MjMwMzA3MX0.vRLJw3_Ve6Az-0K2PJphwg8cE9juG4y2p7VYMPbR5io"
 
-// ── Fixed server config ───────────────────────────────────────────────────
+
 static const uint16_t GAME_PORT   = 7777;
 static const uint16_t LOBBY_PORT  = 8888;
 static const uint16_t DISC_PORT   = 7779;  // LAN discovery broadcast port
 static const uint8_t  MAX_PLAYERS = 4;
 static const int      TIMEOUT_S   = 5;
 
-// ── Game packet types (client <-> server) ─────────────────────────────────
 #define PKT_PLAYER_STATE  1
 #define PKT_ID_ASSIGN     2
 #define PKT_PLAYER_LEFT   3
@@ -193,9 +93,8 @@ static const uint16_t PORT_MAX     = 7800;  // 24 simultaneous online lobbies
 using Clock     = std::chrono::steady_clock;
 using TimePoint = std::chrono::time_point<Clock>;
 
-// ═══════════════════════════════════════════════════════════════════════════
+
 //  Server state
-// ═══════════════════════════════════════════════════════════════════════════
 
 struct Player {
     std::string key;
@@ -244,10 +143,6 @@ std::string lobbyName;
 std::string publicIp;
 std::string pwHash;
 
-// ── Auto-detect LAN IP ────────────────────────────────────────────────────
-// Connects a UDP socket to a public address (no data sent) and reads back
-// the local IP the OS chose — this is the LAN IP on the active interface.
-// Works on Windows without enumerating adapters or parsing ipconfig output.
 std::string get_lan_ip() {
 #ifdef _WIN32
     WSADATA _wsa; WSAStartup(MAKEWORD(2,2), &_wsa);
@@ -281,9 +176,7 @@ std::string addrKey(const sockaddr_in& a) {
            std::to_string(ntohs(a.sin_port));
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  Packet string helpers
-// ═══════════════════════════════════════════════════════════════════════════
+
 
 int lp_write(char* buf, int off, const std::string& s) {
     uint8_t len = (uint8_t)(s.size() > 63 ? 63 : s.size());
@@ -300,11 +193,11 @@ int lp_read(const char* buf, int off, int bufLen, std::string& out) {
     return 1 + len;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+
 //  Supabase HTTP helpers
 //  Windows: WinHTTP (built-in, no dependencies)
 //  Linux:   libcurl (apt install libcurl4-openssl-dev)
-// ═══════════════════════════════════════════════════════════════════════════
+
 
 #ifdef _WIN32
 
@@ -401,7 +294,6 @@ std::string supabase_request(const std::string& method, const std::string& path,
 
 #endif
 
-// Minimal JSON int64 extractor — finds the first "key":number in a JSON string
 // Sufficient for extracting auto-generated IDs from Supabase responses.
 int64_t json_extract_int64(const std::string& json, const std::string& key) {
     std::string search = "\"" + key + "\":";
@@ -428,9 +320,8 @@ std::string json_str(const std::string& s) {
     return out;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+
 //  Supabase lobby/match operations
-// ═══════════════════════════════════════════════════════════════════════════
 
 // Called on startup — wipes stale rows, then inserts this lobby
 void supabase_register_lobby() {
@@ -556,9 +447,9 @@ void supabase_match_end() {
     myMatchId = -1;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+
 //  Lobby list — fetched from Supabase and sent to requesting clients
-// ═══════════════════════════════════════════════════════════════════════════
+
 
 // Parse a JSON array of lobby objects from Supabase and send as type-26 packet
 void send_lobby_list(int sock, const sockaddr_in& dest) {
@@ -997,9 +888,8 @@ void run_as_manager(const std::string& dropletIp) {
 }
 #endif  // !_WIN32
 
-// ═══════════════════════════════════════════════════════════════════════════
 //  main
-// ═══════════════════════════════════════════════════════════════════════════
+
 
 int main(int argc, char* argv[]) {
 #ifdef _WIN32

@@ -14,9 +14,10 @@ if (global.match_phase == "countdown" || global.match_phase == "winner") {
         buffer_write(_sbuf, buffer_u8,  1);
         buffer_write(_sbuf, buffer_f32, x);
         buffer_write(_sbuf, buffer_f32, y);
-        buffer_write(_sbuf, buffer_u8,  hitpoints);
+        buffer_write(_sbuf, buffer_u8,  clamp(hitpoints, 0, 255));
         buffer_write(_sbuf, buffer_u8,  image_index);
         buffer_write(_sbuf, buffer_u8,  round((player_look_dir / 360.0) * 255));
+        buffer_write(_sbuf, buffer_string, oPlayerHitbox.time_phase);
         network_send_udp_raw(global.socket, global.ip_address, global.port,
                              _sbuf, buffer_tell(_sbuf));
         buffer_delete(_sbuf);
@@ -313,6 +314,7 @@ function _send_shoot_packet() {
     buffer_write(_buf, buffer_u8,  round((player_look_dir / 360.0) * 255)); // dir
     buffer_write(_buf, buffer_u8,  _wtype_byte);          // weapon type
     buffer_write(_buf, buffer_f32, bullet_damage);        // damage
+	buffer_write(_buf, buffer_string, oPlayerHitbox.time_phase);
     network_send_udp_raw(global.socket, global.ip_address, global.port,
                          _buf, buffer_tell(_buf));
     buffer_delete(_buf);
@@ -330,9 +332,10 @@ if (net_send_timer >= game_get_speed(gamespeed_fps) / 20) {
     buffer_write(buf, buffer_u8,  1);
     buffer_write(buf, buffer_f32, x);
     buffer_write(buf, buffer_f32, y);
-    buffer_write(buf, buffer_u8,  hitpoints);
+    buffer_write(buf, buffer_u8,  clamp(hitpoints, 0, 255));
     buffer_write(buf, buffer_u8,  image_index);
     buffer_write(buf, buffer_u8,  round((player_look_dir / 360.0) * 255));
+	buffer_write(buf, buffer_string, (oPlayerHitbox.time_phase));
     network_send_udp_raw(global.socket, global.ip_address, global.port,
                          buf, buffer_tell(buf));
     buffer_delete(buf);
@@ -340,7 +343,14 @@ if (net_send_timer >= game_get_speed(gamespeed_fps) / 20) {
 #endregion
 
 #region Time rewind
-if (keyboard_check_pressed(ord("Z")) && time_phase == "present") {
+if (time_phase == "present" && time_cd > 0){
+	time_cd--;
+}
+
+// Only allow rewind when alive and playing (not in countdown/winner)
+var _can_rewind = (global.match_phase == "playing") && global.player_alive;
+if (keyboard_check_pressed(ord("Z")) && time_phase == "present"
+    && time_cd <= 0 && _can_rewind) {
     if (!rewind_active) {
         plr_travel_start();
     }

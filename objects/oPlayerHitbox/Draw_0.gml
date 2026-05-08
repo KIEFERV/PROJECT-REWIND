@@ -16,19 +16,21 @@ repeat (ds_map_size(other_players)) {
         var ohp     = entry[2];
         var oanim   = entry[3];
         var ofacing = entry[4];
+        var otime_phase = entry[5];
 
-        // Only draw if alive
-        if (ohp > 0) {
+    // Only draw if alive and in the same time phase
+    if (ohp > 0 && otime_phase == oPlayerHitbox.time_phase) {
             draw_sprite_ext(sPlayerEnemyModel, oanim, ox, oy,
                     1, 1,
                     ofacing,
                     c_white, 1);
 
-            // Health bar above head
+            // Health bar above head — clamp to prevent overflow
+            var _hp_ratio = clamp(ohp / max_hp, 0, 1);
             draw_set_color(c_red);
             draw_rectangle(ox - 16, oy - 28, ox + 16, oy - 22, false);
             draw_set_color(c_lime);
-            draw_rectangle(ox - 16, oy - 28, ox - 16 + (32 * (ohp / max_hp)), oy - 22, false);
+            draw_rectangle(ox - 16, oy - 28, ox - 16 + (32 * _hp_ratio), oy - 22, false);
             draw_set_color(c_white);
         }
     }
@@ -44,6 +46,7 @@ if (show_GUI = true) {
         draw_sprite_ext(sCrosshair, 0, mouse_x, mouse_y, 1, 1, 0, c_white, 1);
     }
 }
+
 
 // ── Knife swing cone flash ────────────────────────────────────────────────
 if (weapon_type == "melee" && knife_swing_timer > 0) {
@@ -74,4 +77,5 @@ if (weapon_type == "melee" && knife_swing_timer > 0) {
 
     draw_set_alpha(1);
     draw_set_color(c_white);
-}
+	
+	}
